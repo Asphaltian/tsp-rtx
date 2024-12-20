@@ -22,7 +22,11 @@ namespace components
 	// contains overrides for the current area, nullptr if no overrides exist
 	map_settings::area_overrides_s* g_player_current_area_override = nullptr;
 
-	bool g_cull_disable_frustum_culling = false;
+	namespace cmd
+	{
+		bool disable_frustum_culling = false;
+		bool sound_debug_printing = false;
+	}
 
 	namespace api
 	{
@@ -434,8 +438,6 @@ namespace components
 		{
 			api::remix_rayportal::get()->draw_all_pairs();
 		}
-
-		api::remix_lights::on_client_frame();
 	}
 
 	HOOK_RETN_PLACE_DEF(cviewrenderer_renderview_retn);
@@ -492,6 +494,86 @@ namespace components
 		}
 	}
 
+
+	// #
+	// #
+
+	// TODO: move to separate cpp
+
+	// each of these stands for something .. that we don't care about
+	char* skip_sound_chars(const char* pch)
+	{
+		auto str = (char*)pch;
+		while (true)
+		{
+			if (*str != '*' && *str != '?' && *str != '!' && *str != '#' && *str != '@' && *str != '(' && 
+				*str != '>' && *str != '<' && *str != '^' && *str != ')' && *str != '}' && *str != '$') 
+			{
+				break;
+			} str++;
+		}
+		return str;
+	}
+
+	void on_start_sound_hk(const StartSoundParams_t* parms)
+	{
+		if (parms->pSfx) 
+		{
+			char buff[264];
+
+			if (const char* sound_name = skip_sound_chars(parms->pSfx->vftable->getname(parms->pSfx, buff, 260u)); 
+				sound_name)
+			{
+				int pool_idx = 0;
+				if (parms->pSfx) {
+					pool_idx = parms->pSfx->m_namePoolIndex;
+				}
+
+				// check if we need to hash sounds
+				const bool any_hash_use = api::remix_lights::on_sound_start_require_hash();
+				
+				uint32_t hash = 0u;
+				if (any_hash_use || cmd::sound_debug_printing)
+				{
+					hash = utils::hash32_combine(hash, sound_name);
+					hash = utils::hash32_combine(hash, pool_idx);
+					hash = utils::hash32_combine(hash, parms->origin.x);
+					hash = utils::hash32_combine(hash, parms->origin.y);
+					hash = utils::hash32_combine(hash, parms->origin.z);
+
+					if (any_hash_use) {
+						api::remix_lights::on_sound_start(hash);
+					}
+
+					if (cmd::sound_debug_printing) 
+					{
+						game::print_ingame("[sound_hk] HASH:   0x%x   -- %s -- pool index: %d -- origin: [%.5f %.5f %.5f]\n", 
+							hash, sound_name ? sound_name : "NULL", pool_idx, parms->origin.x, parms->origin.y, parms->origin.z);
+					}
+				}
+			}
+		}
+	}
+
+	__declspec(naked) void on_start_sound_stub()
+	{
+		__asm
+		{
+			pushad;
+			push	ebx;
+			call	on_start_sound_hk;
+			add		esp, 4;
+			popad;
+
+			// og
+			pop     edi;
+			pop		ebx;
+			mov		esp, ebp;
+			pop		ebp;
+			retn;
+		}
+	}
+
 	// #
 	// #
 	
@@ -526,18 +608,9 @@ namespace components
 	 */
 	void on_map_load_hk(const char* map_name)
 	{
-		// ALL RESETS first because 'on_host_disconnect_hk' is not reliable
-		choreo_events::reset_all();
-
-		model_render::vgui_progress_board_scalar = 1.0f;
-		model_render::linked_area_portals.clear();
-
-		main_module::trigger_vis_logic();
-
-		// -------
-
 		api::remix_vars::on_map_load();
 		map_settings::on_map_load(map_name);
+		api::remix_lights::on_map_load();
 		main_module::setup_required_cvars();
 
 		// reset portal vars
@@ -570,19 +643,22 @@ namespace components
 		}
 	}
 
-
 	/**
 	 * Called from Host_Disconnect
 	 * on: disconnect, restart, killserver, stopdemo ...
 	 */
-#if 0
 	void on_host_disconnect_hk()
 	{
-		// #TODO: not called when traversing maps via the elevator ...
+		choreo_events::reset_all();
 
-		/*map_settings::on_map_exit(); 
-		events::s_ent.reset();
-		model_render::linked_area_portals.clear();*/
+		model_render::vgui_progress_board_scalar = 1.0f;
+		model_render::linked_area_portals.clear();
+
+		main_module::trigger_vis_logic();
+
+		// ----------
+
+		map_settings::on_map_unload();
 	}
 
 	HOOK_RETN_PLACE_DEF(on_host_disconnect_retn);
@@ -600,8 +676,30 @@ namespace components
 			jmp		on_host_disconnect_retn;
 		}
 	}
-#endif
 
+	/**
+	 * Called from Host_Changelevel
+	 * Host_Disconnect is not called when this triggers
+	 */
+	void on_host_change_level_hk()
+	{
+		on_host_disconnect_hk();
+	}
+
+	HOOK_RETN_PLACE_DEF(on_host_change_level_retn);
+	__declspec(naked) void on_host_change_level_stub()
+	{
+		__asm
+		{
+			pushad;
+			call	on_host_change_level_hk;
+			popad;
+
+			// og
+			push    0x104;
+			jmp		on_host_change_level_retn;
+		}
+	}
 
 	// #
 	// #
@@ -1167,7 +1265,7 @@ namespace components
 	int r_cullnode_wrapper(mnode_t* node)
 	{
 		// default culling mode or no culling if cmd was used
-		map_settings::AREA_CULL_MODE cmode = g_cull_disable_frustum_culling ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_MODE_DEFAULT;
+		map_settings::AREA_CULL_MODE cmode = cmd::disable_frustum_culling ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_MODE_DEFAULT;
 		int node_index = 0;
 
 		const auto view_id = game::get_current_view_id();
@@ -1411,7 +1509,7 @@ namespace components
 					{
 						// check if portal is in player frustum or very close (frustum check can fail when halfway in the portal)
 						if (ignore_portal_vis_check 
-							|| (g_player_view_org - p->portal->m_ptOrigin).LenghtSqr() < (330.0f) 
+							|| (g_player_view_org - p->portal->m_ptOrigin).LengthSqr() < (330.0f) 
 							|| is_portal_in_frustum(game::get_g_frustum(), p->portal->m_InternallyMaintainedData.m_ptCorners))
 						{
 							Frustum_t frustum = {};
@@ -1860,6 +1958,12 @@ namespace components
 		api::remix_debug_node_vis = !api::remix_debug_node_vis;
 	}
 
+	ConCommand xo_debug_toggle_sound_print_cmd{};
+	void xo_debug_toggle_sound_print_fn()
+	{
+		cmd::sound_debug_printing = !cmd::sound_debug_printing;
+	}
+
 #if defined(BENCHMARK)
 	ConCommand xo_debug_toggle_benchmark_cmd{};
 	void xo_debug_toggle_benchmark_fn()
@@ -1875,11 +1979,11 @@ namespace components
 	ConCommand xo_cull_toggle_frustum_cmd{};
 	void xo_cull_toggle_frustum_fn()
 	{
-		g_cull_disable_frustum_culling = !g_cull_disable_frustum_culling;
+		cmd::disable_frustum_culling = !cmd::disable_frustum_culling;
 		game::print_ingame(
 			"[CMD] Set default culling mode to <%s>\n"
 			"|> Reload the map or use cmd: 'xo_mapsettings_update'\n"
-			, g_cull_disable_frustum_culling ? "None" : "Frustum Culling + Force Current Area");
+			, cmd::disable_frustum_culling ? "None" : "Frustum Culling + Force Current Area");
 	}
 
 	// #
@@ -1907,6 +2011,7 @@ namespace components
 			game::cvar_uncheat_and_set_int("r_lod_switch_scale", 1); // hidden cvar
 		}
 
+		game::cvar_uncheat_and_set_int("r_dopixelvisibility", 0); // hopefully fix random crash (dxvk cmdBindPipeline) on map load
 		game::cvar_uncheat_and_set_int("r_PortalTestEnts", 0);
 		game::cvar_uncheat_and_set_int("portal_ghosts_disable", 0);
 		game::cvar_uncheat_and_set_int("r_portal_earlyz", 0);
@@ -2022,6 +2127,7 @@ namespace components
 		// commands
 
 		game::con_add_command(&xo_debug_toggle_node_vis_cmd, "xo_debug_toggle_node_vis", xo_debug_toggle_node_vis_fn, "Toggle bsp node/leaf debug visualization using the remix api");
+		game::con_add_command(&xo_debug_toggle_sound_print_cmd, "xo_debug_toggle_sound_print", xo_debug_toggle_sound_print_fn, "Toggle sound debug prints (HASH for map_settings)");
 
 #if defined(BENCHMARK)
 		game::con_add_command(&xo_debug_toggle_benchmark_cmd, "xo_debug_toggle_benchmark", xo_debug_toggle_benchmark_fn, "Toggle benchmark printing");
@@ -2038,8 +2144,11 @@ namespace components
 		HOOK_RETN_PLACE(on_map_load_stub_retn, ENGINE_BASE + USE_OFFSET(0xFD901, 0xFCD61));
 
 		// Host_Disconnect :: called on map unload
-		//utils::hook(ENGINE_BASE + USE_OFFSET(0x19A3E1, 0x197DF1), on_host_disconnect_stub).install()->quick();
-		//HOOK_RETN_PLACE(on_host_disconnect_retn, ENGINE_BASE + USE_OFFSET(0x19A3E6, 0x197DF6));
+		utils::hook(ENGINE_BASE + USE_OFFSET(0x19A3E1, 0x197DF1), on_host_disconnect_stub).install()->quick();
+		HOOK_RETN_PLACE(on_host_disconnect_retn, ENGINE_BASE + USE_OFFSET(0x19A3E6, 0x197DF6));
+
+		utils::hook(ENGINE_BASE + USE_OFFSET(0x19620D, 0x193C6D), on_host_change_level_stub).install()->quick();
+		HOOK_RETN_PLACE(on_host_change_level_retn, ENGINE_BASE + USE_OFFSET(0x196212, 0x193C72));
 
 
 		// CViewRender::RenderView :: "start" of current frame (after CViewRender::DrawMonitors)
@@ -2051,6 +2160,8 @@ namespace components
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x1EE8F4, 0x1E92F4), cviewrenderer_drawonemonitor_stub).install()->quick();
 		HOOK_RETN_PLACE(cviewrenderer_drawonemonitor_retn, CLIENT_BASE + USE_OFFSET(0x1EE8F9, 0x1E92F9));
 
+		// S_StartSound
+		utils::hook(ENGINE_BASE + USE_OFFSET(0x1BF47, 0x1BD27), on_start_sound_stub).install()->quick();
 
 		// #
 		// culling

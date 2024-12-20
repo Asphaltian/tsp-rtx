@@ -60,5 +60,7 @@ namespace components
 		}
 
 		static inline event_single ev_a4_f2_api_portal_spawn = {};
+
+		static inline std::vector<event_single> events = {};
 	};
 }

@@ -220,24 +220,24 @@ public:
 		x = X; y = Y;
 	}
 
-	float Lenght(void) const
+	float Length(void) const
 	{
 		return ::sqrtf(x * x + y * y);
 	}
 
-	float LenghtSqr(void) const
+	float LengthSqr(void) const
 	{
 		return (x * x + y * y);
 	}
 
 	float DistTo(const Vector2D& v) const
 	{
-		return (*this - v).Lenght();
+		return (*this - v).Length();
 	}
 
 	float DistToSqr(const Vector2D& v) const
 	{
-		return (*this - v).LenghtSqr();
+		return (*this - v).LengthSqr();
 	}
 
 	float Dot(const Vector2D& v) const
@@ -418,19 +418,19 @@ public:
 		return Vector(-x, -y, -z);
 	}
 
-	float Lenght(void) const
+	float Length(void) const
 	{
 		return sqrtf(x * x + y * y + z * z);
 	}
 
-	float LenghtSqr(void) const
+	float LengthSqr(void) const
 	{
 		return (x * x + y * y + z * z);
 	}
 
 	float Normalize()
 	{
-		float fl_lenght = Lenght();
+		float fl_lenght = Length();
 		float fl_lenght_normal = 1.f / ((1.19209290E-07F) + fl_lenght);
 
 		x = x * fl_lenght_normal;
@@ -442,7 +442,7 @@ public:
 
 	float NormalizeChecked()
 	{
-		const float fl_lenght = Lenght();
+		const float fl_lenght = Length();
 		if (fl_lenght != 0.0f)
 		{
 			const float ilength = 1.0f / fl_lenght;
@@ -469,7 +469,7 @@ public:
 		return Normalize();
 	}
 
-	float Lenght2D(void) const
+	float Length2D(void) const
 	{
 		return sqrtf(x * x + y * y);
 	}
@@ -481,12 +481,12 @@ public:
 
 	float DistTo(const Vector& v) const
 	{
-		return (*this - v).Lenght();
+		return (*this - v).Length();
 	}
 
 	float DistToSqr(const Vector& v) const
 	{
-		return (*this - v).LenghtSqr();
+		return (*this - v).LengthSqr();
 	}
 
 	float Dot(const Vector& v) const
@@ -530,6 +530,11 @@ public:
 	hlslpp::float3 ToFloat3()
 	{
 		return hlslpp::float3(x, y, z);
+	}
+
+	remixapi_Float3D ToRemixFloat3D() const
+	{
+		return remixapi_Float3D{ x, y, z };
 	}
 
 public:

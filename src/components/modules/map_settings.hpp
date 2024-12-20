@@ -82,6 +82,41 @@ namespace components
 			std::unordered_set<std::uint32_t> when_not_in_leafs;
 		};
 
+
+		struct remix_light_settings_s
+		{
+			struct point_s
+			{
+				Vector position;
+				Vector radiance;
+				float radiance_scalar = 1.0f;
+				float radius = 1.0f;
+				float timepoint = 0.0f;
+				float smoothness = 0.5f;
+
+				// shaping
+				bool use_shaping = false;
+				Vector direction = { 0.0f, 0.0f, 1.0f };
+				float degrees = 90.0; // cone angle
+				float softness = 0.0f; // cone
+				float exponent = 0.0f; // focus
+			};
+
+			std::vector<point_s> points;
+			bool run_once = false;
+			bool loop = false;
+			bool loop_smoothing = false;
+			bool trigger_always = false;
+
+			std::string trigger_choreo_name;
+			std::uint32_t trigger_sound_hash;
+			float trigger_delay = 0.0f;
+
+			std::string kill_choreo_name;
+			std::uint32_t kill_sound_hash;
+			float kill_delay = 0.0f;
+		};
+
 		struct area_overrides_s
 		{
 			std::unordered_set<std::uint32_t> leafs;
@@ -90,9 +125,6 @@ namespace components
 
 			// areas - when_not_in_leafs
 			std::vector<hide_area_s> hide_areas;
-
-			// areas where portal views are allowed to get culled (when portals are not in view)
-			//std::unordered_set<std::uint32_t> portal_cull_area;
 
 			AREA_CULL_MODE cull_mode;
 			std::uint32_t area_index;
@@ -116,6 +148,7 @@ namespace components
 			std::vector<choreo_transition_s> choreo_transitions;
 			std::vector<marker_settings_s> map_markers;
 			std::vector<std::string> api_var_configs;
+			std::vector<remix_light_settings_s> remix_lights;
 		};
 
 		static map_settings_s& get_map_settings() { return m_map_settings; }
@@ -125,6 +158,7 @@ namespace components
 		static void spawn_markers_once();
 		static void destroy_markers();
 		static void on_map_load(const std::string& map_name);
+		static void on_map_unload();
 		static void clear_map_settings();
 
 		struct level_bool_s
@@ -224,6 +258,7 @@ namespace components
 		static inline map_settings_s m_map_settings = {};
 		static inline std::vector<std::string> m_args;
 		static inline bool m_spawned_markers = false;
+		static inline bool m_loaded = false;
 
 		bool parse_toml();
 		bool matches_map_name();
