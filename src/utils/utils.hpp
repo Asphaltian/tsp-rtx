@@ -80,6 +80,11 @@ namespace utils
 	bool string_contains(const std::string_view& s1, const std::string_view s2);
 	void replace_all(std::string& source, const std::string_view& from, const std::string_view& to);
 	bool erase_substring(std::string& base, const std::string& replace);
+
+	inline void to_lower(std::string& str) {
+		std::ranges::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	}
+
 	std::string str_to_lower(std::string input);
 	std::string convert_wstring(const std::wstring& wstr);
 	std::string& ltrim(std::string& s);
@@ -96,6 +101,10 @@ namespace utils
 	bool open_file_homepath(const std::string& sub_dir, const std::string& file_name, std::ifstream& file);
 	std::uint64_t string_hash64(const std::string_view& str);
 	std::uint32_t string_hash32(const std::string_view& str);
+
+	uint32_t hash32_combine(uint32_t seed, const char* str);
+	uint32_t hash32_combine(uint32_t seed, int val);
+	uint32_t hash32_combine(uint32_t seed, float val);
 
 	class benchmark
 	{

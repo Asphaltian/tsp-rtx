@@ -33,6 +33,7 @@
 #include <map>
 #include <unordered_set>
 #include <fstream>
+#include <iostream>
 #include <xmmintrin.h>
 #include <intrin.h>
 

@@ -2856,6 +2856,59 @@ namespace components
 		float bottom;
 	};
 
+	
+	struct CSfxTable_vtbl;
+	struct CSfxTable
+	{
+		CSfxTable_vtbl* vftable;
+		int m_namePoolIndex;
+		void* pSource; // CAudioSource
+		__int8 m_bUseErrorFilename : 1;
+		__int8 m_bIsUISound : 1;
+		__int8 m_bIsLateLoad : 1;
+		__int8 m_bMixGroupsCached : 1;
+		__int8 m_bIsMusic : 1;
+		__int8 m_bIsCreatedByQueuedLoader : 1;
+		unsigned __int8 m_mixGroupCount;
+		unsigned __int8 m_mixGroupList[8];
+		const char* m_pDebugName;
+	};
+
+	struct CSfxTable_vtbl
+	{
+		const char* (__thiscall* getname)(CSfxTable*, char*, unsigned int);
+	};
+
+	struct __declspec(align(4)) StartSoundParams_t
+	{
+		int userdata;
+		int soundsource;
+		int entchannel;
+		CSfxTable* pSfx;
+		Vector origin;
+		Vector direction;
+		float fvol;
+		int soundlevel; // soundlevel_t
+		int flags;
+		int pitch;
+		float delay;
+		int speakerentity;
+		int initialStreamPosition;
+		int skipInitialSamples;
+		int m_nQueuedGUID;
+		unsigned int m_nSoundScriptHash;
+		const char* m_pSoundEntryName;
+		KeyValues* m_pOperatorsKV;
+		float opStackElapsedTime;
+		float opStackElapsedStopTime;
+		__int8 staticsound : 1;
+		__int8 bUpdatePositions : 1;
+		__int8 fromserver : 1;
+		__int8 bToolSound : 1;
+		__int8 m_bIsScriptHandle : 1;
+		__int8 m_bDelayedStart : 1;
+	};
+
 }
 
 

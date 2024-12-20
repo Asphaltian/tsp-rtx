@@ -326,4 +326,26 @@ namespace utils
 
 		return hash;
 	}
+
+	uint32_t hash32_combine(uint32_t seed, const char* str)
+	{
+		while (*str != '\0') 
+		{
+			seed ^= std::hash<char>{}(*str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			++str;
+		}
+		return seed;
+	}
+
+	uint32_t hash32_combine(const uint32_t seed, const int val)
+	{
+		return seed ^ (std::hash<int>{}(val)+0x9e3779b9 + (seed << 6) + (seed >> 2));
+	}
+
+	uint32_t hash32_combine(const uint32_t seed, float val)
+	{
+		const uint32_t* ptr = reinterpret_cast<uint32_t*>(&val);
+		return seed ^ (*ptr + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+	}
+
 }
