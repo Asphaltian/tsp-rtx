@@ -268,7 +268,7 @@ namespace components::api
 
 			light->info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
 			light->info.pNext = &light->ext;
-			light->info.hash = utils::string_hash64(utils::va("api-light%d", light->index));
+			light->info.hash = utils::string_hash64(utils::va("api-light%d", light->light_num));
 			light->info.radiance = remixapi_Float3D{ pt.radiance.x * pt.radiance_scalar, pt.radiance.y * pt.radiance_scalar, pt.radiance.z * pt.radiance_scalar };
 
 			return bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
@@ -291,11 +291,11 @@ namespace components::api
 			// add lights without a trigger
 			if (it->trigger_choreo_name.empty() && !it->trigger_sound_hash)
 			{
-				const auto index = m_map_lights.size();
 				m_map_lights.push_back(
 					remix_light_s(
 						std::move(*it),
-						index
+						m_map_light_spawn_tracker++,
+						it->kill_delay
 					));
 
 				// erase element from the mapsettings vector
@@ -320,11 +320,10 @@ namespace components::api
 	 */
 	void remix_lights::add_single_map_setting_light(map_settings::remix_light_settings_s* def)
 	{
-		const auto index = m_map_lights.size();
 		m_map_lights.push_back(
 			remix_light_s(
 				def->trigger_always ? *def : std::move(*def), // do not move the light if it can be triggered multiple times
-				index
+				m_map_light_spawn_tracker++
 			));
 
 		auto* light = &m_map_lights.back();
@@ -660,8 +659,12 @@ namespace components::api
 		get()->draw_all_map_lights();
 	}
 
+	// called before map_settings
 	void remix_lights::on_map_load()
 	{
+		// reset spawn tracker
+		m_map_light_spawn_tracker = 0u;
+
 		get()->a2_bts3_flashlight_destroy();
 	}
 

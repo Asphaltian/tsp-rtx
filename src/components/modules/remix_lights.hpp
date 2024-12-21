@@ -108,10 +108,10 @@ namespace components::api
 		struct remix_light_s
 		{
 			map_settings::remix_light_settings_s def;
-			std::uint32_t index = 0u;
-			light_interpolator mover;
-			bool is_marked_for_destruction = false;
+			std::uint32_t light_num = 0u;
 			float timer = 0.0f;
+			bool is_marked_for_destruction = false;
+			light_interpolator mover;
 			remixapi_LightHandle handle = nullptr;
 			remixapi_LightInfoSphereEXT ext = {};
 			remixapi_LightInfo info = {};
@@ -137,6 +137,7 @@ namespace components::api
 		static inline Vector m_bts3_wheatly_pos = {};
 
 		// ---
+		static inline std::uint32_t m_map_light_spawn_tracker = 0u;
 		static inline std::vector<remix_light_s> m_map_lights = {};
 	};
 }

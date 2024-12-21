@@ -705,7 +705,7 @@ namespace components
 									if (trigger.contains("always")) {
 										temp_trigger_always = to_int(trigger.at("always"), 0);
 									}
-								} else { TOML_ERROR("[LIGHTS] #trigger", trigger, "defined trigger with no choreo string"); }
+								} else { TOML_ERROR("[LIGHTS] #trigger", trigger, "defined trigger with no choreo / sound hash"); }
 							}
 
 							// - parse kill
@@ -743,7 +743,7 @@ namespace components
 									if (kill.contains("delay")) {
 										temp_kill_delay = to_float(kill.at("delay"), 0.0f);
 									}
-								} else { TOML_ERROR("[LIGHTS] #trigger", kill, "defined kill with no choreo string"); }
+								} else { TOML_ERROR("[LIGHTS] #trigger", kill, "defined kill trigger with no choreo / sound hash"); }
 							}
 
 							// - parse points

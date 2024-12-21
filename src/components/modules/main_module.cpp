@@ -536,7 +536,9 @@ namespace components
 				if (any_hash_use || cmd::sound_debug_printing)
 				{
 					hash = utils::hash32_combine(hash, sound_name);
-					hash = utils::hash32_combine(hash, pool_idx);
+					//hash = utils::hash32_combine(hash, pool_idx); // changing
+					hash = utils::hash32_combine(hash, parms->delay);
+					hash = utils::hash32_combine(hash, parms->fvol);
 					hash = utils::hash32_combine(hash, parms->origin.x);
 					hash = utils::hash32_combine(hash, parms->origin.y);
 					hash = utils::hash32_combine(hash, parms->origin.z);
@@ -547,8 +549,9 @@ namespace components
 
 					if (cmd::sound_debug_printing) 
 					{
-						game::print_ingame("[sound_hk] HASH:   0x%x   -- %s -- pool index: %d -- origin: [%.5f %.5f %.5f]\n", 
-							hash, sound_name ? sound_name : "NULL", pool_idx, parms->origin.x, parms->origin.y, parms->origin.z);
+						game::print_ingame("[sound_hk] HASH: ( 0x%x ) -- %s -- delay: %.2f -- vol: %.2f -- origin: [%.5f %.5f %.5f] @ time: %.2f\n", 
+							hash, sound_name ? sound_name : "NULL", parms->delay, parms->fvol, 
+							parms->origin.x, parms->origin.y, parms->origin.z, game::get_global_vars()->curtime);
 					}
 				}
 			}
@@ -609,8 +612,8 @@ namespace components
 	void on_map_load_hk(const char* map_name)
 	{
 		api::remix_vars::on_map_load();
-		map_settings::on_map_load(map_name);
 		api::remix_lights::on_map_load();
+		map_settings::on_map_load(map_name);
 		main_module::setup_required_cvars();
 
 		// reset portal vars
