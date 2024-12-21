@@ -2012,6 +2012,10 @@ namespace components
 		}
 
 		game::cvar_uncheat_and_set_int("r_dopixelvisibility", 0); // hopefully fix random crash (dxvk cmdBindPipeline) on map load
+
+		game::cvar_uncheat_and_set_int("r_WaterDrawRefraction", 0); // fix weird culling behaviour near water surfaces
+		game::cvar_uncheat_and_set_int("r_WaterDrawReflection", 0); // perf?
+
 		game::cvar_uncheat_and_set_int("r_PortalTestEnts", 0);
 		game::cvar_uncheat_and_set_int("portal_ghosts_disable", 0);
 		game::cvar_uncheat_and_set_int("r_portal_earlyz", 0);
