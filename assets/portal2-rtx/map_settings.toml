@@ -11,6 +11,7 @@
     sp_a1_wakeup = { distance = 60000, color = [180, 140, 100] }
     sp_a2_intro = { distance = 60000, color = [180, 140, 100] }
     sp_a2_core = { distance = 150000, color = [180, 140, 100] }
+    sp_a3_01 = { distance = 150000, color = [200, 180, 140] }
     sp_a4_finale2 = { distance = 150000, color = [180, 140, 100] }
 
 
@@ -98,7 +99,7 @@
     ]
 
     sp_a3_01 = [
-        { area = 3, cull = 1, leafs = [768, 846, 1360, 1675] }
+        { area = 3, cull = 2, leafs = [768, 769, 846, 1143, 1241, 1360, 1512, 1571, 1609, 1675] }
     ]
 
     sp_a4_laser_platform = [
@@ -341,18 +342,73 @@
         ]
     
     sp_a3_01 = [
-            # playonce\level\animation_sfx\vault_door_open.wav - rotating spotlight
-            #{ points = [       # skip the trigger to tweak the light 
-            { trigger = { sound = 0x70e27f54, delay = 0.0 }, kill = { sound = 0xda5ff0c7, delay = 0.0 }, points = [
+            # turn on vault door light with lever
+            # HASH: ( 0x405a8af2 ) -- world\light_power_on_01.wav -- delay: 0.00 -- vol: 1.00 -- origin: [3664.00000 4488.00000 -360.00000]
+            #{ points = [   # skip the trigger to tweak the light
+            { trigger = { sound = 0x405a8af2, delay = 0.0 }, kill = { sound = 0x431b8441, delay = 0.0 }, points = [
+                { position = [4740.0, 4175.0, 440.0], radiance = [0.0, 0.0, 0.0], scalar = 0.0, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.2  },
+                { radiance = [350.0, 450.0, 400.0], scalar = 1.5, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.22 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 1.5, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.45 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 0.5, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.46 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 0.5, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.6 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 0.9, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.61 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 0.9, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.77 },
+                { radiance = [350.0, 450.0, 400.0], scalar = 1.5, radius = 5.0, smoothness = 0.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 0.79 },
+            ], run_once = 0, loop = 0, loop_smoothing = 0 },
+
+
+            # same lever - turn off spotlight next to lever
+            #{ points = [   # skip the trigger to tweak the light
+            { kill = { sound = 0xfc385d18, delay = 0.2 }, points = [
+                { position = [3693.0, 4265.0, -46.0], radiance = [500.0, 350.0, 150.0], scalar = 0.32, radius = 6.0, smoothness = 0.0, timepoint = 0.5  },
+            ], run_once = 0, loop = 0, loop_smoothing = 0 },
+
+            # ^ flicker afterwards
+            #{ points = [   # skip the trigger to tweak the light
+            { trigger = { sound = 0xfc385d18, delay = 0.67 }, points = [
+                { position = [3693.0, 4265.0, -50.0], radiance = [500.0, 350.0, 150.0], scalar = 0.1, radius = 6.0, smoothness = 0.0, timepoint = 0  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.2  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.2, radius = 6.0, smoothness = 0.0, timepoint = 0.21  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.2, radius = 6.0, smoothness = 0.0, timepoint = 0.3  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.31  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.4  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.1, radius = 6.0, smoothness = 0.0, timepoint = 0.41  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.1, radius = 6.0, smoothness = 0.0, timepoint = 1.3  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 1.31  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 1.6  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.07, radius = 6.0, smoothness = 0.0, timepoint = 1.61  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.07, radius = 6.0, smoothness = 0.0, timepoint = 1.9  },
+            ], run_once = 0, loop = 1, loop_smoothing = 1 },
+
+            # ^ second flicker, slighty offset
+            { trigger = { sound = 0xfc385d18, delay = 1.23 }, points = [
+                { position = [3693.0, 4263.0, -42.0], radiance = [500.0, 350.0, 150.0], scalar = 0.3, radius = 6.0, smoothness = 0.0, timepoint = 0.0  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.01  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.1  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.2, radius = 6.0, smoothness = 0.0, timepoint = 0.11  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.2, radius = 6.0, smoothness = 0.0, timepoint = 0.5  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.51  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.05, radius = 6.0, smoothness = 0.0, timepoint = 0.6  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.1, radius = 6.0, smoothness = 0.0, timepoint = 0.61  },
+                { radiance = [500.0, 350.0, 150.0], scalar = 0.1, radius = 6.0, smoothness = 0.0, timepoint = 0.74  },
+            ], run_once = 0, loop = 1, loop_smoothing = 0 },
+
+
+            # on vault door open - rotating spotlight
+            # HASH: ( 0x431b8441 ) -- playonce\level\animation_sfx\vault_door_open.wav -- delay: 0.00 -- vol: 1.00 -- origin: [5368.00000 4600.00000 -48.00000]
+            #{ points = [   # skip the trigger to tweak the light 
+            { trigger = { sound = 0x431b8441, delay = 0.0 }, kill = { sound = 0x7803b2f2, delay = 0.0 }, points = [
                 { position = [5155.0, 4120.0, -600.0], radiance = [500.0, 200.0, 50.0],  radius = 0.0, smoothness = 1.0, degrees = 20.0, direction = [0, -0.75, 0.25]  },
                 { position = [5155.0, 4105.0, -580.0], radiance = [10000.0, 6000.0, 3000.0], scalar = 800.0, radius = 0.05, smoothness = 1.0, degrees = 33.0, direction = [0, 0, 1], softness = 0.005, exponent = 0.0, timepoint = 0.6  },
                 { position = [5155.0, 4105.0, -600.0], radiance = [10000.0, 6000.0, 3000.0], scalar = 800.0, radius = 0.05, smoothness = 1.0, degrees = 33.0, direction = [0,  1,  0], softness = 0.005, exponent = 0.0, timepoint = 1.6 },
                 { radiance = [500.0, 200.0, 50.0],  radius = 0.0, smoothness = 1.0, degrees = 20.0, direction = [0,  0, -1], timepoint = 2.6 },
             ], run_once = 0, loop = 1, loop_smoothing = 0 },
 
-            # world\light_power_on_01.wav - turn on light when door is fully open - static light
-            #{ points = [       # skip the trigger to tweak the light 
-            { trigger = { sound = 0xda5ff0c7, delay = 0.0 }, points = [
+
+            # turn on light after door is fully open
+            # HASH: ( 0x7803b2f2 ) -- world\light_power_on_01.wav -- delay: 0.00 -- vol: 1.00 -- origin: [5392.00000 4616.00000 -432.00000]
+            #{ points = [   # skip the trigger to tweak the light 
+            { trigger = { sound = 0x7803b2f2, delay = 0.0 }, points = [
                 { position = [4740.0, 4175.0, 440.0], radiance = [350.0, 450.0, 400.0], scalar = 1.5, radius = 5.0, smoothness = 1.0, degrees = 45.0, direction = [0.5, 0.5, -0.4], softness = 0.1, timepoint = 2.6  },
             ], run_once = 0, loop = 0, loop_smoothing = 0 }
         ]
