@@ -2909,6 +2909,444 @@ namespace components
 		__int8 m_bDelayedStart : 1;
 	};
 
+	struct CBaseEntity_vtbl;
+	struct CBaseEntity
+	{
+		CBaseEntity_vtbl* vtbl;
+		void* m_iObjectCapsCache;
+		void(__thiscall* m_pfnMoveDone)(CBaseEntity*);
+		void(__thiscall* m_pfnThink)(CBaseEntity*);
+		char m_Network[0x50]; // CServerNetworkProperty
+		const char* m_iClassname;
+		float m_flPrevAnimTime;
+		float m_flAnimTime;
+		float m_flSimulationTime;
+		int m_nLastThinkTick;
+		int touchStamp;
+		char m_aThinkFunctions[0x14];
+		char m_ResponseContexts[0x14];
+		const char* m_iszResponseContext;
+		int m_nNextThinkTick;
+		int m_fEffects;
+		const char* m_ModelName;
+		CBaseEntity* m_pLink;
+		const char* m_target;
+		char m_nRenderFX;
+		char m_nRenderMode;
+		uint16_t m_nModelIndex;
+		DWORD m_clrRender;
+		int m_nSimulationTick;
+		int m_fDataObjectTypes;
+		int m_iEFlags;
+		int m_fFlags;
+		const char* m_iName;
+		DWORD m_pParent;
+		unsigned __int8 m_nTransmitStateOwnedCounter;
+		char m_iParentAttachment;
+		char m_MoveType;
+		char m_MoveCollide;
+		int m_hMoveParent;
+		DWORD m_hMoveChild;
+		DWORD m_hMovePeer;
+		char m_Collision[0x5C];
+		DWORD m_hOwnerEntity;
+		int m_CollisionGroup;
+		void* m_pPhysicsObject;
+		unsigned __int8 m_nWaterTouch;
+		unsigned __int8 m_nSlimeTouch;
+		unsigned __int8 m_nWaterType;
+		char m_nWaterLevel;
+		float m_flNavIgnoreUntilTime;
+		DWORD m_hGroundEntity;
+		float m_flGroundChangeTime;
+		Vector m_vecBaseVelocity;
+		Vector m_vecAbsVelocity;
+		QAngle m_vecAngVelocity;
+		matrix3x4_t m_rgflCoordinateFrame;
+		float m_flFriction;
+		float m_flElasticity;
+		float m_flLocalTime;
+		float m_flVPhysicsUpdateLocalTime;
+		float m_flMoveDoneTime;
+		int m_nPushEnumCount;
+		Vector m_vecAbsOrigin;
+		QAngle m_angAbsRotation;
+		Vector m_vecVelocity;
+		DWORD m_pBlocker;
+		int m_iTextureFrameIndex;
+		bool m_bSimulatedEveryTick;
+		bool m_bAnimatedEveryTick;
+		bool m_bAlternateSorting;
+		int m_nMinCPULevel;
+		int m_nMaxCPULevel;
+		int m_nMinGPULevel;
+		int m_nMaxGPULevel;
+		const char* m_iGlobalname;
+		const char* m_iParent;
+		int m_iHammerID;
+		float m_flSpeed;
+		int m_iMaxHealth;
+		int m_iHealth;
+		const char* m_iszDamageFilterName;
+		DWORD m_hDamageFilter;
+		/*void(__thiscall* m_pfnTouch)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* m_pfnUse)(CBaseEntity*, CBaseEntity*, CBaseEntity*, int, float);
+		void(__thiscall* m_pfnBlocked)(CBaseEntity*, CBaseEntity*);
+		CNetworkVarBase<bool, CBaseEntity::NetworkVar_m_bClientSideRagdoll> m_bClientSideRagdoll;
+		CNetworkVarBase<char, CBaseEntity::NetworkVar_m_lifeState> m_lifeState;
+		CNetworkVarBase<char, CBaseEntity::NetworkVar_m_takedamage> m_takedamage;
+		CNetworkVarBase<bool, CBaseEntity::NetworkVar_m_bIsPlayerSimulated> m_bIsPlayerSimulated;
+		CNetworkHandleBase<CBasePlayer, CBaseEntity::NetworkVar_m_hPlayerSimulationOwner> m_hPlayerSimulationOwner;
+		COutputEvent m_OnUser1;
+		COutputEvent m_OnUser2;
+		COutputEvent m_OnUser3;
+		COutputEvent m_OnUser4;
+		COutputEvent m_OnKilled;
+		int m_cellwidth;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_cellbits> m_cellbits;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_cellX> m_cellX;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_cellY> m_cellY;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_cellZ> m_cellZ;
+		CNetworkVectorXY_SeparateZBase<Vector, CBaseEntity::NetworkVar_m_vecOrigin> m_vecOrigin;
+		CNetworkVectorXYZBase<QAngle, CBaseEntity::NetworkVar_m_angRotation> m_angRotation;
+		CBaseHandle m_RefEHandle;
+		CNetworkVectorXYZBase<Vector, CBaseEntity::NetworkVar_m_vecViewOffset> m_vecViewOffset;
+		unsigned int m_ListByClass;
+		CBaseEntity* m_pPrevByClass;
+		CBaseEntity* m_pNextByClass;
+		int m_iInitialTeamNum;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_iTeamNum> m_iTeamNum;
+		bool m_bDynamicModelAllowed;
+		bool m_bDynamicModelPending;
+		CNetworkVarBase<int, CBaseEntity::NetworkVar_m_spawnflags> m_spawnflags;
+		string_t m_AIAddOn;
+		float m_flGravity;
+		CNetworkHandleBase<CBaseEntity, CBaseEntity::NetworkVar_m_hEffectEntity> m_hEffectEntity;
+		CNetworkVarBase<float, CBaseEntity::NetworkVar_m_fadeMinDist> m_fadeMinDist;
+		CNetworkVarBase<float, CBaseEntity::NetworkVar_m_fadeMaxDist> m_fadeMaxDist;
+		CNetworkVarBase<float, CBaseEntity::NetworkVar_m_flFadeScale> m_flFadeScale;
+		CNetworkVarBase<float, CBaseEntity::NetworkVar_m_flShadowCastDistance> m_flShadowCastDistance;
+		float m_flDesiredShadowCastDistance;
+		CNetworkVarBase<string_t, CBaseEntity::NetworkVar_m_iSignifierName> m_iSignifierName;
+		bool m_bNetworkQuantizeOriginAndAngles;
+		bool m_bLagCompensate;
+		bool m_bForcePurgeFixedupStrings;
+		CGlobalEvent* m_pEvent;
+		int m_debugOverlays;
+		TimedOverlay_t* m_pTimedOverlay;
+		string_t m_iszVScripts;
+		string_t m_iszScriptThinkFunction;
+		CScriptScopeT<CDefScriptScopeBase> m_ScriptScope;
+		HSCRIPT__* m_hScriptInstance;
+		string_t m_iszScriptId;
+		CScriptKeyValues* m_pScriptModelKeyValues;*/
+	};
+	STATIC_ASSERT_OFFSET(CBaseEntity, touchStamp, 0x74);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_target, 0xB4);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_nModelIndex, 0xBA);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_pParent, 0xD4);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_hMoveParent, 0xDC);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_pPhysicsObject, 0x14C);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_vecAbsVelocity, 0x16C);
+	STATIC_ASSERT_OFFSET(CBaseEntity, m_vecAbsOrigin, 0x1CC);
+
+	struct ScriptClassDesc_t
+	{
+		const char* m_pszScriptName;
+		const char* m_pszClassname;
+		const char* m_pszDescription;
+		ScriptClassDesc_t* m_pBaseDesc;
+		char m_FunctionBindings[0x14];
+		void* (__cdecl* m_pfnConstruct)();
+		void(__cdecl* m_pfnDestruct)(void*);
+		void* pHelper;
+		ScriptClassDesc_t* m_pNextDesc;
+	};
+
+	struct ServerClass
+	{
+		char* m_pNetworkName;
+		void* m_pTable;
+		ServerClass* m_pNext;
+		int m_ClassID;
+		int m_InstanceBaselineIndex;
+	};
+
+	struct CBaseEntity_vtbl
+	{
+		void(__thiscall* CBaseEntity_Destructor)(struct CBaseEntity*);
+		void(__thiscall* SetRefEHandle)(struct CBaseEntity*, const CBaseHandle*);
+		const CBaseHandle* (__thiscall* GetRefEHandle)(struct CBaseEntity*);
+		void* (__thiscall* GetCollideable)(struct CBaseEntity*);
+		void* (__thiscall* GetNetworkable)(struct CBaseEntity*);
+		CBaseEntity* (__thiscall* GetBaseEntity)(struct CBaseEntity*);
+		int(__thiscall* GetModelIndex)(struct CBaseEntity*);
+		const char*(__thiscall* GetModelName)(struct CBaseEntity*);
+		void(__thiscall* SetModelIndex)(struct CBaseEntity*, int);
+		ServerClass* (__thiscall* GetServerClass)(CBaseEntity*);
+		int(__thiscall* YouForgotToImplementOrDeclareServerClass)(CBaseEntity*);
+		void* (__thiscall* GetDataDescMap)(CBaseEntity*); // datamap_t
+		ScriptClassDesc_t* (__thiscall* GetScriptDesc)(CBaseEntity*);
+		const char*(__thiscall* GetAIAddOn)(CBaseEntity*);
+		bool(__thiscall* TestCollision)(CBaseEntity*, const Ray_t*, unsigned int, void*); // CGameTrace
+		bool(__thiscall* TestHitboxes)(CBaseEntity*, const Ray_t*, unsigned int, void*);
+		void(__thiscall* ComputeWorldSpaceSurroundingBox)(CBaseEntity*, Vector*, Vector*);
+		bool(__thiscall* ShouldCollide)(CBaseEntity*, int, int);
+		void(__thiscall* SetOwnerEntity)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* SetScriptOwnerEntity)(CBaseEntity*, void*);
+		int(__thiscall* ShouldTransmit)(CBaseEntity*, const void*);
+		int(__thiscall* UpdateTransmitState)(CBaseEntity*);
+		void(__thiscall* SetTransmit)(CBaseEntity*, void*, bool);
+		const char* (__thiscall* GetTracerType)(CBaseEntity*);
+		void(__thiscall* Spawn)(CBaseEntity*);
+		void(__thiscall* Precache)(CBaseEntity*);
+		void(__thiscall* SetModel)(CBaseEntity*, const char*);
+		CStudioHdr* (__thiscall* OnNewModel)(CBaseEntity*);
+		void(__thiscall* InitSharedVars)(CBaseEntity*);
+		void(__thiscall* PostConstructor)(CBaseEntity*, const char*);
+		void(__thiscall* PostClientActive)(CBaseEntity*);
+		void(__thiscall* OnParseMapDataFinished)(CBaseEntity*);
+		bool(__thiscall* KeyValue1)(CBaseEntity*, const char*, const Vector*);
+		bool(__thiscall* KeyValue2)(CBaseEntity*, const char*, int);
+		bool(__thiscall* KeyValue3)(CBaseEntity*, const char*, float);
+		bool(__thiscall* KeyValue4)(CBaseEntity*, const char*, const char*);
+		bool(__thiscall* GetKeyValue)(CBaseEntity*, const char*, char*, int);
+		void(__thiscall* Activate)(CBaseEntity*);
+		void(__thiscall* SetParent)(CBaseEntity*, CBaseEntity*, int);
+		int(__thiscall* ObjectCaps)(CBaseEntity*);
+		bool(__thiscall* AcceptInput)(CBaseEntity*, const char*, CBaseEntity*, CBaseEntity*, int, int);
+		const char* (__thiscall* GetPlayerName)(CBaseEntity*);
+		void(__thiscall* DrawDebugGeometryOverlays)(CBaseEntity*);
+		int(__thiscall* DrawDebugTextOverlays)(CBaseEntity*);
+		int(__thiscall* Save)(CBaseEntity*, void*);
+		int(__thiscall* Restore)(CBaseEntity*, void*);
+		bool(__thiscall* ShouldSavePhysics)(CBaseEntity*);
+		void(__thiscall* OnSave)(CBaseEntity*, void*);
+		void(__thiscall* OnRestore)(CBaseEntity*);
+		int(__thiscall* RequiredEdictIndex)(CBaseEntity*);
+		void(__thiscall* MoveDone)(CBaseEntity*);
+		void(__thiscall* Think)(CBaseEntity*);
+		void(__thiscall* NetworkStateChanged_m_nNextThinkTick1)(CBaseEntity*, void*);
+		void(__thiscall* NetworkStateChanged_m_nNextThinkTick2)(CBaseEntity*);
+		void* (__thiscall* GetBaseAnimating)(CBaseEntity*); // CBaseAnimating
+		void* (__thiscall* GetBaseAnimatingOverlay)(CBaseEntity*); // CBaseAnimatingOverlay
+		void* (__thiscall* GetResponseSystem)(CBaseEntity*);
+		void(__thiscall* DispatchResponse)(CBaseEntity*, const char*);
+		int(__thiscall* Classify)(CBaseEntity*);
+		void(__thiscall* DeathNotice)(CBaseEntity*, CBaseEntity*);
+		bool(__thiscall* ShouldAttractAutoAim)(CBaseEntity*, CBaseEntity*);
+		float(__thiscall* GetAutoAimRadius)(CBaseEntity*);
+		Vector* (__thiscall* GetAutoAimCenter)(CBaseEntity*, Vector* result);
+		void* (__thiscall* GetBeamTraceFilter)(CBaseEntity*);
+		bool(__thiscall* PassesDamageFilter)(CBaseEntity*, const void*);
+		void(__thiscall* TraceAttack)(CBaseEntity*, const void*, const Vector*, void*);
+		bool(__thiscall* CanBeHitByMeleeAttack)(CBaseEntity*, CBaseEntity*);
+		int(__thiscall* OnTakeDamage)(CBaseEntity*, const void*);
+		int(__thiscall* TakeHealth)(CBaseEntity*, float, int);
+		bool(__thiscall* IsAlive)(CBaseEntity*);
+		void(__thiscall* Event_Killed)(CBaseEntity*, const void*);
+		void(__thiscall* Event_KilledOther)(CBaseEntity*, CBaseEntity*, const void*);
+		int(__thiscall* BloodColor)(CBaseEntity*);
+		bool(__thiscall* IsTriggered)(CBaseEntity*, CBaseEntity*);
+		bool(__thiscall* IsNPC)(CBaseEntity*);
+		void* (__thiscall* MyNPCPointer)(CBaseEntity*);
+		void* (__thiscall* MyCombatCharacterPointer)(CBaseEntity*);
+		void* (__thiscall* MyNextBotPointer)(CBaseEntity*);
+		float(__thiscall* GetDelay)(CBaseEntity*);
+		bool(__thiscall* IsMoving)(CBaseEntity*);
+		const char* (__thiscall* DamageDecal)(CBaseEntity*, int, int);
+		void(__thiscall* DecalTrace)(CBaseEntity*, void*, const char*);
+		void(__thiscall* ImpactTrace)(CBaseEntity*, void*, int, char*);
+		bool(__thiscall* OnControls)(CBaseEntity*, CBaseEntity*);
+		bool(__thiscall* HasTarget)(CBaseEntity*, const char*);
+		bool(__thiscall* IsPlayer)(CBaseEntity*);
+		bool(__thiscall* IsNetClient)(CBaseEntity*);
+		bool(__thiscall* IsTemplate)(CBaseEntity*);
+		bool(__thiscall* IsBaseObject)(CBaseEntity*);
+		bool(__thiscall* IsBaseTrain)(CBaseEntity*);
+		bool(__thiscall* IsBaseCombatWeapon)(CBaseEntity*);
+		void* (__thiscall* MyCombatWeaponPointer)(CBaseEntity*);
+		void* (__thiscall* GetServerVehicle)(CBaseEntity*);
+		bool(__thiscall* IsViewable)(CBaseEntity*);
+		void(__thiscall* ChangeTeam)(CBaseEntity*, int);
+		void(__thiscall* OnEntityEvent)(CBaseEntity*, int, void*);
+		bool(__thiscall* CanStandOn1)(CBaseEntity*, void*);
+		bool(__thiscall* CanStandOn2)(CBaseEntity*, CBaseEntity*);
+		CBaseEntity* (__thiscall* GetEnemy1)(CBaseEntity*);
+		CBaseEntity* (__thiscall* GetEnemy2)(CBaseEntity*);
+		void(__thiscall* UpdatePaintPowersFromContacts)(CBaseEntity*);
+		void(__thiscall* Use)(CBaseEntity*, CBaseEntity*, CBaseEntity*, int, float);
+		void(__thiscall* StartTouch)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* Touch)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* EndTouch)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* StartBlocked)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* Blocked)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* EndBlocked)(CBaseEntity*);
+		void(__thiscall* PhysicsSimulate)(CBaseEntity*);
+		void(__thiscall* PhysicsLandedOnGround)(CBaseEntity*, float);
+		void(__thiscall* UpdateOnRemove)(CBaseEntity*);
+		void(__thiscall* StopLoopingSounds)(CBaseEntity*);
+		bool(__thiscall* SUB_AllowedToFade)(CBaseEntity*);
+		void(__thiscall* Teleport)(CBaseEntity*, const Vector*, const QAngle*, const Vector*, bool);
+		void(__thiscall* NotifySystemEvent)(CBaseEntity*, CBaseEntity*, int, const void*);
+		void(__thiscall* MakeTracer)(CBaseEntity*, const Vector*, const void*, int);
+		int(__thiscall* GetTracerAttachment)(CBaseEntity*);
+		void(__thiscall* FireBullets)(CBaseEntity*, const void*);
+		void(__thiscall* DoImpactEffect)(CBaseEntity*, void*, int);
+		CBaseEntity* (__thiscall* Respawn)(CBaseEntity*);
+		bool(__thiscall* IsLockedByMaster)(CBaseEntity*);
+		int(__thiscall* GetMaxHealth)(CBaseEntity*);
+		void(__thiscall* SetHealth)(CBaseEntity*, int);
+		void(__thiscall* ModifyOrAppendCriteria)(CBaseEntity*, void*);
+		void(__thiscall* ModifyOrAppendDerivedCriteria)(CBaseEntity*, void*);
+		int(__thiscall* GetDamageType)(CBaseEntity*);
+		float(__thiscall* GetDamage)(CBaseEntity*);
+		void(__thiscall* SetDamage)(CBaseEntity*, float);
+		Vector* (__thiscall* EyePosition)(CBaseEntity*, Vector* result);
+		const QAngle* (__thiscall* EyeAngles)(CBaseEntity*);
+		const QAngle* (__thiscall* LocalEyeAngles)(CBaseEntity*);
+		Vector* (__thiscall* EarPosition)(CBaseEntity*, Vector* result);
+		Vector* (__thiscall* BodyTarget)(CBaseEntity*, Vector* result, const Vector*, bool);
+		Vector* (__thiscall* HeadTarget)(CBaseEntity*, Vector* result, const Vector*);
+		void(__thiscall* GetVectors)(CBaseEntity*, Vector*, Vector*, Vector*);
+		const Vector* (__thiscall* GetViewOffset)(CBaseEntity*);
+		void(__thiscall* SetViewOffset)(CBaseEntity*, const Vector*);
+		Vector* (__thiscall* GetSmoothedVelocity)(CBaseEntity*, Vector* result);
+		void(__thiscall* GetVelocity)(CBaseEntity*, Vector*, Vector*);
+		float(__thiscall* GetFriction)(CBaseEntity*);
+		bool(__thiscall* FVisible1)(CBaseEntity*, const Vector*, int, CBaseEntity**);
+		bool(__thiscall* FVisible2)(CBaseEntity*, CBaseEntity*, int, CBaseEntity**);
+		bool(__thiscall* CanBeSeenBy)(CBaseEntity*, void*);
+		float(__thiscall* GetAttackDamageScale)(CBaseEntity*, CBaseEntity*);
+		float(__thiscall* GetReceivedDamageScale)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* OnGroundChanged)(CBaseEntity*, CBaseEntity*, CBaseEntity*);
+		void(__thiscall* GetGroundVelocityToApply)(CBaseEntity*, Vector*);
+		bool(__thiscall* PhysicsSplash)(CBaseEntity*, const Vector*, const Vector*, float, float);
+		void(__thiscall* Splash)(CBaseEntity*);
+		const Vector* (__thiscall* WorldSpaceCenter)(CBaseEntity*);
+		Vector* (__thiscall* GetSoundEmissionOrigin)(CBaseEntity*, Vector* result);
+		bool(__thiscall* CreateVPhysics)(CBaseEntity*);
+		bool(__thiscall* ForceVPhysicsCollide)(CBaseEntity*, CBaseEntity*);
+		void(__thiscall* VPhysicsDestroyObject)(CBaseEntity*);
+		void(__thiscall* VPhysicsUpdate)(CBaseEntity*, void*);
+		int(__thiscall* VPhysicsTakeDamage)(CBaseEntity*, const void*);
+		void(__thiscall* VPhysicsShadowCollision)(CBaseEntity*, int, void*);
+		void(__thiscall* VPhysicsShadowUpdate)(CBaseEntity*, void*);
+		void(__thiscall* VPhysicsCollision)(CBaseEntity*, int, void*);
+		void(__thiscall* VPhysicsFriction)(CBaseEntity*, void*, float, int, int);
+		void(__thiscall* UpdatePhysicsShadowToCurrentPosition)(CBaseEntity*, float);
+		int(__thiscall* VPhysicsGetObjectList)(CBaseEntity*, void**, int);
+		bool(__thiscall* VPhysicsIsFlesh)(CBaseEntity*);
+		bool(__thiscall* CanPushEntity)(CBaseEntity*, CBaseEntity*);
+		void* (__thiscall* HasPhysicsAttacker)(CBaseEntity*, float);
+		unsigned int(__thiscall* PhysicsSolidMaskForEntity)(CBaseEntity*);
+		void(__thiscall* ResolveFlyCollisionCustom)(CBaseEntity*, void*, Vector*);
+		void(__thiscall* PerformCustomPhysics)(CBaseEntity*, Vector*, Vector*, QAngle*, QAngle*);
+		Vector* (__thiscall* GetStepOrigin)(CBaseEntity*, Vector* result);
+		QAngle* (__thiscall* GetStepAngles)(CBaseEntity*, QAngle* result);
+	};
+
+	struct HierarchicalSpawn_t
+	{
+		CBaseEntity* m_pEntity;
+		int m_nDepth;
+		CBaseEntity* m_pDeferredParent;
+		const char* m_pDeferredParentAttachment;
+	};
+
+	struct StaticPropDict_t
+	{
+		model_t* m_pModel;
+	};
+
+	struct StaticPropDict_t_Mem
+	{
+		StaticPropDict_t* m_pMemory;
+		int m_nAllocationCount;
+		int m_nGrowSize;
+	};
+
+	struct StaticPropDict_t_vec
+	{
+		StaticPropDict_t_Mem m_Memory;
+		std::uint32_t m_Size;
+		StaticPropDict_t* m_pElements;
+	};
+
+	struct  ICollideable
+	{
+		void* vftable;
+	};
+
+	struct CStaticProp : IClientUnknown, IClientRenderable, ICollideable, IClientModelRenderable
+	{
+		Vector m_Origin;
+		QAngle m_Angles;
+		model_t* m_pModel;
+		unsigned __int16 m_Partition;
+		unsigned __int16 m_ModelInstance;
+		unsigned __int8 m_Alpha;
+		unsigned __int8 m_nSolidType;
+		unsigned __int8 m_Skin;
+		unsigned __int8 m_Flags;
+		unsigned __int8 m_nMinCPULevel;
+		unsigned __int8 m_nMaxCPULevel;
+		unsigned __int8 m_nMinGPULevel;
+		unsigned __int8 m_nMaxGPULevel;
+		unsigned __int16 m_FirstLeaf;
+		unsigned __int16 m_LeafCount;
+		CBaseHandle m_EntHandle;
+		unsigned __int16 m_RenderHandle;
+		unsigned __int16 m_nReserved;
+		void* m_pClientAlphaProperty;
+		Vector m_RenderBBoxMin;
+		Vector m_RenderBBoxMax;
+		matrix3x4_t m_ModelToWorld;
+		float m_flRadius;
+		Vector m_WorldRenderBBoxMin;
+		Vector m_WorldRenderBBoxMax;
+		Vector m_LightingOrigin;
+		Vector4D m_DiffuseModulation;
+	};
+
+	struct CStaticProp_Mem
+	{
+		CStaticProp* m_pMemory;
+		int m_nAllocationCount;
+		int m_nGrowSize;
+	};
+
+	struct CStaticProp_vec
+	{
+		StaticPropDict_t_Mem m_Memory;
+		std::uint32_t m_Size;
+		CStaticProp* m_pElements;
+	};
+
+	struct IStaticPropMgrEngine
+	{
+		void* vftable;
+	};
+
+	struct IStaticPropMgr
+	{
+		void* vftable;
+	};
+
+	struct  IStaticPropMgrClient : IStaticPropMgr
+	{ };
+
+	struct IStaticPropMgrServer : IStaticPropMgr
+	{ };
+
+	struct CStaticPropMgr : IStaticPropMgrEngine, IStaticPropMgrClient, IStaticPropMgrServer
+	{
+		//CUtlVector<CStaticPropMgr::StaticPropDict_t, CUtlMemory<CStaticPropMgr::StaticPropDict_t, int> > m_StaticPropDict;
+		StaticPropDict_t_vec m_StaticPropDict;
+
+		//CUtlVector<CStaticProp, CUtlMemory<CStaticProp, int> > m_StaticProps;
+		CStaticProp_vec m_StaticProps;
+	};
 }
 
 

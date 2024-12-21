@@ -620,6 +620,20 @@ namespace utils::vector
 		vector_ma_inline(start, scale, direction, dest);
 	}
 
+	inline bool is_point_in_aabb(const Vector& point, const Vector& mins, const Vector& maxs, const float scale = 1.0f)
+	{
+		const Vector center = (mins + maxs) * 0.5f;
+		const Vector half_size = (maxs - mins) * 0.5f * scale;
+
+		// Compute the scaled AABB bounds
+		const Vector scaled_mins = center - half_size;
+		const Vector scaled_maxs = center + half_size;
+
+		return (point.x >= scaled_mins.x && point.x <= scaled_maxs.x 
+			 && point.y >= scaled_mins.y && point.y <= scaled_maxs.y 
+			 && point.z >= scaled_mins.z && point.z <= scaled_maxs.z);
+	}
+
 	struct matrix3x3
 	{
 		float m[3][3];

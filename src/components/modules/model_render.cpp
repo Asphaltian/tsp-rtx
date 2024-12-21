@@ -420,6 +420,7 @@ namespace components
 				{
 					game::debug_add_text_overlay(&pInfo.origin.x, pInfo.pModel->szPathName, 0);
 					game::debug_add_text_overlay(&pInfo.origin.x, utils::va("Radius: %.7f", pInfo.pModel->radius), 1);
+					game::debug_add_text_overlay(&pInfo.origin.x, utils::va("Origin: %.7f %.7f %.7f", pInfo.origin.x, pInfo.origin.y, pInfo.origin.z), 2);
 				}
 			}
 		}

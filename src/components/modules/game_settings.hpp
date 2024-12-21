@@ -133,6 +133,13 @@ namespace components
 				"Check each node for potential emissive light strips (rectangular with limited depth) & force-draw node on match.",
 				1
 			};
+
+			variable spotlight_billboard_spawning =
+			{
+				"spotlight_billboard_spawning",
+				"Spawn billboard sprites (fake volumetrics) on light props",
+				0
+			};
 		}; //STATIC_ASSERT_SIZE(var_definitions, 2 * sizeof(variable));
 
 		static inline var_definitions vars = {};

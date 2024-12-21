@@ -1872,6 +1872,115 @@ namespace components
 	// #
 	// #
 
+	bool light_string_blacklist(const std::string_view& str_to_check)
+	{
+		if (   str_to_check.starts_with("models/props_lights/")
+			|| str_to_check == ("models/props_bts/lamp_hanging.mdl")
+			|| str_to_check == ("models/props_bts/light_hanging_1a.mdl")
+			|| str_to_check == ("models/props_lab/glass_lightcover.mdl"))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Used to skip spawning of certain entities
+	 * @param spawnlist bsp entity list
+	 * @param ent		the entity about to be spawned
+	 * @param num_ents	total number of entities
+	 * @return			return 1 to NOT spawn the entity
+	 */
+	int skip_entity_spawn([[maybe_unused]] HierarchicalSpawn_t* spawnlist, const CBaseEntity* ent, [[maybe_unused]] int num_ents)
+	{
+		if (ent)
+		{
+			// skip fake volumetrics near static light props if OFF
+			if (!game_settings::get()->spotlight_billboard_spawning.get_as<bool>())
+			{
+				if (const auto classname = std::string_view(ent->m_iClassname);
+					classname == "env_sprite" || classname == "beam_spotlight")
+				{
+					// check all static props
+					const auto prop_mgr = game::get_cstatic_prop_mgr();
+					for (auto i = 0u; i < prop_mgr->m_StaticProps.m_Size; i++)
+					{
+						if (const auto mdl = &prop_mgr->m_StaticProps.m_pElements[i];
+							mdl->m_pModel)
+						{
+							const auto mdl_name = std::string_view(mdl->m_pModel->szPathName);
+							if (light_string_blacklist(mdl_name))
+							{
+								if (utils::vector::is_point_in_aabb(ent->m_vecAbsOrigin, mdl->m_WorldRenderBBoxMin, mdl->m_WorldRenderBBoxMax, 2.0f)
+									|| ent->m_vecAbsOrigin.DistToSqr(mdl->m_Origin) < 400.0f * 400.0f)
+								{
+									return 1;
+								}
+							}
+						}
+					}
+
+					// check dynamic props for light models (sp_a3_01)
+					for (HierarchicalSpawn_t* list = spawnlist; num_ents > 0; ++list, --num_ents)
+					{
+						if (const auto e = list->m_pEntity;
+							e && e->m_iClassname)
+						{
+							if (std::string_view(e->m_iClassname) == "prop_dynamic")
+							{
+								if (light_string_blacklist(e->m_ModelName))
+								{
+									if (ent->m_vecAbsOrigin.DistToSqr(e->m_vecAbsOrigin) < 400.0f * 400.0f) {
+										return 1;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	HOOK_RETN_PLACE_DEF(spawn_all_entities_jz_retn);
+	HOOK_RETN_PLACE_DEF(spawn_all_entities_retn);
+	__declspec(naked) void spawn_all_entities_stub()
+	{
+		__asm
+		{
+			// og
+ 			test    eax, eax;
+			jz      JZ_LOC;
+
+			push	eax;	// save ent ptr
+			pushad;
+			push	esi;	// num total entities
+			push	eax; // CBaseEntity* (about to be spawned)
+			mov     edx, [ebp + 0xC]; // HierarchicalSpawn_t* spawnlist
+			push	edx;
+			call	skip_entity_spawn;
+			add		esp, 12;
+			cmp		eax, 1;
+			je		JZ_LOC_PRE;	// jump if eax = 1
+			popad;
+			pop		eax;	// restore ent ptr
+
+			push    1;
+			jmp		spawn_all_entities_retn;
+
+		JZ_LOC_PRE:
+			popad;
+			pop		eax;	// restore ent ptr
+
+		JZ_LOC:
+			jmp		spawn_all_entities_jz_retn;
+		}
+	}
+
+
 	int override_entity_vis(C_BaseEntity* ent)
 	{
 		if (ent && ent->model && std::string_view(ent->model->szPathName).contains("mapmarker")) {
@@ -2275,6 +2384,19 @@ namespace components
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x287B1D, 0x281FAD), 2);
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x287B28, 0x281FB8) + 5, 1);
 		utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x287B28, 0x281FB8), 0x00015CE9); // 0F85 5B01 0000 to E9 5C 01 00 00 + 1 nop
+
+		// C_BeamSpotLight::ClientThink :: disable spotlight billboards
+		/*utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937A9), 2);
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C4), 2);
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x938D1), 6);
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9) + 5, 1);
+		utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9), 0x0000FCE9);*/
+
+		// SpawnAllEntities:: try to not spawn sprites close to light models
+		utils::hook::nop(SERVER_BASE + USE_OFFSET(0x19FAA0, 0x19A870), 6);
+		utils::hook(SERVER_BASE + USE_OFFSET(0x19FAA0, 0x19A870), spawn_all_entities_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(spawn_all_entities_jz_retn, SERVER_BASE + USE_OFFSET(0x19FAE4, 0x19A8B4));
+		HOOK_RETN_PLACE(spawn_all_entities_retn, SERVER_BASE + USE_OFFSET(0x19FAA6, 0x19A876));
 
 
 		// #
