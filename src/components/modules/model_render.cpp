@@ -60,6 +60,7 @@ namespace components
 		LPDIRECT3DTEXTURE9 sky_gray_dn;
 		LPDIRECT3DTEXTURE9 emancipation_grill;
 		LPDIRECT3DTEXTURE9 emancipation_grill_bg;
+		LPDIRECT3DTEXTURE9 emancipation_grill_emissive;
 		LPDIRECT3DTEXTURE9 water_drip;
 		LPDIRECT3DTEXTURE9 white;
 	}
@@ -91,6 +92,7 @@ namespace components
 			if (tex_addons::sky_gray_dn) tex_addons::sky_gray_dn->Release();
 			if (tex_addons::emancipation_grill) tex_addons::emancipation_grill->Release();
 			if (tex_addons::emancipation_grill_bg) tex_addons::emancipation_grill_bg->Release();
+			if (tex_addons::emancipation_grill_emissive) tex_addons::emancipation_grill_emissive->Release();
 			if (tex_addons::water_drip) tex_addons::water_drip->Release();
 			if (tex_addons::white) tex_addons::white->Release();
 			return;
@@ -120,6 +122,7 @@ namespace components
 		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_dn.jpg", &tex_addons::sky_gray_dn);
 		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill.png", &tex_addons::emancipation_grill);
 		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill_bg.png", &tex_addons::emancipation_grill_bg);
+		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill_emissive.png", &tex_addons::emancipation_grill_emissive);
 		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\water_drip.png", &tex_addons::water_drip);
 		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\white.dds", &tex_addons::white);
 	}
@@ -3099,6 +3102,9 @@ namespace components
 
 			dev->SetTransform(D3DTS_TEXTURE0, &current_transform);
 
+			// make sure to restart w/e texture we saved before
+			ctx.restore_texture(dev, 0);
+
 			ctx.save_texture(dev, 0); 
 			dev->SetTexture(0, tex_addons::emancipation_grill_bg);
 
@@ -3109,6 +3115,24 @@ namespace components
 
 			// draw surface a second time
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+
+			// third time as emissive proxy
+			if (game_settings::get()->emancipationgrill_emissive_proxy.get_as<bool>())
+			{
+				ctx.restore_texture_transform(dev);
+				ctx.restore_texture(dev, 0);
+				dev->SetTexture(0, tex_addons::emancipation_grill_emissive);
+
+				current_transform(3, 0) = ctx.modifiers.emancipation_offset.x + 10.0f;
+				dev->SetTransform(D3DTS_TEXTURE0, &current_transform);
+
+				ctx.info.buffer_state.m_Transform[0].m[3][0] += 0.01f;
+				ctx.info.buffer_state.m_Transform[0].m[3][1] += 0.01f;
+				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+
+				// draw surface a third time
+				dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+			}
 		}
 
 		if (ctx.modifiers.dual_render_with_specified_texture)

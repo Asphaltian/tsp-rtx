@@ -91,6 +91,7 @@ namespace components
 				ASSIGN(portal_visibility_culling);
 				ASSIGN(check_nodes_for_potential_lights);
 				ASSIGN(spotlight_billboard_spawning);
+				ASSIGN(emancipationgrill_emissive_proxy);
 
 			#undef ASSIGN
 			}

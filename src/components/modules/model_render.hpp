@@ -484,6 +484,7 @@ namespace components
 		extern LPDIRECT3DTEXTURE9 sky_gray_dn;
 		extern LPDIRECT3DTEXTURE9 emancipation_grill;
 		extern LPDIRECT3DTEXTURE9 emancipation_grill_bg;
+		extern LPDIRECT3DTEXTURE9 emancipation_grill_emissive;
 		extern LPDIRECT3DTEXTURE9 water_drip;
 		extern LPDIRECT3DTEXTURE9 white;
 	}
