@@ -175,7 +175,7 @@
     ]
 
     sp_a1_intro2 = [
-        { marker = 2, position = [-500, 180, 430] }
+        { nocull = 2, position = [-690, -62, 720] }
     ]
 
     sp_a1_intro3 = [
@@ -183,6 +183,18 @@
         { marker = 6, position = [18, 2283, -363] },
         { marker = 7, position = [-500, -500, 1150] },
         { nocull = 3, position = [-800, 0, 1710] }
+    ]
+
+    sp_a1_intro4 = [
+        { nocull = 4, position = [-530, 359, 310] }
+    ]
+
+    sp_a1_intro5 = [
+        { nocull = 5, position = [-530, -1250, 1040] }
+    ]
+
+    sp_a1_intro6 = [
+        { nocull = 6, position = [-90, -1050, 770] }
     ]
 
     sp_a1_wakeup = [

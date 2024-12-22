@@ -68,6 +68,7 @@ If you want to support my work, consider buying me some coffee:
 > - The `_remix_mod.zip` contains a base remix-mod required to get portals to work (and a few emissive textures etc.)
 - To avoid rebuilding the sound cache on first startup, copy `_master.cache` from  
 `root/portal2/maps/soundcache` to `root/portal2_dlc3/maps/soundcache`
+- Your folder structure should look like [this](#folder-structure)
 - Start the game by executing `p2-rtx-launcher.exe`
 - The window title should change to `Portal 2 - RTX` followed by the GitHub commit number if successful
 
@@ -155,12 +156,44 @@ for Portal 2 (`bin/.trex/d3d9.dll`)
 
 
 <br>
-<br>
 
-
-# Graphic-Settings
 
 <div align="center" markdown="1">
 
+<h2>Graphic-Settings</h3>
+<br>
 <img src=".github/img/settings.png" alt="Description" width="70%">
+
+<br>
+<h2>Folder Structure</h3>
+<a name=""></a>
 </div>
+
+```
+.  
+├─ ...
+├─ 📁 steamapps
+│  └─📁 common
+│     └─📁 Portal 2
+│       ├── 📜 p2-rtx-launcher.exe
+│       ├── 📜 portal2.exe
+│       ├── 📜 ...
+│       │
+│       ├── 📁 portal2_dlc3
+│       │   ├── 📜 pak01_dir.vpk
+│       │   └── 📁 maps
+│       │       └─ 📁 soundcache
+│       │          └── 📜 _master.cache
+│       │
+│       ├── 📁 portal2-rtx
+│       │   ├── 📜 map_settings.toml
+│       │   └── ...
+│       │
+│       └── 📁 rtx-remix
+│           └─📁 mods
+│             └─📁 portal2rtx
+│               ├── 📜 portals.usda
+│               ├── 📜 mod.usda
+│               └── ...
+└── ...  
+```
