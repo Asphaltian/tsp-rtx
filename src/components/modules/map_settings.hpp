@@ -57,6 +57,7 @@ namespace components
 		{
 			std::uint32_t index = 0;
 			float origin[3] = {};
+			bool no_cull = false;
 			void* handle = nullptr;
 		};
 

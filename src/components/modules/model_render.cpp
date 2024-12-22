@@ -185,9 +185,8 @@ namespace components
 	{
 		if (g_light_to_texture_modified)
 		{
-			const D3DMATERIAL9 temp_mat =
-			{
-				.Diffuse = {.r = g_old_light_to_texture_color.r, .g = g_old_light_to_texture_color.g, .b = g_old_light_to_texture_color.b }
+			const D3DMATERIAL9 temp_mat = {
+				.Diffuse = { .r = g_old_light_to_texture_color.r, .g = g_old_light_to_texture_color.g, .b = g_old_light_to_texture_color.b }
 			};
 
 			game::get_d3d_device()->SetMaterial(&temp_mat);
@@ -196,11 +195,30 @@ namespace components
 	}
 
 	// uses unused Renderstate 149 to tweak the emissive intensity of remix legacy materials
+	// ~ currently req. runtime changes
 	void set_remix_emissive_intensity(IDirect3DDevice9* dev, prim_fvf_context& ctx, float intensity)
 	{
 		ctx.save_rs(dev, (D3DRENDERSTATETYPE)149);
 		dev->SetRenderState((D3DRENDERSTATETYPE)149, *reinterpret_cast<DWORD*>(&intensity));
 	}
+
+	// set remix texture categories - RemixInstanceCategories
+	// ~ currently req. runtime changes
+	void set_remix_texture_categories(IDirect3DDevice9* dev, prim_fvf_context& ctx, const std::uint32_t& cat)
+	{
+		
+		ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
+		dev->SetRenderState((D3DRENDERSTATETYPE)42, cat);
+	}
+
+	// set custom remix hash
+	// ~ currently req. runtime changes
+	void set_remix_texture_hash(IDirect3DDevice9* dev, prim_fvf_context& ctx, const std::uint32_t& hash)
+	{
+		ctx.save_rs(dev, (D3DRENDERSTATETYPE)150);
+		dev->SetRenderState((D3DRENDERSTATETYPE)150, hash);
+	}
+
 
 	// can be used to figure out the layout of the vertex buffer
 	void lookat_vertex_decl([[maybe_unused]] IDirect3DDevice9* dev, [[maybe_unused]] CPrimList* primlist = nullptr)
@@ -625,14 +643,8 @@ namespace components
 			}
 
 			// this requires dxvk-remix modifications (https://github.com/NVIDIAGameWorks/dxvk-remix/pull/79)
-
-			// set remix texture categories
-			ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
-			dev->SetRenderState((D3DRENDERSTATETYPE)42, IgnoreOpacityMicromap | DecalStatic);
-
-			// set custom remix hash
-			ctx.save_rs(dev, (D3DRENDERSTATETYPE)150);
-			dev->SetRenderState((D3DRENDERSTATETYPE)150, 0x1337);
+			set_remix_texture_categories(dev, ctx, IgnoreOpacityMicromap | DecalStatic);
+			set_remix_texture_hash(dev, ctx, 0x1337);
 		}
 	}
 
@@ -1612,13 +1624,8 @@ namespace components
 				// render bik using shaders
 				else if (ctx.info.material_name.starts_with("videobik") || ctx.info.material_name.starts_with("media/"))
 				{
-					// set remix texture categories
-					ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
-					dev->SetRenderState((D3DRENDERSTATETYPE)42, DecalStatic);
-
-					// set custom remix hash
-					ctx.save_rs(dev, (D3DRENDERSTATETYPE)150);
-					dev->SetRenderState((D3DRENDERSTATETYPE)150, utils::string_hash32(ctx.info.material_name));
+					set_remix_texture_categories(dev, ctx, DecalStatic);
+					set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
 
 					// works but not of much use if we cant use the albedo as emissive
 					//ctx.save_rs(dev, D3DRS_TEXTUREFACTOR);
@@ -2070,11 +2077,8 @@ namespace components
 
 					bool is_world_ui_text = ctx.info.buffer_state.m_Transform[0].m[3][0] != 0.0f && ctx.info.material_name == "vgui__fontpage";
 
-					if (is_world_ui_text)
-					{
-						// set remix texture categories
-						ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
-						dev->SetRenderState((D3DRENDERSTATETYPE)42, WorldUI);
+					if (is_world_ui_text) {
+						set_remix_texture_categories(dev, ctx, WorldUI);
 					}
 
 					// vgui/screens/vgui_coop_progress_board
@@ -3137,9 +3141,7 @@ namespace components
 				ctx.save_rs(dev, D3DRS_ZENABLE);
 				dev->SetRenderState(D3DRS_ZENABLE, FALSE);
 
-				// set remix texture categories
-				ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
-				dev->SetRenderState((D3DRENDERSTATETYPE)42, WorldMatte | IgnoreOpacityMicromap);
+				set_remix_texture_categories(dev, ctx, WorldMatte | IgnoreOpacityMicromap);
 			}
 
 			// re-draw surface

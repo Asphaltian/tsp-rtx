@@ -58,12 +58,12 @@
     ]
 
     sp_a1_intro3 = [
-        { area = 1, leafs = [13, 384, 387, 402, 1215] },
+        { area = 1, leafs = [13, 384, 387, 402] },
         { area = 2, leafs = [735, 746, 872, 889, 901, 1055, 1167, 1191, 1215] },
-        { area = 3, leafs = [19, 21, 30, 38, 52, 60, 71, 73, 77, 82, 118, 145, 148, 162, 175, 191, 193, 196, 209, 233, 238, 240, 246, 266, 277, 280, 397, 400, 406, 415, 426, 427, 428, 434, 437, 620, 622, 625, 635, 640, 662, 664, 666, 674, 681, 669, 744, 751, 752, 754, 790, 801, 802, 932, 1222, 1215] },
+        { area = 3, leafs = [19, 21, 30, 38, 52, 60, 71, 73, 77, 82, 118, 145, 148, 162, 175, 191, 193, 196, 209, 233, 238, 240, 246, 266, 277, 280, 397, 400, 406, 415, 426, 427, 428, 434, 437, 620, 622, 625, 635, 640, 662, 664, 666, 674, 681, 669, 744, 751, 752, 754, 790, 801, 802, 932, 1222] },
         { area = 4, leafs = [712, 713, 714, 780, 1215] },
         { area = 5, leafs = [861, 862, 1215] },
-        { area = 7, leafs = [699, 712, 713, 714, 945, 954, 1080, 1081, 1111, 1215] }
+        { area = 7, leafs = [699, 712, 713, 714, 945, 954, 1080, 1081, 1111] }
     ]
 
     sp_a1_intro4 = [
@@ -160,11 +160,14 @@
 
 
 
-# Spawn unique markers that can be used as anchor meshes - You can spawn duplicates
+# Spawn unique markers that can be used as anchor meshes
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
-# marker:       number of unique marker mesh (the same marker can be spawned multiple times per map)
-# position:     X Y Z position of the marker mesh [3D Vector]
+# marker     ]    THIS:     number of marker mesh - can get culled BUT that can be controlled via leaf/area forcing (initial spawning can't be forced) [int 0-100]
+# nocull     ] OR THAT:     number of marker mesh - never getting culled and spawned on map load (eg: useful for distant light) [int 0-inf.]
+#                           [!] both can be spawned multiple times per map
+#
+# position:                 X Y Z position of the marker mesh [3D Vector]
 
 [MARKER]
     sp_a1_intro1 = [
@@ -178,7 +181,8 @@
     sp_a1_intro3 = [
         { marker = 5, position = [-380, 840, -250] },
         { marker = 6, position = [18, 2283, -363] },
-        { marker = 7, position = [-500, -500, 1150] }
+        { marker = 7, position = [-500, -500, 1150] },
+        { nocull = 3, position = [-800, 0, 1710] }
     ]
 
     sp_a1_wakeup = [

@@ -47,6 +47,11 @@ namespace components
 		// spawn map markers
 		for (auto& m : m_map_settings.map_markers)
 		{
+			// ignore nocull markers (main_module::draw_nocull_markers)
+			if (m.no_cull) {
+				continue;
+			}
+
 			const auto mdl_num = m.index / 10u;
 			const auto skin_num = m.index % 10u;
 			const auto model_name = utils::va("models/props_xo/mapmarker%03d.mdl", mdl_num * 10);
@@ -416,7 +421,24 @@ namespace components
 				// #
 				auto process_marker_entry = [to_int, to_float](const toml::value& entry)
 					{
-						if (entry.contains("marker") && entry.contains("position"))
+						bool temp_is_nocull_marker = false;
+						std::uint32_t temp_marker_index = 0u;
+
+						if (entry.contains("marker")) {
+							temp_marker_index = static_cast<std::uint32_t>(to_int(entry.at("marker"), 0u));
+						}
+						else if (entry.contains("nocull")) 
+						{
+							temp_marker_index = static_cast<std::uint32_t>(to_int(entry.at("nocull"), 0u));
+							temp_is_nocull_marker = true;
+						}
+						else
+						{
+							TOML_ERROR("[MARKER] #index", entry, "Marker did not define an index via 'marker' or 'nocull' -> skipping");
+							return;
+						}
+
+						if (entry.contains("position"))
 						{
 							if (const auto& pos = entry.at("position").as_array();
 								pos.size() == 3)
@@ -424,10 +446,12 @@ namespace components
 								m_map_settings.map_markers.emplace_back(
 									marker_settings_s
 									{
-										.index = static_cast<std::uint32_t>(to_int(entry.at("marker"))),
-										.origin = {to_float(pos[0]), to_float(pos[1]), to_float(pos[2])}
+										.index = temp_marker_index,
+										.origin = {to_float(pos[0]), to_float(pos[1]), to_float(pos[2])},
+										.no_cull = temp_is_nocull_marker
 									});
 							}
+							else { TOML_ERROR("[MARKER] #position", entry.at("position"), "expected a 3D vector but got => %d ", entry.at("position").as_array().size()); }
 						}
 					};
 
