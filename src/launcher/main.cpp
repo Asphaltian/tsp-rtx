@@ -111,9 +111,10 @@ int wmain(int argc, wchar_t* argv[])
 			}
 		}
 	}
-	else { // normal startup
-		WaitForSingleObject(pi.hThread, INFINITE);
-	}
+
+	//else { // normal startup
+	//	WaitForSingleObject(pi.hThread, INFINITE);
+	//}
 
 	if (error) {
 		system("pause");
