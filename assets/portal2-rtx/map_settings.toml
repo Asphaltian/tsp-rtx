@@ -15,6 +15,7 @@
     sp_a4_finale2 = { distance = 150000, color = [180, 140, 100] }
 
 
+
 # Water UV Scale
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
@@ -27,6 +28,7 @@
 
 
 # Override culling per game area
+# Useful console command: 'xo_debug_toggle_node_vis'
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # area:         the area the player has to be in
@@ -214,6 +216,7 @@
 
 
 # Remix variable configs
+# Useful console command: 'scene_print' && 'xo_debug_toggle_node_vis'
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # startup:      configs that will be loaded on map-load, conf matching the map name will be loaded automatically and does not need to be specified
@@ -253,6 +256,7 @@
 
 
 # Spawn portals using the remix api - useful for area-connecting portals (between doors / rooms)
+# Useful console command: 'xo_debug_toggle_rayportal_info'
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # pair:         number of pair (0 to 1 - only two pairs are currently supported)
@@ -282,7 +286,9 @@
     ]
 
 
+
 # Spawn lights using the remix api
+# Useful console command: 'scene_print' && 'xo_debug_toggle_sound_print'
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # trigger:          trigger light creation via choreography (.vcd) or sound
