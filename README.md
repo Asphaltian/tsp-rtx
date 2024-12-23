@@ -31,6 +31,7 @@ Please keep that in mind.
 ### __[ Remix Compatibility Features ]__   
 🔹Most things are rendered using the fixed-function pipeline🔹  
 🔹Remix friendly culling and the ability to manually override culling🔹  
+🔹Ability to spawn and animate lights on events using a keyframe system🔹  
 🔹Per map loading of remix config files to set remix variables🔹  
 🔹Ability to animate remix variables on events🔹  
 🔹Spawning of unique anchor meshes🔹  
@@ -39,7 +40,8 @@ Please keep that in mind.
 <br>
 <br>
 
-If you want to support my work, consider buying me some coffee:  
+If you want to support my work,  
+consider buying me some coffee:  
 
 [![ko-fi](https://xoxor4d.github.io/assets/img/social/kofi.png)](https://ko-fi.com/xoxor4d)
 </div>
@@ -63,18 +65,9 @@ If you want to support my work, consider buying me some coffee:
 
 ----
 
-- Download the latest [release](https://github.com/xoxor4d/p2-rtx/releases) and follow instructions found there.
-- To avoid rebuilding the sound cache on first startup, copy `_master.cache` from  
-`root/portal2/maps/soundcache` to `root/portal2_dlc3/maps/soundcache`
-- Your folder structure should look like [this](#folder-structure)
+- Download the latest [release](https://github.com/xoxor4d/p2-rtx/releases) and follow instructions found __there__.
 - Start the game by executing `p2-rtx-launcher.exe`
 - The window title should change to `Portal 2 - RTX` followed by the GitHub commit number if successful
-
-- [Set graphic options](#graphic-settings) ⚠️ 
-> - Shader Detail: Low  
-> - Effect Detail: Low  
-> - Model /Texture Detail: High  
-> - Paged Pool Memory: High  
 
 <br>
 
@@ -151,47 +144,3 @@ for Portal 2 (`bin/.trex/d3d9.dll`)
 ![img](.github/img/03.png)
 ![img](.github/img/05.png)
 </div>
-
-
-<br>
-
-
-<div align="center" markdown="1">
-
-<h2>Graphic-Settings</h3>
-<br>
-<img src=".github/img/settings.png" alt="Description" width="70%">
-
-<br>
-<h2>Folder Structure</h3>
-<a name=""></a>
-</div>
-
-```
-.  
-├─ ...
-├─ 📁 steamapps
-│  └─📁 common
-│     └─📁 Portal 2
-│       ├── 📜 p2-rtx-launcher.exe
-│       ├── 📜 portal2.exe
-│       ├── 📜 ...
-│       │
-│       ├── 📁 portal2_dlc3
-│       │   ├── 📜 pak01_dir.vpk
-│       │   └── 📁 maps
-│       │       └─ 📁 soundcache
-│       │          └── 📜 _master.cache
-│       │
-│       ├── 📁 portal2-rtx
-│       │   ├── 📜 map_settings.toml
-│       │   └── ...
-│       │
-│       └── 📁 rtx-remix
-│           └─📁 mods
-│             └─📁 portal2rtx
-│               ├── 📜 portals.usda
-│               ├── 📜 mod.usda
-│               └── ...
-└── ...  
-```
