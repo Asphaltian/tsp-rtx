@@ -2176,9 +2176,7 @@ namespace components
 
 		//utils::benchmark bench;
 
-		// uncheat lod cvars but don't force them when commandline arg is set
-		if (static bool no_lod_forcing = flags::has_flag("xo_disable_lod_forcing");
-			no_lod_forcing)
+		if (!game_settings::get()->lod_forcing.get_as<bool>())
 		{
 			game::cvar_uncheat("r_staticprop_lod");
 			game::cvar_uncheat("r_lod");

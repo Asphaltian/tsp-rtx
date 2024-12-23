@@ -92,6 +92,7 @@ namespace components
 				ASSIGN(check_nodes_for_potential_lights);
 				ASSIGN(spotlight_billboard_spawning);
 				ASSIGN(emancipationgrill_emissive_proxy);
+				ASSIGN(lod_forcing);
 
 			#undef ASSIGN
 			}

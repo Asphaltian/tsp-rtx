@@ -147,6 +147,13 @@ namespace components
 				"Spawns an additional surface on emancipation grills that can be turned into an invisible, but emissive surface using the toolkit",
 				1
 			};
+
+			variable lod_forcing =
+			{
+				"lod_forcing",
+				"The mod normally forces LOD0 for everything. Setting this to 0 disables that.",
+				1
+			};
 		}; //STATIC_ASSERT_SIZE(var_definitions, 2 * sizeof(variable));
 
 		static inline var_definitions vars = {};
