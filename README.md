@@ -64,8 +64,6 @@ If you want to support my work, consider buying me some coffee:
 ----
 
 - Download the latest [release](https://github.com/xoxor4d/p2-rtx/releases) and follow instructions found there.
-> - The `.zip` with the commit hash contains the files to make the game compatibile with RTX Remix  
-> - The `_remix_mod.zip` contains a base remix-mod required to get portals to work (and a few emissive textures etc.)
 - To avoid rebuilding the sound cache on first startup, copy `_master.cache` from  
 `root/portal2/maps/soundcache` to `root/portal2_dlc3/maps/soundcache`
 - Your folder structure should look like [this](#folder-structure)
