@@ -98,8 +98,13 @@ DWORD WINAPI find_window_loop(LPVOID)
 	while (!main_window)
 	{
 		// get main window hwnd
-		if (!main_window) {
+		if (!main_window) // should really use 'EnumWindows' here
+		{
 			 main_window = FindWindowA(nullptr, IS_LATEST_BUILD ? "Portal 2 - Direct3D 9" : "PORTAL 2");
+
+			if (!main_window) {
+				 main_window = FindWindowA(nullptr, IS_LATEST_BUILD ? "PORTAL 2 - Direct3D 9" : "PORTAL 2");
+			 }
 		}
 
 		Sleep(100); T += 100;
