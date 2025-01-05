@@ -98,9 +98,12 @@ for Portal 2 (`bin/.trex/d3d9.dll`)
 <br></details>
 
 
-<details><summary>Missing dependencies or similar error</summary>
+<details><summary>Crashing or similar issues</summary>
 <br>
 
+- Make sure that you have no clipping softare such as "medal" running in the background
+- Run the launcher with admin rights (only required if your game is installed within `Program Files`)
+- Make sure that the title of the portal 2 window changes to `Portal 2 - RTX ...`
 - Download and install [DirectX End-User Runtimes (June 2010)](https://www.microsoft.com/en-ie/download/details.aspx?id=8109)
 
 <br></details>
