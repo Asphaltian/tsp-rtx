@@ -175,12 +175,12 @@ namespace components
 		p_this = this;
 
 		// CSceneEntity::StartEvent :: : can be used to detect the start of scene (vcd) entities
-		utils::hook(SERVER_BASE + USE_OFFSET(0x233618, 0x22D428), scene_ent_on_start_event_stub).install()->quick();
-		HOOK_RETN_PLACE(scene_ent_on_start_event_retn, SERVER_BASE + USE_OFFSET(0x23361D, 0x22D42D));
+		utils::hook(SERVER_BASE + USE_OFFSET(0x233618, 0x22D428), scene_ent_on_start_event_stub).install()->quick(); // 2501
+		HOOK_RETN_PLACE(scene_ent_on_start_event_retn, SERVER_BASE + USE_OFFSET(0x23361D, 0x22D42D)); // 2501
 
 		// CSceneEntity::OnSceneFinished
-		utils::hook::nop(SERVER_BASE + USE_OFFSET(0x238483, 0x232273), 6);
-		utils::hook(SERVER_BASE + USE_OFFSET(0x238483, 0x232273), scene_ent_on_finish_event_stub).install()->quick();
-		HOOK_RETN_PLACE(scene_ent_on_finish_event_retn, SERVER_BASE + USE_OFFSET(0x238489, 0x232279));
+		utils::hook::nop(SERVER_BASE + USE_OFFSET(0x238483, 0x232273), 6); // 2501
+		utils::hook(SERVER_BASE + USE_OFFSET(0x238483, 0x232273), scene_ent_on_finish_event_stub).install()->quick(); // 2501
+		HOOK_RETN_PLACE(scene_ent_on_finish_event_retn, SERVER_BASE + USE_OFFSET(0x238489, 0x232279)); // 2501
 	}
 }

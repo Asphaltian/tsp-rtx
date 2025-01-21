@@ -4,8 +4,8 @@
 //#define STUDIORENDER_BASE		game::studiorender_module
 //#define MATERIALSTYSTEM_BASE	game::materialsystem_module
 #define ENGINE_BASE				game::engine_module
-#define CLIENT_BASE				game::client_module
-#define SERVER_BASE				game::server_module
+#define CLIENT_BASE				game::client_module // 0125: offsets changed
+#define SERVER_BASE				game::server_module // 0125: offsets unchanged
 #define VSTDLIB_BASE			game::vstdlib_module
 
 using namespace components;
@@ -63,7 +63,7 @@ namespace game
 	inline components::IShaderAPIDX8* get_shaderapi() { return reinterpret_cast<components::IShaderAPIDX8*>(*(DWORD*)(RENDERER_BASE + USE_OFFSET(0xD0C74, 0x164C48))); }
 	inline components::CShaderAPIDx8* get_cshaderapi() { return reinterpret_cast<components::CShaderAPIDx8*>((RENDERER_BASE + USE_OFFSET(0xD7040, 0x1769A0))); }
 	inline components::worldbrushdata_t* get_hoststate_worldbrush_data() { return reinterpret_cast<components::CCommonHostState*>(ENGINE_BASE + USE_OFFSET(0x43F028, 0x439C1C))->worldbrush; }
-	inline components::CGlobalVarsBase* get_global_vars() { return reinterpret_cast<components::CGlobalVarsBase*>(*(DWORD*)(CLIENT_BASE + USE_OFFSET(0x92A37C, 0x9220BC))); }
+	inline components::CGlobalVarsBase* get_global_vars() { return reinterpret_cast<components::CGlobalVarsBase*>(*(DWORD*)(CLIENT_BASE + USE_OFFSET(0x92A37C, 0x9220BC))); } // 0125
 	inline components::CCvar* get_icvar() { return reinterpret_cast<components::CCvar*>((VSTDLIB_BASE + USE_OFFSET(0x315B0, 0x31550))); }
 
 	inline components::CStaticPropMgr* get_cstatic_prop_mgr() { return reinterpret_cast<components::CStaticPropMgr*>((ENGINE_BASE + USE_OFFSET(0x442998, 0x43D490))); }
@@ -74,7 +74,7 @@ namespace game
 	inline Vector* get_current_view_up() { return reinterpret_cast<Vector*>(ENGINE_BASE + USE_OFFSET(0x4351E8, 0x42FFFC)); }
 
 	// note: this might be ILLEGAL when within 'CBaseWorldView::DrawSetup' -> use 'game::saved_view_id' instead
-	inline view_id* get_current_view_id() { return reinterpret_cast<view_id*>(CLIENT_BASE + USE_OFFSET(0x937F40, 0x92FB00)); }
+	inline view_id* get_current_view_id() { return reinterpret_cast<view_id*>(CLIENT_BASE + USE_OFFSET(0x937F40, 0x92FB00)); } // 0125
 	extern view_id saved_view_id;
 
 	inline bool is_puzzlemaker_active()
@@ -93,7 +93,7 @@ namespace game
 			int m_nCachedSSSlot;
 		};
 
-		const auto p = reinterpret_cast<puzz*>(*(DWORD*)(CLIENT_BASE + USE_OFFSET(0x94EAE8, 0x946438)));
+		const auto p = reinterpret_cast<puzz*>(*(DWORD*)(CLIENT_BASE + USE_OFFSET(0x94EAE8, 0x946438))); // 0125
 		return p && p->m_bActive;
 	}
 	// 946438

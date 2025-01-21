@@ -1695,7 +1695,7 @@ namespace components
 					// do not fog HUD elements :D
 					dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
 
-					const auto s_viewFadeColor = reinterpret_cast<Vector4D*>(CLIENT_BASE + USE_OFFSET(0x9F7748, 0x9EDAF8));
+					const auto s_viewFadeColor = reinterpret_cast<Vector4D*>(CLIENT_BASE + USE_OFFSET(0x9F7748, 0x9EDAF8)); // 0125
 
 					/*const auto s_viewFadeModulate = reinterpret_cast<bool*>(CLIENT_BASE + USE_OFFSET(0x0, 0x9ECEE0));
 					if (s_viewFadeModulate && *s_viewFadeModulate)
@@ -3501,10 +3501,10 @@ namespace components
 #endif
 
 		// C_FuncAreaPortalWindow::DrawModel :: disable drawing Area Portal Brushmodels
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xA15FE, 0x9DE9E), 2);
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xA164E, 0x9DE9E), 2); // 0125
 
 		// C_Prop_Portal::ClientThink :: hook to get portal 1/2 m_fOpenAmount member var
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x285AD2, 0x280012), prop_portal_client_think_stub, HOOK_JUMP).install()->quick();
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x286142, 0x280012), prop_portal_client_think_stub, HOOK_JUMP).install()->quick(); // 0125
 
 		// #
 		// Window portals
@@ -3537,31 +3537,31 @@ namespace components
 		// modify trail vertices upon creation, right before the mesh gets unlocked
 #ifdef SPRITE_TRAIL_TEST
 		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertex_t>
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x61EA74, 0x6165E4), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x61EA74, 0x6165E4), RenderSpriteCardFastRopeVertex_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertex_retn_addr, CLIENT_BASE + USE_OFFSET(0x61EA7A, 0x6165EA));
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), 6); // 0125
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), RenderSpriteCardFastRopeVertex_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertex_retn_addr, CLIENT_BASE + USE_OFFSET(0x61ED1A, 0x6165EA)); // 0125
 
 		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertexNormal_t>
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x620056, 0x617BC6), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x620056, 0x617BC6), RenderSpriteCardFastRopeVertexNormal_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormal_retn_addr, CLIENT_BASE + USE_OFFSET(0x62005C, 0x617BCC));
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6202F6, 0x617BC6), 6); // 0125
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x6202F6, 0x617BC6), RenderSpriteCardFastRopeVertexNormal_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormal_retn_addr, CLIENT_BASE + USE_OFFSET(0x6202FC, 0x617BCC)); // 0125
 
 		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertexNormalCacheAligned_t>
 		// not in use?
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x621649, 0x6191B9), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x621649, 0x6191B9), RenderSpriteCardFastRopeVertexNormalCache_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormalCache_retn_addr, CLIENT_BASE + USE_OFFSET(0x62164F, 0x6191BF));
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6218E9, 0x6191B9), 6); // 0125
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x6218E9, 0x6191B9), RenderSpriteCardFastRopeVertexNormalCache_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormalCache_retn_addr, CLIENT_BASE + USE_OFFSET(0x6218EF, 0x6191BF)); // 0125
 
 		// C_OP_RenderSpritesTrail::Render
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x62257E, 0x61A0EE), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x62257E, 0x61A0EE), RenderSpritesTrail_Render_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RenderSpritesTrail_Render_retn_addr, CLIENT_BASE + USE_OFFSET(0x622584, 0x61A0F4));
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), 6); // 0125
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), RenderSpritesTrail_Render_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(RenderSpritesTrail_Render_retn_addr, CLIENT_BASE + USE_OFFSET(0x622824, 0x61A0F4)); // 0125
 #endif
 
 		// C_OP_RenderSprites::Render :: fix SpriteCard UV's
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x622030, 0x619BA0), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x622030, 0x619BA0), RenderSpriteCardNew_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RenderSpriteCardNew_retn_addr, CLIENT_BASE + USE_OFFSET(0x622036, 0x619BA6));
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), 6); // 0125
+		utils::hook(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), RenderSpriteCardNew_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(RenderSpriteCardNew_retn_addr, CLIENT_BASE + USE_OFFSET(0x6222D6, 0x619BA6)); // 0125
 
 		// #
 		// commands
