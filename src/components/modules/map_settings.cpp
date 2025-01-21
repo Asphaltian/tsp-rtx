@@ -1052,6 +1052,7 @@ namespace components
 
 	map_settings::map_settings()
 	{
+		p_this = this;
 		game::con_add_command(&xo_mapsettings_update, "xo_mapsettings_update", xo_mapsettings_update_fn, "Reloads the map_settings.toml file + map.conf");
 	}
 }
