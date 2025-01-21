@@ -141,23 +141,23 @@ namespace components
 	}
 
 	// adds '$nocull' material var to material - returns true if exists
-	bool add_nocull_materialvar(IMaterialInternal* cmat)
-	{
-		bool found = false;
-		auto cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
-		//auto varname = cullvar->vftable->GetName(cullvar);
+	//bool add_nocull_materialvar(IMaterialInternal* cmat)
+	//{
+	//	bool found = false;
+	//	auto cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
+	//	//auto varname = cullvar->vftable->GetName(cullvar);
 
-		if (!found)
-		{
-			utils::function<IMaterialVar* (IMaterialInternal* pMaterial, const char* pKey, int val)> IMaterialVar_Create = MATERIALSTYSTEM_BASE + 0x1A2F0;
-			auto var = IMaterialVar_Create(cmat, "$nocull", 1);
+	//	if (!found)
+	//	{
+	//		utils::function<IMaterialVar* (IMaterialInternal* pMaterial, const char* pKey, int val)> IMaterialVar_Create = MATERIALSTYSTEM_BASE + 0x1A2F0;
+	//		auto var = IMaterialVar_Create(cmat, "$nocull", 1);
 
-			cmat->vftable->AddMaterialVar(cmat, nullptr, var);
-			cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
-		}
+	//		cmat->vftable->AddMaterialVar(cmat, nullptr, var);
+	//		cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
+	//	}
 
-		return found;
-	}
+	//	return found;
+	//}
 
 
 	D3DCOLORVALUE g_old_light_to_texture_color = {};
