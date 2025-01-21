@@ -1,8 +1,8 @@
 #pragma once
 
 #define RENDERER_BASE			game::shaderapidx9_module
-#define STUDIORENDER_BASE		game::studiorender_module
-#define MATERIALSTYSTEM_BASE	game::materialsystem_module
+//#define STUDIORENDER_BASE		game::studiorender_module
+//#define MATERIALSTYSTEM_BASE	game::materialsystem_module
 #define ENGINE_BASE				game::engine_module
 #define CLIENT_BASE				game::client_module
 #define SERVER_BASE				game::server_module

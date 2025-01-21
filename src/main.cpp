@@ -118,8 +118,8 @@ DWORD WINAPI find_window_loop(LPVOID)
 	}
 
 	GET_MODULE_HANDLE(game::shaderapidx9_module, "shaderapidx9.dll", T);
-	GET_MODULE_HANDLE(game::studiorender_module, "StudioRender.dll", T);
-	GET_MODULE_HANDLE(game::materialsystem_module, "MaterialSystem.dll", T);
+	//GET_MODULE_HANDLE(game::studiorender_module, "StudioRender.dll", T);
+	//GET_MODULE_HANDLE(game::materialsystem_module, "MaterialSystem.dll", T);
 	GET_MODULE_HANDLE(game::engine_module, "engine.dll", T);
 	GET_MODULE_HANDLE(game::client_module, "client.dll", T);
 	GET_MODULE_HANDLE(game::server_module, "server.dll", T);
@@ -129,7 +129,7 @@ DWORD WINAPI find_window_loop(LPVOID)
 	{
 		init_fail_msg_setup();
 		std::cout << "---------------> MinHook failed to initialize with code: " << MH_INIT_STATUS << std::endl;
-		init_fail_msg_post();
+		init_fail_msg_post(); 
 		return TRUE;
 	}
 
