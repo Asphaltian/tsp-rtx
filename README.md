@@ -98,9 +98,12 @@ for Portal 2 (`bin/.trex/d3d9.dll`)
 <br></details>
 
 
-<details><summary>Missing dependencies or similar error</summary>
+<details><summary>Crashing or similar issues</summary>
 <br>
 
+- Make sure that you have no clipping software such as "medal" running in the background
+- Run the launcher with admin rights (only required if your game is installed within `Program Files`)
+- Make sure that the title of the portal 2 window changes to `Portal 2 - RTX ...`
 - Download and install [DirectX End-User Runtimes (June 2010)](https://www.microsoft.com/en-ie/download/details.aspx?id=8109)
 
 <br></details>
@@ -109,10 +112,18 @@ for Portal 2 (`bin/.trex/d3d9.dll`)
 <details><summary>Portals not showing up or looking incorrect</summary>
 <br>
 
-- Make sure that you installed the `_remix_mod.zip`. See [Issue #13](https://github.com/xoxor4d/p2-rtx/issues/13)
+- Make sure that you installed the [base-remix-mod](https://github.com/xoxor4d/p2-rtx-base-mod) as stated in the release notes
 
 <br></details>
 
+
+<details><summary>No sound</summary>
+<br>
+
+- Either copy `_master.cache` from `root/portal2/maps/soundcache` to `root/portal2_dlc3/maps/soundcache` 
+- Or paste this into the in-game console and execute: `snd_rebuildaudiocache;snd_updateaudiocache;exit`
+
+<br></details>
 
 <details><summary>Game is too dark, sunlight is leaking on certain maps, textures look flat</summary>
 <br>
