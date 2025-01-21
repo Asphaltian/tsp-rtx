@@ -61,7 +61,7 @@ namespace game
 	 */
 	void debug_add_text_overlay(const float* pos, float duration, const char* text)
 	{
-		utils::hook::call<void(__cdecl)(const float*, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4640, 0xC3FE0))
+		utils::hook::call<void(__cdecl)(const float*, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4640, 0xC3FE0)) // 0125
 			(pos, duration, text);
 	}
 
@@ -77,7 +77,7 @@ namespace game
 	 */
 	void debug_add_text_overlay(const float* pos, const char* text, const int line_offset, const float r, const float g, const float b, const float a)
 	{
-		utils::hook::call<void(__cdecl)(const float*, int, float, float, float, float, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4B30, 0xC4460))
+		utils::hook::call<void(__cdecl)(const float*, int, float, float, float, float, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4B30, 0xC4460)) // 0125
 			(pos, line_offset, 0.0f, r, g, b, a, text);
 	}
 
@@ -92,7 +92,7 @@ namespace game
 	}
 
 	int get_visframecount() {
-		return *reinterpret_cast<int*>(ENGINE_BASE + USE_OFFSET(0x6AAE6C, 0x6A56B4));
+		return *reinterpret_cast<int*>(ENGINE_BASE + USE_OFFSET(0x6AAE6C, 0x6A56B4)); // 0125
 	}
 
 	const char* get_map_name() {
@@ -102,21 +102,21 @@ namespace game
 	void r_flow_through_area(const int area, const Vector* vec_vis_origin, const CPortalRect* clip_rect, const VisOverrideData_t* vis_data, float* reflection_water_height)
 	{
 		utils::hook::call<void(__cdecl)(int, const Vector*, const CPortalRect*, const VisOverrideData_t*, float*)>(ENGINE_BASE + USE_OFFSET(0x10FB70, 0x10EA00))
-			(area, vec_vis_origin, clip_rect, vis_data, reflection_water_height);
+			(area, vec_vis_origin, clip_rect, vis_data, reflection_water_height); // 0125
 	}
 
 	// Frustum_t::SetPlanes
 	void frustum_set_planes(Frustum_t* frustum, const VPlane* planes)
 	{
-		utils::hook::call<void(__fastcall)(Frustum_t*, void* null, const VPlane*)>(ENGINE_BASE + USE_OFFSET(0x270050, 0x26CED0))
-			(frustum, nullptr, planes);
+		utils::hook::call<void(__fastcall)(Frustum_t*, void* null, const VPlane*)>(ENGINE_BASE + USE_OFFSET(0x270090, 0x26CED0))
+			(frustum, nullptr, planes); // 0125
 	}
 
 	// Frustum_t::CullBox
 	bool frustum_cull_box(Frustum_t* frustum, const Vector* mins, const Vector* maxs)
 	{
-		return utils::hook::call<bool(__fastcall)(void* this_ptr, void* null, const Vector*, const Vector*)>(ENGINE_BASE + USE_OFFSET(0x270100, 0x26CF80))
-			(frustum, nullptr, mins, maxs);
+		return utils::hook::call<bool(__fastcall)(void* this_ptr, void* null, const Vector*, const Vector*)>(ENGINE_BASE + USE_OFFSET(0x270140, 0x26CF80))
+			(frustum, nullptr, mins, maxs); // 0125
 	}
 
 	void cvar_uncheat(const char* name)
