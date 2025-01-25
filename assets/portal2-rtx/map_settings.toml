@@ -1,4 +1,4 @@
-# Fog Settings
+# Fog Settings -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-fog
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # distance:     larger distance == less fog
@@ -15,8 +15,7 @@
     sp_a4_finale2 = { distance = 150000, color = [180, 140, 100] }
 
 
-
-# Water UV Scale
+# Water UV Scale -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-water-uv-scale
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # Small values reduce repetition while larger values will increase tiling (default = 1.0)
@@ -27,8 +26,7 @@
 
 
 
-# Override culling per game area
-# Useful console command: 'xo_debug_toggle_node_vis'
+# Override culling per game area -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-culling
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # area:         the area the player has to be in
@@ -86,6 +84,7 @@
     ]
 
     sp_a1_intro7 = [
+        { area = 2, areas = [3] },
         { area = 6, leafs = [601, 607, 633, 643, 959, 968, 978] },
         { area = 7, leafs = [632, 633, 640, 643, 646, 884, 915, 965, 984] }
     ]
@@ -152,8 +151,8 @@
 
 
 
-# Can be used to hide models (eg. when a certain model is used a lot, it can make sense to hide them and manually re-add the models by adding them as references to map markers (toolkit) - will help with cpu bottlenecks)
-# Useful console command: 'xo_debug_toggle_model_info'
+# Can be used to hide models -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#hide-models
+# (eg. when a certain model is used a lot, it can make sense to hide them and manually re-add the models by adding them as references to map markers (toolkit) - will help with cpu bottlenecks)
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # name   :   force hide models containing the specified substring [string array]
@@ -168,7 +167,7 @@
 
 
 
-# Spawn unique markers that can be used as anchor meshes
+# Spawn unique markers that can be used as anchor meshes -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#map-marker-spawning
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # marker     ]    THIS:     number of marker mesh - can get culled BUT that can be controlled via leaf/area forcing (initial spawning can't be forced) [int 0-100]
@@ -215,8 +214,7 @@
 
 
 
-# Remix variable configs
-# Useful console command: 'scene_print' && 'xo_debug_toggle_node_vis'
+# Remix variable configs -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#remix-config-loading--transitions
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # startup:      configs that will be loaded on map-load, conf matching the map name will be loaded automatically and does not need to be specified
@@ -256,7 +254,6 @@
 
 
 # Spawn portals using the remix api - useful for area-connecting portals (between doors / rooms)
-# Useful console command: 'xo_debug_toggle_rayportal_info'
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # pair:         number of pair (0 to 1 - only two pairs are currently supported)
@@ -286,9 +283,7 @@
     ]
 
 
-
-# Spawn lights using the remix api
-# Useful console command: 'scene_print' && 'xo_debug_toggle_sound_print'
+# Spawn lights using the remix api -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#spawning--animating-of-lights-via-the-remixapi
 # Parameters ---------------------------------------------------------------------------------------------------------------------------------
 #
 # trigger:          trigger light creation via choreography (.vcd) or sound
