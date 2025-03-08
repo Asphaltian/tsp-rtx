@@ -1,7 +1,7 @@
 #include "std_include.hpp"
 #include "remix_vars.hpp"
 
-namespace components::api
+namespace components
 {
 	// checks if str is made up of numbers only
 	// ignores dot, comma, minus and whitespaces
@@ -9,7 +9,7 @@ namespace components::api
 	{
 		return std::ranges::all_of(str.begin(), str.end(), [](const char c) {
 			return std::isdigit(c) || c == ',' || c == '.' || c == '-' || c == ' ';
-		});
+			});
 	}
 
 	remix_vars::option_handle remix_vars::add_custom_option(const std::string& name, const option_s& o)
@@ -73,13 +73,13 @@ namespace components::api
 	/**
 	 * Updates the given variable within the options map and sends it of to remix via the api
 	 * @param o					handle into the options map
-	 * @param v					variable will be set to this value 
+	 * @param v					variable will be set to this value
 	 * @param is_level_setting	update the reset_level value (used if reset_option() is called with reset_to_level_state)
 	 * @return					true if successfull
 	 */
 	bool remix_vars::set_option(option_handle o, const option_value& v, const bool is_level_setting)
 	{
-		if (o && api::m_initialized)
+		if (o && remix_api::is_initialized())
 		{
 			o->second.current = v;
 
@@ -88,7 +88,7 @@ namespace components::api
 			}
 
 			std::string var_str;
-			switch(o->second.type)
+			switch (o->second.type)
 			{
 			case OPTION_TYPE_BOOL:
 				var_str = v.enabled ? "True" : "False";
@@ -116,7 +116,7 @@ namespace components::api
 
 			if (!var_str.empty())
 			{
-				api::bridge.SetConfigVariable(o->first.c_str(), var_str.c_str());
+				remix_api::get()->m_bridge.SetConfigVariable(o->first.c_str(), var_str.c_str());
 				return true;
 			}
 
@@ -132,11 +132,11 @@ namespace components::api
 	 * @param reset_to_level_state	\n
 	 *								false => reset options to values stored in rtx.conf\n
 	 *								true  => reset options to per level conf
-	 * @return						
+	 * @return
 	 */
 	bool remix_vars::reset_option(option_handle o, const bool reset_to_level_state)
 	{
-		if (o && api::m_initialized)
+		if (o && remix_api::is_initialized())
 		{
 			o->second.current = reset_to_level_state ? o->second.reset_level : o->second.reset;
 
@@ -161,7 +161,7 @@ namespace components::api
 	 */
 	void remix_vars::reset_all_modified(const bool reset_to_level_state)
 	{
-		if (api::m_initialized)
+		if (remix_api::is_initialized())
 		{
 			auto count = 0u;
 			for (auto& o : options)
@@ -182,7 +182,7 @@ namespace components::api
 	 * Tries to convert a string to <option_value>
 	 * @param type	variable type
 	 * @param str	string containing the value/s
-	 * @return		returns a valid <option_value> even if conversion failed 
+	 * @return		returns a valid <option_value> even if conversion failed
 	 */
 	remix_vars::option_value remix_vars::string_to_option_value(OPTION_TYPE type, const std::string& str)
 	{
@@ -266,7 +266,7 @@ namespace components::api
 
 	/**
 	 * Parses the rtx.conf in the root directory and builds an unordered map \n
-	 * with pairs made of: <variable name> (std::string) and <variable value/type/...> (option_s) 
+	 * with pairs made of: <variable name> (std::string) and <variable value/type/...> (option_s)
 	 */
 	void remix_vars::parse_rtx_options()
 	{
@@ -306,7 +306,7 @@ namespace components::api
 	void remix_vars::parse_and_apply_conf_with_lerp(const std::string& conf_name, const std::uint64_t& identifier, const EASE_TYPE ease, const float duration, const float delay, const float delay_transition_back)
 	{
 		std::ifstream file;
-		if (utils::open_file_homepath("portal2-rtx\\map_configs", conf_name, file))
+		if (utils::open_file_homepath(COMPMOD_ASSET_DIR "map_configs", conf_name, file))
 		{
 			std::string input;
 			while (std::getline(file, input))
@@ -340,7 +340,7 @@ namespace components::api
 		else
 		{
 			game::console();
-			printf("[RemixVars] Failed to find config: \"%s\" in \"portal2-rtx\\map_configs\"\n", conf_name.c_str());
+			printf("[RemixVars] Failed to find config: \"%s\" in \"" COMPMOD_ASSET_DIR "map_configs\"\n", conf_name.c_str());
 		}
 	}
 
@@ -374,31 +374,39 @@ namespace components::api
 
 		if (h)
 		{
-			// check if we are already interpolating the value
-			bool exists = false;
-
-			for (auto& ip : interpolate_stack)
-			{
-				if (ip.option == h)
-				{
-					// update
-					ip.identifier = identifier;
-					ip.start = h->second.current;
-					ip.goal = goal;
-					ip.style = ease;
-					ip.time_duration = duration;
-					ip.time_delay_transition_back = delay_transition_back;
-					ip._time_elapsed = -delay;
-
-					exists = true;
-					break;
-				}
+			// directly apply when no duration and no delay
+			if (duration == 0.0f && delay == 0.0f) {
+				set_option(handle, goal);
 			}
-
-			if (!exists)
+			// interpolate over time or set after delay
+			else
 			{
-				interpolate_stack.emplace_back(interpolate_entry_s
-					{ identifier, h, h->second.current, goal, h->second.type, ease, duration, delay_transition_back, -delay });
+				// check if we are already interpolating the value
+				bool exists = false;
+
+				for (auto& ip : interpolate_stack)
+				{
+					if (ip.option == h)
+					{
+						// update
+						ip.identifier = identifier;
+						ip.start = h->second.current;
+						ip.goal = goal;
+						ip.style = ease;
+						ip.time_duration = duration;
+						ip.time_delay_transition_back = delay_transition_back;
+						ip._time_elapsed = -delay;
+
+						exists = true;
+						break;
+					}
+				}
+
+				if (!exists)
+				{
+					interpolate_stack.emplace_back(interpolate_entry_s
+						{ identifier, h, h->second.current, goal, h->second.type, ease, duration, delay_transition_back, -delay });
+				}
 			}
 
 			return true;
@@ -467,9 +475,9 @@ namespace components::api
 
 			case remix_vars::EASE_TYPE_EXPO_INOUT:
 				e = fraction == 0.0f ? 0.0f : fraction == 1.0f ? 1.0f
-						: fraction < 0.5f
-							? powf(2.0f, 20.0f * fraction - 10.0f) * 0.5f
-							: (2.0f - powf(2.0f, -20.0f * fraction + 10.0f)) * 0.5f;
+					: fraction < 0.5f
+					? powf(2.0f, 20.0f * fraction - 10.0f) * 0.5f
+					: (2.0f - powf(2.0f, -20.0f * fraction + 10.0f)) * 0.5f;
 				break;
 			}
 
@@ -495,10 +503,11 @@ namespace components::api
 				// remove completed transitions - we do that in-front of the loop so that the final values (complete) can be used for the entire frame
 				auto completed_condition = [](const interpolate_entry_s& ip)
 					{
-						/*if (ip.complete)
-						{
-							DEBUG_PRINT("[VAR-LERP] Complete: %s\n", ip.option->first.c_str());
-						}*/
+						//if (ip._complete)
+						//{
+							//int break_me = 1;
+							//DEBUG_PRINT("[VAR-LERP] Complete: %s\n", ip.option->first.c_str());
+						//}
 
 						return ip._complete;
 					};
@@ -526,98 +535,98 @@ namespace components::api
 
 					switch (ip.type)
 					{
-						case OPTION_TYPE_INT:
+					case OPTION_TYPE_INT:
+					{
+						if (!transition_time_exceeded)
 						{
-							if (!transition_time_exceeded)
-							{
-								float temp = (float)ip.option->second.current.integer;
-								lerp_float(&temp, (float)ip.start.integer, (float)ip.goal.integer, f, ip.style);
-								ip.option->second.current.integer = (int)temp;
+							float temp = (float)ip.option->second.current.integer;
+							lerp_float(&temp, (float)ip.start.integer, (float)ip.goal.integer, f, ip.style);
+							ip.option->second.current.integer = (int)temp;
 
-								ip._complete = ip.option->second.current.integer == ip.goal.integer;
-							}
-							else
-							{
-								ip.option->second.current.integer = ip.goal.integer;
-								ip._complete = true;
-							}
-							break;
+							ip._complete = ip.option->second.current.integer == ip.goal.integer;
 						}
-							
-						case OPTION_TYPE_FLOAT:
+						else
 						{
-							if (!transition_time_exceeded)
-							{
-								lerp_float(&ip.option->second.current.value, ip.start.value, ip.goal.value, f, ip.style);
-								ip._complete = utils::float_equal(ip.option->second.current.value, ip.goal.value);
-							}
-							else
-							{
-								ip.option->second.current.value = ip.goal.value;
-								ip._complete = true;
-							}
-							break;
+							ip.option->second.current.integer = ip.goal.integer;
+							ip._complete = true;
+						}
+						break;
+					}
+
+					case OPTION_TYPE_FLOAT:
+					{
+						if (!transition_time_exceeded)
+						{
+							lerp_float(&ip.option->second.current.value, ip.start.value, ip.goal.value, f, ip.style);
+							ip._complete = utils::float_equal(ip.option->second.current.value, ip.goal.value);
+						}
+						else
+						{
+							ip.option->second.current.value = ip.goal.value;
+							ip._complete = true;
+						}
+						break;
+					}
+
+					case OPTION_TYPE_VEC2:
+					{
+						if (!transition_time_exceeded)
+						{
+							lerp_float(&ip.option->second.current.vector[0], ip.start.vector[0], ip.goal.vector[0], f, ip.style);
+							lerp_float(&ip.option->second.current.vector[1], ip.start.vector[1], ip.goal.vector[1], f, ip.style);
+							ip._complete = utils::float_equal(ip.option->second.current.vector[0], ip.goal.vector[0])
+								&& utils::float_equal(ip.option->second.current.vector[1], ip.goal.vector[1]);
+						}
+						else
+						{
+							ip.option->second.current.vector[0] = ip.goal.vector[0];
+							ip.option->second.current.vector[1] = ip.goal.vector[1];
+							ip._complete = true;
+						}
+						break;
+					}
+
+					case OPTION_TYPE_VEC3:
+					{
+						if (!transition_time_exceeded)
+						{
+							lerp_float(&ip.option->second.current.vector[0], ip.start.vector[0], ip.goal.vector[0], f, ip.style);
+							lerp_float(&ip.option->second.current.vector[1], ip.start.vector[1], ip.goal.vector[1], f, ip.style);
+							lerp_float(&ip.option->second.current.vector[2], ip.start.vector[2], ip.goal.vector[2], f, ip.style);
+							ip._complete = utils::float_equal(ip.option->second.current.vector[0], ip.goal.vector[0])
+								&& utils::float_equal(ip.option->second.current.vector[1], ip.goal.vector[1])
+								&& utils::float_equal(ip.option->second.current.vector[2], ip.goal.vector[2]);
+						}
+						else
+						{
+							ip.option->second.current.vector[0] = ip.goal.vector[0];
+							ip.option->second.current.vector[1] = ip.goal.vector[1];
+							ip.option->second.current.vector[2] = ip.goal.vector[2];
+							ip._complete = true;
+						}
+						break;
+					}
+
+					case OPTION_TYPE_BOOL:
+					{
+						// "complete" the transition when the rest finishes
+						if (transition_time_exceeded) {
+							ip._complete = true;
 						}
 
-						case OPTION_TYPE_VEC2:
-						{
-							if (!transition_time_exceeded)
-							{
-								lerp_float(&ip.option->second.current.vector[0], ip.start.vector[0], ip.goal.vector[0], f, ip.style);
-								lerp_float(&ip.option->second.current.vector[1], ip.start.vector[1], ip.goal.vector[1], f, ip.style);
-								ip._complete =  utils::float_equal(ip.option->second.current.vector[0], ip.goal.vector[0])
-											&& utils::float_equal(ip.option->second.current.vector[1], ip.goal.vector[1]);
-							}
-							else
-							{
-								ip.option->second.current.vector[0] = ip.goal.vector[0];
-								ip.option->second.current.vector[1] = ip.goal.vector[1];
-								ip._complete = true;
-							}
-							break;
-						}
-
-						case OPTION_TYPE_VEC3:
-						{
-							if (!transition_time_exceeded)
-							{
-								lerp_float(&ip.option->second.current.vector[0], ip.start.vector[0], ip.goal.vector[0], f, ip.style);
-								lerp_float(&ip.option->second.current.vector[1], ip.start.vector[1], ip.goal.vector[1], f, ip.style);
-								lerp_float(&ip.option->second.current.vector[2], ip.start.vector[2], ip.goal.vector[2], f, ip.style);
-								ip._complete =  utils::float_equal(ip.option->second.current.vector[0], ip.goal.vector[0])
-											&& utils::float_equal(ip.option->second.current.vector[1], ip.goal.vector[1])
-											&& utils::float_equal(ip.option->second.current.vector[2], ip.goal.vector[2]);
-							}
-							else
-							{
-								ip.option->second.current.vector[0] = ip.goal.vector[0];
-								ip.option->second.current.vector[1] = ip.goal.vector[1];
-								ip.option->second.current.vector[2] = ip.goal.vector[2];
-								ip._complete = true;
-							}
-							break;
-						}
-
-						case OPTION_TYPE_BOOL:
-						{
-							// "complete" the transition when the rest finishes
-							if (transition_time_exceeded) {
-								ip._complete = true;
-							}
-
-							// on forward transition: set goal on start of transition
-							// on backward transition: set goal when transition is completed
-							if (!transition_time_exceeded && ip._in_backwards_transition) {
-								break;
-							}
-
-							ip.option->second.current.enabled = ip.goal.enabled; 
+						// on forward transition: set goal on start of transition
+						// on backward transition: set goal when transition is completed
+						if (!transition_time_exceeded && ip._in_backwards_transition) {
 							break;
 						}
 
-						case OPTION_TYPE_NONE:
-							ip._complete = true; // remove none type
-							continue;
+						ip.option->second.current.enabled = ip.goal.enabled;
+						break;
+					}
+
+					case OPTION_TYPE_NONE:
+						ip._complete = true; // remove none type
+						continue;
 					}
 
 					if (!ip.option->second.not_a_remix_var) {
@@ -639,15 +648,68 @@ namespace components::api
 		}
 	}
 
+	// #
+	// #
+
+	void remix_vars::on_sound_start(const std::uint32_t hash, const std::string_view& sound_name)
+	{
+		// check for spawn trigger
+		auto& msettings = map_settings::get_map_settings();
+		for (auto it = msettings.remix_transitions.begin(); it != msettings.remix_transitions.end();)
+		{
+			// only handle sound transitions
+			if (it->trigger_type != map_settings::TRANSITION_TRIGGER_TYPE::SOUND) {
+				++it; continue;
+			}
+
+			bool iterpp = false;
+			if ((it->sound_hash && it->sound_hash == hash) || it->sound_name == sound_name)
+			{
+				bool can_add_transition = true;
+
+				// do not allow the same transition twice
+				for (const auto& ip : remix_vars::interpolate_stack)
+				{
+					if (ip.identifier == it->hash)
+					{
+						can_add_transition = false;
+						break;
+					}
+				}
+
+				if (can_add_transition)
+				{
+					remix_vars::parse_and_apply_conf_with_lerp(
+						it->config_name,
+						it->hash,
+						it->interpolate_type,
+						it->duration,
+						it->delay_in,
+						it->delay_out);
+
+					if (it->mode <= map_settings::TRANSITION_MODE::ONCE_ON_LEAVE)
+					{
+						it = msettings.remix_transitions.erase(it);
+						iterpp = true; // erase returns the next iterator
+					}
+				}
+			}
+
+			if (!iterpp) {
+				++it;
+			}
+		}
+	}
+
 	ConCommand xo_vars_parse_options_cmd{};
-	void xo_vars_parse_options_fn()
+	void remix_vars::xo_vars_parse_options_fn()
 	{
 		remix_vars::options.clear();
 		remix_vars::custom_options.clear();
 		remix_vars::parse_rtx_options();
 
 		// reset all settings to rtx.conf level (incl. runtime settings)
-		if (api::m_initialized)
+		if (remix_api::is_initialized())
 		{
 			for (auto& o : remix_vars::options)
 			{
@@ -672,6 +734,9 @@ namespace components::api
 	remix_vars::remix_vars()
 	{
 		p_this = this;
+
+		// parse rtx.conf once
+		parse_rtx_options();
 
 		game::con_add_command(&xo_vars_parse_options_cmd, "xo_vars_parse_options", xo_vars_parse_options_fn, "Re-parse the rtx.conf and resets everything (incl. runtime settings - ignoring tex hashes)");
 		game::con_add_command(&xo_vars_reset_all_options_cmd, "xo_vars_reset_all_options", xo_vars_reset_all_options_fn, "Reset all options (modified by .conf files) to the rtx.conf level");

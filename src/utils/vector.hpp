@@ -29,11 +29,6 @@ public:
 		x = v[0]; y = v[1]; z = v[2]; w = v[3];
 	}
 
-	Vector4D(const hlslpp::float4& v)
-	{
-		x = v.x; y = v.y; z = v.z; w = v.w;
-	}
-
 	Vector4D operator+(const Vector4D& v) const
 	{
 		return Vector4D(x + v.x, y + v.y, z + v.z, w + v.w);
@@ -82,11 +77,6 @@ public:
 	Vector4D operator-() const
 	{
 		return Vector4D(-x, -y, -z, -w);
-	}
-
-	hlslpp::float4 ToFloat4()
-	{
-		return hlslpp::float4(x, y, z, w);
 	}
 
 	vec_t x, y, z, w;
@@ -251,16 +241,6 @@ public:
 			y > -0.01f && y < 0.01f);
 	}
 
-	Vector2D& FromFloat2(const hlslpp::float2& v)
-	{
-		x = v.x; y = v.y; return *this;
-	}
-
-	hlslpp::float2 ToFloat2()
-	{
-		return hlslpp::float2(x, y);
-	}
-
 public:
 	vec_t x, y;
 };
@@ -301,11 +281,6 @@ public:
 	Vector(const Vector2D& v)
 	{
 		x = v.x; y = v.y; z = 0.0f;
-	}
-
-	Vector(const hlslpp::float3& v)
-	{
-		x = v.x; y = v.y; z = v.z;
 	}
 
 	Vector& operator=(const Vector& v)
@@ -418,6 +393,30 @@ public:
 		return Vector(-x, -y, -z);
 	}
 
+	bool operator==(const Vector& vec) const
+	{
+		if (std::fabs(x - vec.x) < 1.e-6f
+			&& std::fabs(y - vec.y) < 1.e-6f
+			&& std::fabs(z - vec.z) < 1.e-6f)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool operator!=(const Vector& vec) const
+	{
+		if (std::fabs(x - vec.x) >= 1.e-6f
+			|| std::fabs(y - vec.y) >= 1.e-6f
+			|| std::fabs(z - vec.z) >= 1.e-6f)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	float Length(void) const
 	{
 		return sqrtf(x * x + y * y + z * z);
@@ -499,11 +498,12 @@ public:
 		return Vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
 	}
 
-	bool IsZero(const float flScale = 0.0f) const
+	bool IsZero(float epsilon = 1.e-6f) const
 	{
-		return (x > -flScale && x < flScale&&
-				y > -flScale && y < flScale&&
-				z > -flScale && z < flScale);
+		return (
+			x >= -epsilon && x <= epsilon &&
+			y >= -epsilon && y <= epsilon &&
+			z >= -epsilon && z <= epsilon);
 	}
 
 	Vector Scale(float fl) {
@@ -522,14 +522,11 @@ public:
 		z = (a.z + b.z);
 	}
 
-	Vector& FromFloat3(const hlslpp::float3& v)
+	bool is_position_within_aabb(const Vector& min_bounds, const Vector& max_bounds, const Vector& position)
 	{
-		x = v.x; y = v.y; z = v.z; return *this;
-	}
-
-	hlslpp::float3 ToFloat3()
-	{
-		return hlslpp::float3(x, y, z);
+		return	position.x >= min_bounds.x && position.x <= max_bounds.x &&
+			position.y >= min_bounds.y && position.y <= max_bounds.y &&
+			position.z >= min_bounds.z && position.z <= max_bounds.z;
 	}
 
 	remixapi_Float3D ToRemixFloat3D() const
@@ -583,23 +580,56 @@ struct Vertex_t
 
 namespace utils::vector
 {
-	inline void AngleVectors(const Vector vAngles, Vector* vForward)
+#define PITCH	0 // up / down
+#define YAW		1 // left / right
+#define ROLL	2 // fall over
+
+	inline void sin_cos(const float angle, float& sine, float& cosine)
+	{
+		sine = std::sinf(angle);
+		cosine = std::cosf(angle);
+	}
+
+	inline void AngleVectors(const Vector& angles, Vector* forward)
 	{
 		float sp, sy, cp, cy;
+		sin_cos(DEG2RADF(angles[YAW]), sp, cp);
+		sin_cos(DEG2RADF(angles[PITCH]), sy, cy);
 
-		const float flX = DEG2RADF(vAngles.x);
-		sp = ::sinf(flX);
-		cp = ::cosf(flX);
-
-		const float flY = DEG2RADF(vAngles.y);
-		sy = ::sinf(flY);
-		cy = ::cosf(flY);
-
-		if (vForward)
+		if (forward)
 		{
-			vForward->x = (cp * cy);
-			vForward->y = (cp * sy);
-			vForward->z = -sp;
+			forward->x = (cp * cy);
+			forward->y = (cp * sy);
+			forward->z = -sp;
+		}
+	}
+
+	inline void AngleVectors(const Vector& angles, Vector* forward, Vector* right, Vector* up)
+	{
+		float sr, sp, sy, cr, cp, cy;
+		sin_cos(DEG2RAD(angles[YAW]), sy, cy);
+		sin_cos(DEG2RAD(angles[PITCH]), sp, cp);
+		sin_cos(DEG2RAD(angles[ROLL]), sr, cr);
+
+		if (forward)
+		{
+			forward->x = cp * cy;
+			forward->y = cp * sy;
+			forward->z = -sp;
+		}
+
+		if (right)
+		{
+			right->x = (-1.0f * sr * sp * cy + -1.0f * cr * -sy);
+			right->y = (-1.0f * sr * sp * sy + -1.0f * cr * cy);
+			right->z = -1.0f * sr * cp;
+		}
+
+		if (up)
+		{
+			up->x = (cr * sp * cy + -sr * -sy);
+			up->y = (cr * sp * sy + -sr * cy);
+			up->z = cr * cp;
 		}
 	}
 
@@ -618,6 +648,20 @@ namespace utils::vector
 	inline void vector_ma(const Vector& start, float scale, const Vector& direction, Vector& dest)
 	{
 		vector_ma_inline(start, scale, direction, dest);
+	}
+
+	inline bool is_point_in_scaled_aabb(const Vector& point, const Vector& mins, const Vector& maxs, const float scale = 1.0f)
+	{
+		const Vector center = (mins + maxs) * 0.5f;
+		const Vector half_size = (maxs - mins) * 0.5f * scale;
+
+		// Compute the scaled AABB bounds
+		const Vector scaled_mins = center - half_size;
+		const Vector scaled_maxs = center + half_size;
+
+		return (point.x >= scaled_mins.x && point.x <= scaled_maxs.x
+			&& point.y >= scaled_mins.y && point.y <= scaled_maxs.y
+			&& point.z >= scaled_mins.z && point.z <= scaled_maxs.z);
 	}
 
 	inline bool is_point_in_aabb(const Vector& point, const Vector& mins, const Vector& maxs, const float scale = 1.0f)

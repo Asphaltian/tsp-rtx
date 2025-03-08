@@ -2,37 +2,15 @@
 
 namespace components
 {
-	extern int g_player_current_leaf;
-	extern int g_player_current_area;
+	extern int g_current_leaf;
+	extern int g_current_area;
 	extern int g_current_area_all_views;
 	extern Vector g_player_view_org;
+	extern map_settings::area_overrides_s* g_player_current_area_override;
 
 	namespace cmd
 	{
-		extern bool disable_frustum_culling;
-		extern bool sound_debug_printing;
-	}
-
-	namespace api
-	{
-		enum DEBUG_REMIX_LINE_COLOR
-		{
-			RED = 0u,
-			GREEN = 1u,
-			TEAL = 2u,
-		};
-
-		extern void init();
-		extern void create_quad(remixapi_HardcodedVertex* v_out, uint32_t* i_out, const float scale);
-		extern void add_debug_line(const Vector& p1, const Vector& p2, const float width, DEBUG_REMIX_LINE_COLOR color);
-
-		extern bool m_initialized;
-		extern remixapi_Interface bridge;
-
-		extern remixapi_MaterialHandle remix_debug_line_materials[3];
-		extern remixapi_MeshHandle remix_debug_line_list[128];
-		extern std::uint32_t remix_debug_line_amount;
-		extern std::uint64_t remix_debug_last_line_hash;
+		extern bool debug_node_vis;
 	}
 
 	class main_module : public component
@@ -41,13 +19,20 @@ namespace components
 		main_module();
 		~main_module();
 
+		static inline main_module* p_this = nullptr;
+		static main_module* get() { return p_this; }
+
 		static inline std::uint64_t framecount = 0u;
 		static inline LPD3DXFONT d3d_font = nullptr;
 
-		static void debug_draw_box(const VectorAligned& center, const VectorAligned& half_diagonal, const float width, const api::DEBUG_REMIX_LINE_COLOR& color);
-		static void setup_required_cvars();
-		static void trigger_vis_logic();
+		static void force_cvars();
+		static void cross_handle_map_and_game_settings();
 
-	private:
+		static void trigger_vis_logic();
+		static void hud_draw_area_info();
+
+		int  m_hud_debug_node_vis_pos[2] = { 250, 135 };
+		bool m_hud_debug_node_vis_has_forced_leafs = false;
+		bool m_hud_debug_node_vis_has_forced_arealeafs = false;
 	};
 }

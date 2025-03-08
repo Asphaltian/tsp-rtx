@@ -1,4 +1,5 @@
 #pragma once
+#include "remix_vars.hpp"
 
 namespace components
 {
@@ -11,7 +12,7 @@ namespace components
 		static inline map_settings* p_this = nullptr;
 		static map_settings* get() { return p_this; }
 
-		enum LEAF_TRANS_MODE : uint8_t
+		enum TRANSITION_MODE : uint8_t
 		{
 			ONCE_ON_ENTER = 0,
 			ONCE_ON_LEAVE = 1,
@@ -19,33 +20,33 @@ namespace components
 			ALWAYS_ON_LEAVE = 3,
 		};
 
-		struct leaf_transition_s
+		enum TRANSITION_TRIGGER_TYPE : uint8_t
 		{
-			std::unordered_set<std::uint32_t> leafs;
-			std::string config_name;
-			LEAF_TRANS_MODE mode;
-			api::remix_vars::EASE_TYPE interpolate_type;
-			float delay_in = 0.0f;
-			float delay_out = 0.0f;
-			float duration = 0.0f;
-			std::uint64_t hash;
-			bool _state_enter = false;
+			CHOREO = 0,
+			SOUND = 1,
+			LEAF = 2,
 		};
 
-		enum CHOREO_TRANS_MODE : uint8_t
+		struct remix_transition_s
 		{
-			ONCE_ON_START = 0,
-			ONCE_ON_END = 1,
-			ALWAYS_ON_START = 2,
-			ALWAYS_ON_END = 3,
-		};
+			TRANSITION_TRIGGER_TYPE trigger_type;
 
-		struct choreo_transition_s
-		{
+			// choreo trigger
 			std::string choreo_name;
+			std::string choreo_actor;
+			std::string choreo_event;
+			std::string choreo_param1;
+
+			// sound trigger
+			std::uint32_t sound_hash;
+			std::string sound_name;
+
+			// leaf trigger
+			std::unordered_set<std::uint32_t> leafs;
+
 			std::string config_name;
-			CHOREO_TRANS_MODE mode;
-			api::remix_vars::EASE_TYPE interpolate_type;
+			TRANSITION_MODE mode;
+			remix_vars::EASE_TYPE interpolate_type;
 			float delay_in = 0.0f;
 			float delay_out = 0.0f;
 			float duration = 0.0f;
@@ -56,9 +57,16 @@ namespace components
 		struct marker_settings_s
 		{
 			std::uint32_t index = 0;
-			float origin[3] = {};
+			Vector origin = {};
 			bool no_cull = false;
-			void* handle = nullptr;
+			Vector rotation = { 0.0f, 0.0f, 0.0f };
+			Vector scale = { 1.0f, 1.0f, 1.0f }; // no_cull only
+			std::unordered_set<std::uint32_t> areas; // no_cull only
+			std::unordered_set<std::uint32_t> when_not_in_leafs; // no_cull only
+			std::string comment;
+
+			void* handle = nullptr; // internal use
+			bool is_hidden = false; // internal use
 		};
 
 		struct api_config_var
@@ -66,23 +74,6 @@ namespace components
 			std::string variable;
 			std::string value;
 		};
-
-		enum AREA_CULL_MODE : uint8_t
-		{
-			AREA_CULL_MODE_NO_FRUSTUM = 0,
-			AREA_CULL_MODE_FRUSTUM = 1,
-			AREA_CULL_MODE_FRUSTUM_FORCE_AREA = 2,
-			AREA_CULL_COUNT = 3,
-			// -------------------
-			AREA_CULL_MODE_DEFAULT = AREA_CULL_MODE_FRUSTUM_FORCE_AREA,
-		};
-
-		struct hide_area_s
-		{
-			std::unordered_set<std::uint32_t> areas;
-			std::unordered_set<std::uint32_t> when_not_in_leafs;
-		};
-
 
 		struct remix_light_settings_s
 		{
@@ -98,7 +89,7 @@ namespace components
 				// shaping
 				bool use_shaping = false;
 				Vector direction = { 0.0f, 0.0f, 1.0f };
-				float degrees = 90.0; // cone angle
+				float degrees = 180.0; // cone angle
 				float softness = 0.0f; // cone
 				float exponent = 0.0f; // focus
 			};
@@ -110,12 +101,65 @@ namespace components
 			bool trigger_always = false;
 
 			std::string trigger_choreo_name;
+			std::string trigger_choreo_actor;
+			std::string trigger_choreo_event;
+			std::string trigger_choreo_param1;
 			std::uint32_t trigger_sound_hash;
 			float trigger_delay = 0.0f;
 
 			std::string kill_choreo_name;
 			std::uint32_t kill_sound_hash;
 			float kill_delay = 0.0f;
+
+			float attach_prop_radius = 0.0f;
+			std::string attach_prop_name;
+			Vector attach_prop_mins; // min bounds
+			Vector attach_prop_maxs; // max bounds
+
+			std::string comment;
+		};
+
+		// ---
+
+		static constexpr float DEFAULT_NOCULL_DIST = 600.0f;
+
+		static constexpr const char* AREA_CULL_MODE_STR[] =
+		{
+			"NoFrustum",
+			"NoFrstmInAr",
+			"Stock",
+			"ForceAr",
+			"AreaDist",
+			"Distance"
+		};
+
+		enum AREA_CULL_MODE : uint8_t
+		{
+			AREA_CULL_MODE_NO_FRUSTUM = 0,					// no frustum culling (everywhere)
+			AREA_CULL_MODE_NO_FRUSTUM_IN_CURRENT_AREA = 1,	// no frustum culling in current area
+			AREA_CULL_MODE_STOCK = 2,						// OG: frustum culling
+			AREA_CULL_MODE_FORCE_AREA = 3,					// frustum culling (outside current area) + force all leafs/nodes in current area
+			AREA_CULL_MODE_FORCE_AREA_DISTANCE = 4,			// frustum culling (outside current area) + force all leafs/nodes in current area and outside of current area within certain dist to player
+			AREA_CULL_MODE_DISTANCE = 5,					// force all leafs/nodes within certain dist to player
+			// -------------------
+			AREA_CULL_INFO_COUNT = 6,
+			AREA_CULL_INFO_DEFAULT = AREA_CULL_MODE_DISTANCE,
+			AREA_CULL_INFO_NOCULLDIST_START = AREA_CULL_MODE_FORCE_AREA_DISTANCE,
+			AREA_CULL_INFO_NOCULLDIST_END = AREA_CULL_MODE_DISTANCE,
+		};
+
+		struct leaf_tweak_s
+		{
+			std::unordered_set<std::uint32_t> in_leafs;
+			std::unordered_set<std::uint32_t> areas;
+			std::unordered_set<std::uint32_t> leafs;
+			float nocull_dist = 0.0f;
+		};
+
+		struct hide_area_s
+		{
+			std::unordered_set<std::uint32_t> areas;
+			std::unordered_set<std::uint32_t> when_not_in_leafs;
 		};
 
 		struct area_overrides_s
@@ -123,11 +167,11 @@ namespace components
 			std::unordered_set<std::uint32_t> leafs;
 			std::unordered_set<std::uint32_t> areas;
 			std::unordered_set<std::uint32_t> hide_leafs;
-
-			// areas - when_not_in_leafs
 			std::vector<hide_area_s> hide_areas;
-
+			std::vector<leaf_tweak_s> leaf_tweaks;
 			AREA_CULL_MODE cull_mode;
+			float nocull_distance = DEFAULT_NOCULL_DIST;
+			bool nocull_distance_overrides_in_leaf_twk = false;
 			std::uint32_t area_index;
 		};
 
@@ -141,15 +185,22 @@ namespace components
 		{
 			std::string	mapname;
 			float fog_dist = 0.0f;
+			float fog_density = 0.0f;
 			DWORD fog_color = 0xFFFFFFFF;
 			float water_uv_scale = 1.0f;
+			float water_offset_top = 0.5f; // top layer
+			float water_offset_bottom = 0.0f; // bottom layer
 			std::unordered_map<std::uint32_t, area_overrides_s> area_settings;
+			float default_nocull_dist = DEFAULT_NOCULL_DIST;
 			hide_models_s hide_models;
-			std::vector<leaf_transition_s> leaf_transitions;
-			std::vector<choreo_transition_s> choreo_transitions;
+			std::vector<remix_transition_s> remix_transitions;
 			std::vector<marker_settings_s> map_markers;
 			std::vector<std::string> api_var_configs;
 			std::vector<remix_light_settings_s> remix_lights;
+			bool using_any_light_sound_hash = false;
+			bool using_any_light_attached_to_prop = false;
+			bool using_any_transition_sound_hash = false;
+			bool using_any_transition_sound_name = false;
 		};
 
 		static map_settings_s& get_map_settings() { return m_map_settings; }
@@ -161,6 +212,7 @@ namespace components
 		static void on_map_load(const std::string& map_name);
 		static void on_map_unload();
 		static void clear_map_settings();
+		static void reload();
 
 		struct level_bool_s
 		{

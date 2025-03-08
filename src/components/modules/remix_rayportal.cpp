@@ -1,7 +1,7 @@
 #include "std_include.hpp"
 #include "remix_vars.hpp"
 
-namespace components::api
+namespace components
 {
 	/**
 	 * Initiates a full rayportal via the api (material and mesh) (1x1 Unit)
@@ -30,7 +30,7 @@ namespace components::api
 
 		remixapi_HardcodedVertex verts[4] = {};
 		uint32_t indices[6] = {};
-		api::create_quad(verts, indices, 0.5f);
+		remix_api::get()->create_quad(verts, indices, 0.5f);
 
 		remixapi_MeshInfoSurfaceTriangles triangles =
 		{
@@ -52,12 +52,12 @@ namespace components::api
 			.surfaces_count = 1,
 		};
 
-		return api::bridge.CreateMesh(&i, &m_hmesh);
+		return remix_api::get()->m_bridge.CreateMesh(&i, &m_hmesh);
 	}
 
 	remixapi_ErrorCode remix_rayportal::portal_single::destroy_mesh()
 	{
-		const auto res = api::bridge.DestroyMesh(m_hmesh);
+		const auto res = remix_api::get()->m_bridge.DestroyMesh(m_hmesh);
 		m_hmesh = nullptr;
 		return res;
 	}
@@ -98,12 +98,12 @@ namespace components::api
 		ext.rotationSpeed = 1.0f;
 
 		info.pNext = &ext;
-		return api::bridge.CreateMaterial(&info, &m_hmaterial);
+		return remix_api::get()->m_bridge.CreateMaterial(&info, &m_hmaterial);
 	}
 
 	remixapi_ErrorCode remix_rayportal::portal_single::destroy_material()
 	{
-		const auto res = api::bridge.DestroyMaterial(m_hmaterial);
+		const auto res = remix_api::get()->m_bridge.DestroyMaterial(m_hmaterial);
 		m_hmaterial = nullptr;
 		return res;
 	}
@@ -174,6 +174,8 @@ namespace components::api
 	 */
 	bool remix_rayportal::portal_pair::draw_pair()
 	{
+		const auto api = remix_api::get();
+
 		bool res = true;
 		for (uint8_t i = 0u; i < 2; i++)
 		{
@@ -243,10 +245,10 @@ namespace components::api
 					game::debug_add_text_overlay(&debug_pos.x, 0.0f, utils::va("Normal: %.2f %.2f %.2f", normal.x, normal.y, normal.z));
 
 					const auto corner_points = p.get_corner_points();
-					api::add_debug_line(corner_points[0], corner_points[1], 1.0f, api::DEBUG_REMIX_LINE_COLOR::RED);
-					api::add_debug_line(corner_points[1], corner_points[2], 1.0f, api::DEBUG_REMIX_LINE_COLOR::RED);
-					api::add_debug_line(corner_points[2], corner_points[3], 1.0f, api::DEBUG_REMIX_LINE_COLOR::RED);
-					api::add_debug_line(corner_points[3], corner_points[0], 1.0f, api::DEBUG_REMIX_LINE_COLOR::RED);
+					api->add_debug_line(corner_points[0], corner_points[1], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api->add_debug_line(corner_points[1], corner_points[2], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api->add_debug_line(corner_points[2], corner_points[3], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api->add_debug_line(corner_points[3], corner_points[0], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 				}
 
 				const remixapi_InstanceInfo info =
@@ -258,7 +260,7 @@ namespace components::api
 					.transform = p.get_remix_transform(),
 					.doubleSided = false
 				};
-				res = api::bridge.DrawInstance(&info) == REMIXAPI_ERROR_CODE_SUCCESS ? res : false;
+				res = api->m_bridge.DrawInstance(&info) == REMIXAPI_ERROR_CODE_SUCCESS ? res : false;
 			}
 		}
 

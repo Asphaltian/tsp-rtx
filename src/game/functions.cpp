@@ -3,6 +3,8 @@
 namespace glob
 {
 	bool spawned_external_console = false;
+	HWND main_window = nullptr;
+	sdk::InputContext_t* input_context = nullptr;
 }
 
 namespace game
@@ -169,5 +171,43 @@ namespace game
 		perror(buffer);
 		va_end(list);
 		fn(buffer, list);
+	}
+
+
+	void lock_cursor()
+	{
+		const auto input = interfaces::get()->m_input_system;
+
+		if (!glob::input_context) {
+			glob::input_context = input->push_input_context();
+		}
+			
+
+		input->enable_input_context(glob::input_context, true);
+		input->set_cursor_visible(glob::input_context, false);
+		input->set_mouse_capture(glob::input_context, true);
+
+		ImGui::GetIO().MouseDrawCursor = true;
+	}
+
+	void unlock_cursor()
+	{
+		const auto input = interfaces::get()->m_input_system;
+
+		int width = (int)(ImGui::GetIO().DisplaySize.x / 2.0f);
+		int height = (int)(ImGui::GetIO().DisplaySize.y / 2.0f);
+
+		if (glob::input_context)
+		{
+			if (input->is_topmost_enabled_context(glob::input_context)) {
+				input->set_cursor_position(glob::input_context, width, height);
+			}
+
+			input->enable_input_context(glob::input_context, false);
+		}
+
+		ImGui::GetIO().MouseDrawCursor = false;
+
+		//input->get_raw_mouse_accumulators(&width, &height);
 	}
 }

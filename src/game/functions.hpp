@@ -13,6 +13,8 @@ using namespace components;
 namespace glob
 {
 	extern bool spawned_external_console;
+	extern HWND main_window;
+	extern sdk::InputContext_t* input_context;
 }
 
 namespace game
@@ -129,4 +131,7 @@ namespace game
 			}
 		}
 	}
+
+	extern void lock_cursor();
+	extern void unlock_cursor();
 }

@@ -1,13 +1,18 @@
 #include "std_include.hpp"
 
-namespace components::api
+namespace components
 {
+	namespace cmd
+	{
+		bool show_api_lights = false;
+	}
+
 	/**
 	 * Initializes the light interpolator
 	 * @param points			Reference to point-list
 	 * @param looping			Light is looping
 	 * @param loop_smoothing	Add additional segment between last and first point
-	 * @return 
+	 * @return
 	 */
 	bool light_interpolator::init(const std::vector<map_settings::remix_light_settings_s::point_s>& points, const bool looping, const bool loop_smoothing)
 	{
@@ -21,7 +26,7 @@ namespace components::api
 		m_loop_smoothing = loop_smoothing;
 
 		// ensure first point has timepoint 0
-		m_points[0].timepoint = 0.0f;
+		(m_points)[0].timepoint = 0.0f;
 
 		// total duration defined by the last point
 		m_total_duration = m_points.back().timepoint;
@@ -29,13 +34,13 @@ namespace components::api
 		if (points.size() > 1 && m_total_duration == 0.0f)
 		{
 			game::console();
-			std::cout << "[remix_lights][light_interpolator::init] Encountered a light were the last point has no defined timepoint! Placeholder in-use, please fix!" << std::endl;
+			std::cout << "[RemixLights][light_interpolator::init] Encountered a light were the last point has no defined timepoint! Placeholder in-use, please fix!" << std::endl;
 
 			// use timepoint of prev. point + 1.0
-			m_total_duration = m_points[m_points.size() - 2].timepoint + 1.0f;
+			m_total_duration = (m_points)[m_points.size() - 2].timepoint + 1.0f;
 
 			// write the placeholder value into the last point
-			m_points.back().timepoint = m_total_duration; 
+			m_points.back().timepoint = m_total_duration;
 		}
 
 		// calculate time for points with no defined timepoint
@@ -45,7 +50,7 @@ namespace components::api
 		for (size_t i = 1; i < m_points.size(); ++i)
 		{
 			// point has no defined timepoint
-			if (m_points[i].timepoint == 0.0f)
+			if ((m_points)[i].timepoint == 0.0f)
 			{
 				needs_timepoint_calc = true;
 				if (calc_index_start == 0) {
@@ -76,12 +81,12 @@ namespace components::api
 	{
 		m_elapsed_time += frametime;
 
-		if (m_elapsed_time >= m_total_duration) 
+		if (m_elapsed_time >= m_total_duration)
 		{
-			if (m_looping)  {
+			if (m_looping) {
 				m_elapsed_time -= m_total_duration;
 			}
-			else  {
+			else {
 				m_elapsed_time = m_total_duration;
 			}
 
@@ -94,47 +99,50 @@ namespace components::api
 	/**
 	 * Calculate light properties for the current tick \n
 	 * All arguments are optional - use nullptr to not update a specific property
-	 * @param position		(LightInfoEXT)
-	 * @param radiance		(LightInfo)
-	 * @param radius		(LightInfo)
-	 * @param direction		(LightInfoEXT)
-	 * @param degrees		(LightInfoEXT)
-	 * @param softness		(LightInfoEXT)
-	 * @param exponent		(LightInfoEXT)
+	 * @param position			(LightInfoEXT)
+	 * @param radiance			(LightInfo)
+	 * @param radius			(LightInfo)
+	 * @param direction			(LightInfoEXT)
+	 * @param degrees			(LightInfoEXT)
+	 * @param softness			(LightInfoEXT)
+	 * @param exponent			(LightInfoEXT)
 	 */
-	void light_interpolator::interpolate(remixapi_Float3D* position, remixapi_Float3D* radiance, float* radius, 
-										 remixapi_Float3D* direction, float* degrees, float* softness, float* exponent)
+	void light_interpolator::interpolate(remixapi_Float3D* position, remixapi_Float3D* radiance, float* radius,
+		remixapi_Float3D* direction, float* degrees, float* softness, float* exponent)
 	{
 		{
 			map_settings::remix_light_settings_s::point_s* temp_pt = nullptr;
 			if (m_elapsed_time <= 0.0f) {
-				temp_pt = &m_points[0];
-			} else if (m_elapsed_time >= m_total_duration) {
+				temp_pt = &m_points.front();
+			}
+			else if (m_elapsed_time >= m_total_duration) {
 				temp_pt = &m_points.back();
 			}
 
 			if (temp_pt)
 			{
-				if (position) { *position = temp_pt->position.ToRemixFloat3D(); }
+				if (position) { *position = (temp_pt->position + m_position_offset).ToRemixFloat3D(); }
 				if (radiance) { *radiance = (temp_pt->radiance * temp_pt->radiance_scalar).ToRemixFloat3D(); }
 				if (radius) { *radius = temp_pt->radius; }
 				if (direction) { *direction = temp_pt->direction.ToRemixFloat3D(); }
 				if (degrees) { *degrees = temp_pt->degrees; }
 				if (softness) { *softness = temp_pt->softness; }
 				if (exponent) { *exponent = temp_pt->exponent; }
+
+				return;
 			}
 		}
 
 		float time = m_elapsed_time;
 		for (size_t i = 0; i < m_segment_durations.size(); ++i)
 		{
-			if (time <= m_segment_durations[i]) 
+			if (time <= m_segment_durations[i])
 			{
 				const auto t = time / m_segment_durations[i];
-				const auto& p0 = m_points[((i - 1) + m_points.size()) % m_points.size()];
-				const auto& p1 = m_points[i % m_points.size()];
-				const auto& p2 = m_points[(m_loop_smoothing && i == m_points.size() - 1) ? 0 : (i + 1) % m_points.size()];
-				const auto& p3 = m_points[(i + 2) % m_points.size()];
+				const auto& p0 = (m_points)[((i - 1) + m_points.size()) % m_points.size()];
+				const auto& p1 = (m_points)[i % m_points.size()];
+				const auto& p2 = (m_points)[(m_loop_smoothing && i == m_points.size() - 1) ? 0 : (i + 1) % m_points.size()];
+				const auto& p3 = (m_points)[(i + 2) % m_points.size()];
 
 				const float t2 = t * t;
 				const float t3 = t2 * t;
@@ -143,17 +151,17 @@ namespace components::api
 				if (position)
 				{
 					*position = (
-						  p1.position * (2.0f * t3 - 3.0f * t2 + 1.0f) 
-						+ p2.position * (-2.0f * t3 + 3.0f * t2) 
-						+ (p2.position - p0.position) * p1.smoothness * (t3 - 2.0f * t2 + t) 
+						p1.position * (2.0f * t3 - 3.0f * t2 + 1.0f)
+						+ p2.position * (-2.0f * t3 + 3.0f * t2)
+						+ (p2.position - p0.position) * p1.smoothness * (t3 - 2.0f * t2 + t)
 						+ (p3.position - p1.position) * p2.smoothness * (t3 - t2)
-						).ToRemixFloat3D();
+						+ m_position_offset).ToRemixFloat3D();
 				}
 
 				if (direction)
 				{
 					Vector dir = (
-						  p1.direction * (2.0f * t3 - 3.0f * t2 + 1.0f)
+						p1.direction * (2.0f * t3 - 3.0f * t2 + 1.0f)
 						+ p2.direction * (-2.0f * t3 + 3.0f * t2)
 						+ (p2.direction - p0.direction) * p1.smoothness * (t3 - 2.0f * t2 + t)
 						+ (p3.direction - p1.direction) * p2.smoothness * (t3 - t2)
@@ -192,7 +200,7 @@ namespace components::api
 		}
 
 		// should not happen if durations are correct
-		if (position) { *position = m_points.back().position.ToRemixFloat3D(); }
+		if (position) { *position = (m_points.back().position + m_position_offset).ToRemixFloat3D(); }
 		if (radiance) { *radiance = (m_points.back().radiance * m_points.back().radiance_scalar).ToRemixFloat3D(); }
 		if (radius) { *radius = m_points.back().radius; }
 		if (direction) { *direction = m_points.back().direction.ToRemixFloat3D(); }
@@ -204,7 +212,46 @@ namespace components::api
 	// ----
 
 	/**
-	 * Calculate and update remixApi light for the current tick 
+	 * Update a remixApi light using an "external" point
+	 * @param light		Light handle
+	 * @param pt		External point handle
+	 * @return			True if successfull
+	 */
+	bool remix_lights::update_static_remix_light(remix_light_s* light, const map_settings::remix_light_settings_s::point_s* pt)
+	{
+		if (!light || !pt) {
+			return false;
+		}
+
+		if (light->handle) {
+			destroy_map_light(light);
+		}
+
+		if (light)
+		{
+			light->ext.position = (pt->position + light->attached_offset).ToRemixFloat3D();
+			light->info.radiance = (pt->radiance * pt->radiance_scalar).ToRemixFloat3D();
+			light->ext.radius = pt->radius;
+			light->ext.shaping_hasvalue = pt->use_shaping;
+			light->ext.shaping_value.direction = pt->direction.ToRemixFloat3D();
+			light->ext.shaping_value.coneAngleDegrees = pt->degrees;
+			light->ext.shaping_value.coneSoftness = pt->softness;
+			light->ext.shaping_value.focusExponent = pt->exponent;
+
+			// not updating these can result in a crash in bridge::remix_api?
+			light->ext.pNext = nullptr;
+			light->ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
+			light->info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+			light->info.pNext = &light->ext;
+
+			return remix_api::get()->m_bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Calculate and update remixApi light for the current tick
 	 * @param light		The light
 	 * @return			True if successfull
 	 */
@@ -220,9 +267,11 @@ namespace components::api
 
 		if (light)
 		{
+			light->mover.set_position_offset(light->attached_offset);
+
 			light->mover.interpolate(
-				&light->ext.position, 
-				&light->info.radiance, 
+				&light->ext.position,
+				&light->info.radiance,
 				&light->ext.radius,
 				&light->ext.shaping_value.direction,
 				&light->ext.shaping_value.coneAngleDegrees,
@@ -231,7 +280,13 @@ namespace components::api
 
 			light->ext.shaping_hasvalue = light->ext.shaping_value.coneAngleDegrees != 180.0f;
 
-			return bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+			// not updating these can result in a crash in bridge::remix_api?
+			light->ext.pNext = nullptr;
+			light->ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
+			light->info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+			light->info.pNext = &light->ext;
+
+			return remix_api::get()->m_bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
 		}
 
 		return false;
@@ -257,11 +312,12 @@ namespace components::api
 			const auto& pt = light->def.points[0];
 			light->ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
 			light->ext.pNext = nullptr;
-			light->ext.position = remixapi_Float3D{ pt.position.x, pt.position.y, pt.position.z };
-			light->ext.radius = pt.radius;
+			light->ext.position = pt.position.ToRemixFloat3D();
+			// disable single point lights with attach params until they get attached later down the line
+			light->ext.radius = light->def.points.size() == 1u && light->has_attach_parms() ? 0.0f : pt.radius;
 			light->ext.shaping_hasvalue = pt.use_shaping;
 			light->ext.shaping_value = {};
-			light->ext.shaping_value.direction = remixapi_Float3D{ pt.direction.x, pt.direction.y, pt.direction.z };
+			light->ext.shaping_value.direction = pt.direction.ToRemixFloat3D();
 			light->ext.shaping_value.coneAngleDegrees = pt.degrees;
 			light->ext.shaping_value.coneSoftness = pt.softness;
 			light->ext.shaping_value.focusExponent = pt.exponent;
@@ -269,9 +325,10 @@ namespace components::api
 			light->info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
 			light->info.pNext = &light->ext;
 			light->info.hash = utils::string_hash64(utils::va("api-light%d", light->light_num));
-			light->info.radiance = remixapi_Float3D{ pt.radiance.x * pt.radiance_scalar, pt.radiance.y * pt.radiance_scalar, pt.radiance.z * pt.radiance_scalar };
+			light->info.radiance = (pt.radiance * pt.radiance_scalar).ToRemixFloat3D();
 
-			return bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+			const auto api = remix_api::get();
+			return api->m_bridge.CreateLight(&light->info, &light->handle) == REMIXAPI_ERROR_CODE_SUCCESS;
 		}
 
 		return false;
@@ -288,20 +345,20 @@ namespace components::api
 		auto& msettings = map_settings::get_map_settings();
 		for (auto it = msettings.remix_lights.begin(); it != msettings.remix_lights.end();)
 		{
-			// add lights without a trigger
-			if (it->trigger_choreo_name.empty() && !it->trigger_sound_hash)
+			if (it->trigger_choreo_name.empty() && !it->trigger_sound_hash) // add lights without a trigger
 			{
-				m_map_lights.push_back(
-					remix_light_s(
-						std::move(*it),
-						m_map_light_spawn_tracker++,
+				m_active_lights.push_back(
+					remix_light_s
+					{
+						*it, //std::move(*it),
+						m_active_light_spawn_tracker++,
 						it->kill_delay
-					));
+					});
 
 				// erase element from the mapsettings vector
 				it = msettings.remix_lights.erase(it);
 
-				auto* light = &m_map_lights.back();
+				auto* light = &m_active_lights.back();
 
 				if (light->def.points.size() > 1) {
 					light->mover.init(light->def.points, light->def.loop, light->def.loop_smoothing);
@@ -314,19 +371,38 @@ namespace components::api
 		}
 	}
 
+
+	void remix_lights::add_single_map_setting_light_for_editing(map_settings::remix_light_settings_s* def)
+	{
+		m_active_lights.push_back(
+			remix_light_s(
+				*def,
+				m_active_light_spawn_tracker++
+			));
+
+		auto* light = &m_active_lights.back();
+
+		if (light->def.points.size() > 1) {
+			light->mover.init(light->def.points, true /* always loop*/, light->def.loop_smoothing);
+		}
+
+		// spawn it
+		get()->spawn_remix_light(light);
+	}
+
 	/**
 	 * Adds a single map setting light to 'm_map_lights' - Immediately spawns it if trigger is not defined
 	 * @param def	The map_setting light definition
 	 */
 	void remix_lights::add_single_map_setting_light(map_settings::remix_light_settings_s* def)
 	{
-		m_map_lights.push_back(
+		m_active_lights.push_back(
 			remix_light_s(
-				def->trigger_always ? *def : std::move(*def), // do not move the light if it can be triggered multiple times
-				m_map_light_spawn_tracker++
+				*def, //def->trigger_always ? *def : std::move(*def), // do not move the light if it can be triggered multiple times
+				m_active_light_spawn_tracker++
 			));
 
-		auto* light = &m_map_lights.back();
+		auto* light = &m_active_lights.back();
 
 		// spawn light if it does not use a trigger - triggered spawning is handled elsewhere
 		if (light->def.trigger_choreo_name.empty() && !light->def.trigger_sound_hash)
@@ -348,7 +424,7 @@ namespace components::api
 	{
 		if (light->handle)
 		{
-			bridge.DestroyLight(light->handle);
+			remix_api::get()->m_bridge.DestroyLight(light->handle);
 			light->handle = nullptr;
 		}
 	}
@@ -358,56 +434,77 @@ namespace components::api
 	 */
 	void remix_lights::destroy_all_map_lights()
 	{
-		for (auto& l : m_map_lights) {
+		for (auto& l : m_active_lights) {
 			destroy_map_light(&l);
 		}
 	}
 
 	/**
-	 * Destroys all lights in 'm_map_lights' (remixApi lights) and clears 'm_map_lights' 
+	 * Destroys all lights in 'm_map_lights' (remixApi lights) and clears 'm_map_lights'
 	 */
-	void remix_lights::destroy_and_clear_all_map_lights()
+	void remix_lights::destroy_and_clear_all_active_lights()
 	{
 		destroy_all_map_lights();
-		m_map_lights.clear();
+		m_active_lights.clear();
 	}
 
 	/**
 	 * Updates all lights in 'm_map_lights'
 	 * Handles Destroying, choreo trigger spawning, tick advancing and updating of remixApi lights
 	 */
-	void remix_lights::update_all_map_lights()
+	void remix_lights::update_all_active_lights()
 	{
+		const auto glob = game::get_global_vars();
+		const auto edit_mode = imgui::get()->m_light_edit_mode;
+
 		// destroy lights that are marked for destruction
-		for (auto it = m_map_lights.begin(); it != m_map_lights.end();)
+		for (auto it = m_active_lights.begin(); it != m_active_lights.end();)
 		{
-			if (it->is_marked_for_destruction) 
+			if (it->is_marked_for_destruction)
 			{
 				// kill delay timer
-				if (it->timer > 0.0f) 
+				if (it->timer > 0.0f)
 				{
-					it->timer -= game::get_global_vars()->frametime;
+					it->timer -= glob->absoluteframetime;
 					++it;
 				}
 				else
 				{
 					destroy_map_light(&*it);
-					it = m_map_lights.erase(it);
+					it = m_active_lights.erase(it);
 				}
 			}
 			else { ++it; }
 		}
 
 		// iterate all map lights
-		for (auto& l : m_map_lights)
+		for (auto& l : m_active_lights)
 		{
 			if (l.mover.is_initialized())
 			{
-				const auto finished = l.mover.advance_time(game::get_global_vars()->frametime);
+				const auto finished = l.mover.advance_time(glob->absoluteframetime);
 				update_remix_light(&l);
 
-				if (finished && l.def.run_once) { // destroy light on next frame
-					l.is_marked_for_destruction = true;
+				if (!edit_mode)
+				{
+					if (finished && l.def.run_once) { // destroy light on next frame
+						l.is_marked_for_destruction = true;
+					}
+				}
+			}
+			else // single point lights
+			{
+				if (l.has_attach_parms())
+				{
+					if (l.is_attached()) { // update every frame when attached
+						update_static_remix_light(&l, &l.def.points.front());
+					}
+					else if (l.ext.radius > 0.0f) // "disable" light when it gets unattached
+					{
+						auto temp_pt = l.def.points.front();
+						temp_pt.radius = 0.0f;
+						update_static_remix_light(&l, &temp_pt);
+					}
 				}
 			}
 
@@ -416,7 +513,7 @@ namespace components::api
 			{
 				// handle delayed triggering
 				if (l.timer < l.def.trigger_delay) {
-					l.timer += game::get_global_vars()->frametime;
+					l.timer += glob->absoluteframetime;
 				}
 				else
 				{
@@ -434,15 +531,13 @@ namespace components::api
 		}
 	}
 
-	/**
-	 * Draws all lights in 'm_map_lights'
-	 */
-	void remix_lights::draw_all_map_lights()
+	// Draw all active map lights
+	void remix_lights::draw_all_active_lights()
 	{
-		for (auto& l : m_map_lights)
+		for (auto& l : m_active_lights)
 		{
 			if (l.handle) {
-				bridge.DrawLightInstance(l.handle);
+				remix_api::get()->m_bridge.DrawLightInstance(l.handle);
 			}
 		}
 	}
@@ -454,6 +549,8 @@ namespace components::api
 	{
 		if (map_settings::is_level.sp_a2_bts3)
 		{
+			const auto remixapi = remix_api::get();
+
 			if (!m_bts3_flashlight_pos.IsZero(0.0001f) && !m_bts3_wheatly_pos.IsZero(0.0001f))
 			{
 				auto dir = m_bts3_flashlight_pos - m_bts3_wheatly_pos;
@@ -493,14 +590,14 @@ namespace components::api
 
 				if (m_bts3_flashlight_handle)
 				{
-					bridge.DestroyLight(m_bts3_flashlight_handle);
+					remixapi->m_bridge.DestroyLight(m_bts3_flashlight_handle);
 					m_bts3_flashlight_handle = nullptr;
 				}
 
-				bridge.CreateLight(&info, &m_bts3_flashlight_handle);
+				remixapi->m_bridge.CreateLight(&info, &m_bts3_flashlight_handle);
 
 				if (m_bts3_flashlight_handle) {
-					bridge.DrawLightInstance(m_bts3_flashlight_handle);
+					remixapi->m_bridge.DrawLightInstance(m_bts3_flashlight_handle);
 				}
 
 				// ---
@@ -516,14 +613,14 @@ namespace components::api
 
 				if (m_bts3_flashlight_sphere_handle)
 				{
-					bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
+					remixapi->m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
 					m_bts3_flashlight_sphere_handle = nullptr;
 				}
 
-				bridge.CreateLight(&info, &m_bts3_flashlight_sphere_handle);
+				remixapi->m_bridge.CreateLight(&info, &m_bts3_flashlight_sphere_handle);
 
 				if (m_bts3_flashlight_sphere_handle) {
-					bridge.DrawLightInstance(m_bts3_flashlight_sphere_handle);
+					remixapi->m_bridge.DrawLightInstance(m_bts3_flashlight_sphere_handle);
 				}
 
 				// ---
@@ -536,15 +633,17 @@ namespace components::api
 
 	void remix_lights::a2_bts3_flashlight_destroy()
 	{
+		const auto remixapi = remix_api::get();
+
 		if (m_bts3_flashlight_handle)
 		{
-			bridge.DestroyLight(m_bts3_flashlight_handle);
+			remixapi->m_bridge.DestroyLight(m_bts3_flashlight_handle);
 			m_bts3_flashlight_handle = nullptr;
 		}
 
 		if (m_bts3_flashlight_sphere_handle)
 		{
-			bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
+			remixapi->m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
 			m_bts3_flashlight_sphere_handle = nullptr;
 		}
 
@@ -555,14 +654,84 @@ namespace components::api
 	// #
 	// #
 
-	// called from: choreo_events::scene_ent_on_start_event_hk
-	void remix_lights::on_event_start(const std::string_view& name)
+	bool light_attachment_is_matching_model(const remix_lights::remix_light_s& light, const ModelRenderInfo_t& info)
 	{
+		const bool has_radius = light.def.attach_prop_radius != 0.0f;
+		const bool has_name = !light.def.attach_prop_name.empty();
+
+		if (!has_radius && !has_name) {
+			return false;
+		}
+
+		// bounds check
+		if (!light.def.attach_prop_mins.IsZero() || !light.def.attach_prop_maxs.IsZero())
+		{
+			if (!utils::vector::is_point_in_aabb(info.origin, light.def.attach_prop_mins, light.def.attach_prop_maxs)) {
+				return false;
+			}
+		}
+
+		// radius check if specified
+		if (has_radius && !utils::float_equal(info.pModel->radius, light.def.attach_prop_radius)) {
+			return false;
+		}
+
+		// name substring check if specified
+		if (has_name && !std::string_view(info.pModel->szPathName).contains(light.def.attach_prop_name)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	// called from model_renderer::DrawModelExecute::Detour
+	void remix_lights::on_draw_model_exec(const ModelRenderInfo_t& info)
+	{
+		if (map_settings::get_map_settings().using_any_light_attached_to_prop)
+		{
+			for (auto& light : m_active_lights)
+			{
+				if (light.attachframe != m_attachframe_counter)
+				{
+					if (light_attachment_is_matching_model(light, info))
+					{
+						light.attachframe = m_attachframe_counter; // mark as processed this frame
+						light.attached_offset = info.origin;
+						//break; // we might have other lights attached to this model
+					}
+				}
+			}
+		}
+	}
+
+	// called from: choreo_events::scene_ent_on_start_event_hk
+	void remix_lights::on_event_start(const std::string_view& name, const std::string_view& actor, const std::string_view& event, const std::string_view& param1)
+	{
+		// no event trigger in edit mode
+		if (imgui::get()->m_light_edit_mode) {
+			return;
+		}
+
 		auto& msettings = map_settings::get_map_settings();
 		for (auto it = msettings.remix_lights.begin(); it != msettings.remix_lights.end();)
 		{
 			if (!it->trigger_choreo_name.empty() && name.contains(it->trigger_choreo_name))
 			{
+				// check if opt. actor is defined and matches event actor
+				if (!it->trigger_choreo_actor.empty() && !actor.contains(it->trigger_choreo_actor)) {
+					++it; continue;
+				}
+
+				// check if opt. event is defined and matches event string
+				if (!it->trigger_choreo_event.empty() && !event.contains(it->trigger_choreo_event)) {
+					++it; continue;
+				}
+
+				// check if opt. param1 is defined and matches event param1
+				if (!it->trigger_choreo_param1.empty() && !param1.contains(it->trigger_choreo_param1)) {
+					++it; continue;
+				}
+
 				get()->add_single_map_setting_light(&*it);
 
 				// only spawn on the very first play of the vcd
@@ -578,7 +747,12 @@ namespace components::api
 	// called from: choreo_events::scene_ent_on_finish_event_hk
 	void remix_lights::on_event_finish(const std::string_view& name)
 	{
-		for (auto& l : m_map_lights)
+		// no event trigger in edit mode
+		if (imgui::get()->m_light_edit_mode) {
+			return;
+		}
+
+		for (auto& l : m_active_lights)
 		{
 			// only check active lights with a kill trigger not yet marked to be destroyed
 			if (l.handle && !l.def.kill_choreo_name.empty() && !l.is_marked_for_destruction)
@@ -590,40 +764,15 @@ namespace components::api
 		}
 	}
 
-	/**
-	 * Check if we have to calculate a hash in on_sound_start
-	 * @return	returns true if we require hashing
-	 */
-	bool remix_lights::on_sound_start_require_hash()
-	{
-		// check map_setting lights (spawn)
-		auto& msettings = map_settings::get_map_settings();
-		if (!msettings.remix_lights.empty())
-		{
-			for (const auto& l : msettings.remix_lights)
-			{
-				if (l.trigger_sound_hash || l.kill_sound_hash) {
-					return true;
-				}
-			}
-		}
-
-		// check active lights (kill)
-		for (auto& l : m_map_lights)
-		{
-			// only check active lights with a kill trigger not yet marked to be destroyed
-			if (l.handle && l.def.kill_sound_hash && !l.is_marked_for_destruction) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	void remix_lights::on_sound_start(const std::uint32_t hash)
 	{
+		// no event trigger in edit mode
+		if (imgui::get()->m_light_edit_mode) {
+			return;
+		}
+
 		// check for kill trigger
-		for (auto& l : m_map_lights)
+		for (auto& l : m_active_lights)
 		{
 			// only check active lights with a kill trigger not yet marked to be destroyed
 			if (l.handle && l.def.kill_sound_hash && !l.is_marked_for_destruction)
@@ -654,22 +803,69 @@ namespace components::api
 
 	void remix_lights::on_client_frame()
 	{
-		get()->a2_bts3_flashlight();
-		get()->update_all_map_lights();
-		get()->draw_all_map_lights();
+		const auto rml = remix_lights::get();
+		const auto& glob = game::get_global_vars();
+
+		// check if paused
+		rml->m_is_paused = utils::float_equal(glob->frametime, 0.0f);
+
+		if (!rml->m_is_paused)
+		{
+			rml->update_all_active_lights();
+			++m_attachframe_counter;
+		}
+
+		rml->draw_all_active_lights();
+
+		if (cmd::show_api_lights)
+		{
+			bool first_done = false;
+			for (const auto& l : m_active_lights)
+			{
+				const Vector circle_pos = &l.ext.position.x;
+				const float radius = l.ext.radius;
+				const Vector color = { 1.0f, 1.0f, 1.0f };
+
+				const auto remixapi = remix_api::get();
+
+				// we only need to craft one circle instance - everything else is instanced
+				if (!first_done)
+				{
+					first_done = true;
+					remixapi->add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, color);
+				}
+				else {
+					remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(0, 0, 90), Vector(1.0f, 1.0f, 1.0f));
+				}
+
+				remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(0, 90, 0), Vector(1.0f, 1.0f, 1.0f));
+				remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(90, 0, 90), Vector(1.0f, 1.0f, 1.0f));
+			}
+		}
+
 	}
 
 	// called before map_settings
 	void remix_lights::on_map_load()
 	{
 		// reset spawn tracker
-		m_map_light_spawn_tracker = 0u;
+		m_active_light_spawn_tracker = 0u;
+		m_attachframe_counter = 0u;
+	}
 
-		get()->a2_bts3_flashlight_destroy();
+	ConCommand xo_debug_toggle_show_api_lights_cmd{};
+	void xo_debug_toggle_show_api_lights_fn()
+	{
+		cmd::show_api_lights = !cmd::show_api_lights;
 	}
 
 	remix_lights::remix_lights()
 	{
 		p_this = this;
+
+		// #
+		// commands
+
+		game::con_add_command(&xo_debug_toggle_show_api_lights_cmd, "xo_debug_toggle_show_api_lights", xo_debug_toggle_show_api_lights_fn, "Toggle debug vis for lights added via the remixapi");
 	}
 }

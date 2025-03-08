@@ -1,6 +1,6 @@
 #pragma once
 
-namespace components::api
+namespace components
 {
 	class remix_rayportal : public component
 	{

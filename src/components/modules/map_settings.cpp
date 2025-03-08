@@ -2,6 +2,8 @@
 
 namespace components
 {
+#define CATCH_ERR	catch (toml::type_error& err) { game::console(); printf("%s\n", err.what()); return; }
+
 	void map_settings::set_settings_for_map(const std::string& map_name)
 	{
 		m_map_settings.mapname = !map_name.empty() ? map_name : game::get_map_name();
@@ -11,12 +13,12 @@ namespace components
 		parse_toml();
 
 		static bool disable_map_configs = flags::has_flag("xo_disable_map_conf");
-		if (api::m_initialized)
+		if (remix_api::is_initialized())
 		{
 			if (!disable_map_configs)
 			{
 				// resets all modified variables back to rtx.conf level
-				api::remix_vars::reset_all_modified();
+				remix_vars::reset_all_modified();
 
 				// auto apply {map_name}.conf (if it exists)
 				open_and_set_var_config(m_map_settings.mapname + ".conf", true);
@@ -27,7 +29,46 @@ namespace components
 				}
 			}
 
-			api::remix_lights::get()->add_all_map_setting_lights_without_creation_trigger();
+			main_module::cross_handle_map_and_game_settings();
+
+			// lights are spawned manually in edit mode
+			if (!imgui::get()->m_light_edit_mode) {
+				remix_lights::get()->add_all_map_setting_lights_without_creation_trigger();
+			}
+		}
+
+		m_map_settings.default_nocull_dist = game_settings::get()->default_nocull_distance.get_as<float>();
+
+		// are we using any sound hashes or names to trigger configvar transitions?
+		{
+			if (!m_map_settings.remix_transitions.empty())
+			{
+				for (const auto& t : m_map_settings.remix_transitions)
+				{
+					if (t.trigger_type == TRANSITION_TRIGGER_TYPE::SOUND && t.sound_hash) {
+						m_map_settings.using_any_transition_sound_hash = true;
+					}
+
+					if (t.trigger_type == TRANSITION_TRIGGER_TYPE::SOUND && !t.sound_name.empty()) {
+						m_map_settings.using_any_transition_sound_name = true;
+					}
+				}
+			}
+		}
+
+		// are we using any sound hashes to trigger light spawning?
+		{
+			if (!m_map_settings.remix_lights.empty())
+			{
+				for (const auto& l : m_map_settings.remix_lights)
+				{
+					if (l.trigger_sound_hash || l.kill_sound_hash)
+					{
+						m_map_settings.using_any_light_sound_hash = true;
+						break;
+					}
+				}
+			}
 		}
 
 		m_loaded = true;
@@ -131,9 +172,9 @@ namespace components
 
 	bool map_settings::parse_toml()
 	{
-		try 
+		try
 		{
-			auto config = toml::parse("portal2-rtx\\map_settings.toml");
+			auto config = toml::parse(COMPMOD_ASSET_DIR "map_settings.toml", toml::spec::v(1, 1, 0));
 
 			// #
 			auto to_float = [](const toml::value& entry, const float default_val = 0.0f)
@@ -159,7 +200,7 @@ namespace components
 			// #
 			auto to_int = [](const toml::value& entry, const int default_val = 0)
 				{
-					if (entry.is_floating())  {
+					if (entry.is_floating()) {
 						return static_cast<int>(entry.as_floating());
 					}
 
@@ -197,6 +238,27 @@ namespace components
 					return default_val;
 				};
 
+			// #
+			auto to_bool = [](const toml::value& entry, const bool default_setting = false)
+				{
+					if (entry.is_boolean()) {
+						return static_cast<bool>(entry.as_boolean());
+					}
+
+					if (entry.is_integer()) {
+						return static_cast<bool>(entry.as_integer());
+					}
+
+					try { // this will fail and let the user know whats wrong
+						return static_cast<bool>(entry.as_boolean());
+					}
+					catch (toml::type_error& err) {
+						game::console(); printf("%s\n", err.what());
+					}
+
+					return default_setting;
+				};
+
 			// ####################
 			// parse 'FOG' table
 			if (config.contains("FOG"))
@@ -209,12 +271,19 @@ namespace components
 					if (const auto map = fog_table[m_map_settings.mapname];
 						!map.is_empty())
 					{
-						if (map.contains("distance") && map.contains("color"))
-						{
-							const auto dist = map.at("distance");
-							m_map_settings.fog_dist = to_float(dist);
+						const bool has_distance = map.contains("distance");
+						const bool has_density = map.contains("density");
 
-							if (const auto& color = map.at("color").as_array(); 
+						if ((has_distance || has_density) && map.contains("color"))
+						{
+							if (has_distance) {
+								m_map_settings.fog_dist = to_float(map.at("distance"));
+							}
+							else if (has_density) {
+								m_map_settings.fog_density = to_float(map.at("density"));
+							}
+
+							if (const auto& color = map.at("color").as_array();
 								color.size() == 3)
 							{
 								const auto r = static_cast<std::uint8_t>(to_int(color[0]));
@@ -225,7 +294,7 @@ namespace components
 						}
 					}
 				}
-			} // end 'CULL'
+			} // end 'FOG'
 
 
 			// ####################
@@ -240,7 +309,17 @@ namespace components
 					if (const auto map = water_table[m_map_settings.mapname];
 						!map.is_empty())
 					{
-						m_map_settings.water_uv_scale = to_float(map, 1.0f);
+						if (map.contains("scale")) {
+							m_map_settings.water_uv_scale = to_float(map.at("scale"), 1.0f);
+						}
+
+						if (map.contains("top_layer_offset")) {
+							m_map_settings.water_offset_top = to_float(map.at("top_layer_offset"), 0.5f);
+						}
+
+						if (map.contains("bottom_layer_offset")) {
+							m_map_settings.water_offset_bottom = to_float(map.at("bottom_layer_offset"), 0.0f);
+						}
 					}
 				}
 			} // end 'WATER'
@@ -253,17 +332,18 @@ namespace components
 				auto& cull_table = config["CULL"];
 
 				// #
-				auto process_cull_entry = [to_int](const toml::value& entry)
+				auto process_cull_entry = [to_uint, to_float](const toml::value& entry)
 					{
 						const auto contains_leafs = entry.contains("leafs");
 						const auto contains_areas = entry.contains("areas");
+						const auto contains_leaf_tweak = entry.contains("leaf_tweak");
 						const auto contains_hidden_leafs = entry.contains("hide_leafs");
 						const auto contains_hidden_areas = entry.contains("hide_areas");
 						const auto contains_cull = entry.contains("cull");
 
-						if (entry.contains("area") && (contains_leafs || contains_areas || contains_hidden_leafs || contains_hidden_areas || contains_cull))
+						if (entry.contains("in_area"))
 						{
-							const auto area = to_int(entry.at("area"));
+							const auto area = to_uint(entry.at("in_area"));
 
 							// forced leafs
 							std::unordered_set<std::uint32_t> leaf_set;
@@ -272,7 +352,7 @@ namespace components
 								auto& leafs = entry.at("leafs").as_array();
 
 								for (const auto& leaf : leafs) {
-									leaf_set.insert(to_int(leaf));
+									leaf_set.insert(to_uint(leaf));
 								}
 							}
 
@@ -283,21 +363,27 @@ namespace components
 								auto& areas = entry.at("areas").as_array();
 
 								for (const auto& a : areas) {
-									area_set.insert(to_int(a));
+									area_set.insert(to_uint(a));
 								}
 							}
 
 							// culling mode
-							AREA_CULL_MODE cmode = cmd::disable_frustum_culling ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_MODE_DEFAULT;
+							AREA_CULL_MODE cmode = imgui::get()->m_disable_cullnode ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_INFO_DEFAULT;
 							if (contains_cull)
 							{
-								auto m = to_int(entry.at("cull"));
-								if (m >= AREA_CULL_COUNT) 
+								auto m = to_uint(entry.at("cull"));
+								if (m >= AREA_CULL_INFO_COUNT)
 								{
 									game::console(); printf("MapSettings: param 'cull' was out-of-range (%d)\n", m);
 									m = 0u;
 								}
 								cmode = (AREA_CULL_MODE)(std::uint8_t)m;
+							}
+
+							// nocull dist for certain cull modes
+							float temp_nocull_dist = game_settings::get()->default_nocull_distance.get_as<float>();
+							if (entry.contains("nocull_dist")) {
+								temp_nocull_dist = to_float(entry.at("nocull_dist"));
 							}
 
 							// hidden leafs
@@ -307,7 +393,7 @@ namespace components
 								auto& leafs = entry.at("hide_leafs").as_array();
 
 								for (const auto& leaf : leafs) {
-									hidden_leaf_set.insert(to_int(leaf));
+									hidden_leaf_set.insert(to_uint(leaf));
 								}
 							}
 
@@ -324,7 +410,7 @@ namespace components
 										const auto& areas = elem.at("areas").as_array();
 
 										for (const auto& a : areas) {
-											temp_area_set.insert(to_int(a));
+											temp_area_set.insert(to_uint(a));
 										}
 
 										std::unordered_set<std::uint32_t> temp_not_in_leaf_set;
@@ -332,7 +418,7 @@ namespace components
 										{
 											const auto& nleafs = elem.at("N_leafs").as_array();
 											for (const auto& nl : nleafs) {
-												temp_not_in_leaf_set.insert(to_int(nl));
+												temp_not_in_leaf_set.insert(to_uint(nl));
 											}
 										}
 
@@ -341,21 +427,79 @@ namespace components
 								}
 							}
 
-							m_map_settings.area_settings.emplace(area, 
-								area_overrides_s(
-									std::move(leaf_set), 
-									std::move(area_set), 
-									std::move(hidden_leaf_set), 
+							// leaf tweaks
+							std::vector<leaf_tweak_s> temp_leaf_tweak_set;
+							bool any_nocull_dist_overrides_in_leaf_tweaks = false;
+
+							if (contains_leaf_tweak)
+							{
+								auto& leaf_tweak = entry.at("leaf_tweak").as_array();
+								for (const auto& elem : leaf_tweak)
+								{
+									if (elem.contains("in_leafs"))
+									{
+										std::unordered_set<std::uint32_t> temp_in_leafs_set;
+										const auto& in_leafs = elem.at("in_leafs").as_array();
+
+										for (const auto& l : in_leafs) {
+											temp_in_leafs_set.insert(to_uint(l));
+										}
+
+										std::unordered_set<std::uint32_t> temp_areas;
+										if (elem.contains("areas"))
+										{
+											const auto& areas = elem.at("areas").as_array();
+											for (const auto& a : areas) {
+												temp_areas.insert(to_uint(a));
+											}
+										}
+
+										std::unordered_set<std::uint32_t> temp_leafs;
+										if (elem.contains("leafs"))
+										{
+											const auto& leafs = elem.at("leafs").as_array();
+											for (const auto& l : leafs) {
+												temp_leafs.insert(to_uint(l));
+											}
+										}
+
+										// nocull dist for certain cull modes
+										float temp_leaf_tweak_nocull_dist = 0.0f; // 0 = no override
+										if (elem.contains("nocull_dist"))
+										{
+											temp_leaf_tweak_nocull_dist = to_float(elem.at("nocull_dist"));
+											any_nocull_dist_overrides_in_leaf_tweaks = true;
+										}
+
+										temp_leaf_tweak_set.emplace_back(
+											std::move(temp_in_leafs_set),
+											std::move(temp_areas),
+											std::move(temp_leafs),
+											temp_leaf_tweak_nocull_dist);
+									}
+								}
+							}
+
+							m_map_settings.area_settings.emplace(area,
+								area_overrides_s
+								{
+									std::move(leaf_set),
+									std::move(area_set),
+									std::move(hidden_leaf_set),
 									std::move(temp_hidden_areas_set),
+									std::move(temp_leaf_tweak_set),
 									cmode,
-									area));
+									temp_nocull_dist,
+									any_nocull_dist_overrides_in_leaf_tweaks,
+									area
+								});
 						}
 					};
 
 				// try to find the loaded map
 				if (cull_table.contains(m_map_settings.mapname))
 				{
-					if (const auto map = cull_table[m_map_settings.mapname]; 
+					if (const auto map = cull_table[m_map_settings.mapname];
 						!map.is_empty() && !map.as_array().empty())
 					{
 						for (const auto& entry : map.as_array()) {
@@ -371,7 +515,7 @@ namespace components
 			if (config.contains("HIDEMODEL"))
 			{
 				// try to find the loaded map
-				if (auto& hidemdl_table = config["HIDEMODEL"]; 
+				if (auto& hidemdl_table = config["HIDEMODEL"];
 					hidemdl_table.contains(m_map_settings.mapname))
 				{
 					if (const auto map = hidemdl_table[m_map_settings.mapname];
@@ -406,7 +550,7 @@ namespace components
 								}
 							}
 						}
-						
+
 					}
 				}
 			} // end 'HIDEMODEL'
@@ -427,7 +571,7 @@ namespace components
 						if (entry.contains("marker")) {
 							temp_marker_index = static_cast<std::uint32_t>(to_int(entry.at("marker"), 0u));
 						}
-						else if (entry.contains("nocull")) 
+						else if (entry.contains("nocull"))
 						{
 							temp_marker_index = static_cast<std::uint32_t>(to_int(entry.at("nocull"), 0u));
 							temp_is_nocull_marker = true;
@@ -438,17 +582,74 @@ namespace components
 							return;
 						}
 
+						std::string temp_comment;
+						if (!entry.comments().empty())
+						{
+							temp_comment = entry.comments().at(0);
+							temp_comment.erase(0, 2); // rem '# '
+						}
+
 						if (entry.contains("position"))
 						{
 							if (const auto& pos = entry.at("position").as_array();
 								pos.size() == 3)
 							{
+								Vector temp_rotation;
+								Vector temp_scale = { 1.0, 1.0f, 1.0f };
+
+								// optional
+								if (entry.contains("rotation"))
+								{
+									if (const auto& rot = entry.at("rotation").as_array(); rot.size() == 3) {
+										temp_rotation = { DEG2RAD(to_float(rot[0])), DEG2RAD(to_float(rot[1])), DEG2RAD(to_float(rot[2])) };
+									}
+									else { TOML_ERROR("[MARKER] #rotation", entry.at("rotation"), "expected a 3D vector but got => %d ", entry.at("rotation").as_array().size()); }
+								}
+
+								// optional
+								if (entry.contains("scale"))
+								{
+									if (const auto& scale = entry.at("scale").as_array(); scale.size() == 3) {
+										temp_scale = { to_float(scale[0]), to_float(scale[1]), to_float(scale[2]) };
+									}
+									else { TOML_ERROR("[MARKER] #scale", entry.at("scale"), "expected a 3D vector but got => %d ", entry.at("scale").as_array().size()); }
+								}
+
+								// optional
+								std::unordered_set<std::uint32_t> temp_area_set;
+								if (entry.contains("areas"))
+								{
+									if (const auto& areas = entry.at("areas").as_array(); !areas.empty())
+									{
+										for (const auto& a : areas) {
+											temp_area_set.insert(to_int(a));
+										}
+									}
+								}
+
+								// optional
+								std::unordered_set<std::uint32_t> temp_not_in_leaf_set;
+								if (entry.contains("N_leafs"))
+								{
+									if (const auto& nleafs = entry.at("N_leafs").as_array(); !nleafs.empty())
+									{
+										for (const auto& nl : nleafs) {
+											temp_not_in_leaf_set.insert(to_int(nl));
+										}
+									}
+								}
+
 								m_map_settings.map_markers.emplace_back(
 									marker_settings_s
 									{
 										.index = temp_marker_index,
-										.origin = {to_float(pos[0]), to_float(pos[1]), to_float(pos[2])},
-										.no_cull = temp_is_nocull_marker
+										.origin = { to_float(pos[0]), to_float(pos[1]), to_float(pos[2]) },
+										.no_cull = temp_is_nocull_marker,
+										.rotation = temp_rotation,
+										.scale = temp_scale,
+										.areas = std::move(temp_area_set),
+										.when_not_in_leafs = std::move(temp_not_in_leaf_set),
+										.comment = std::move(temp_comment)
 									});
 							}
 							else { TOML_ERROR("[MARKER] #position", entry.at("position"), "expected a 3D vector but got => %d ", entry.at("position").as_array().size()); }
@@ -474,25 +675,24 @@ namespace components
 			{
 				auto& configvar_table = config["CONFIGVARS"];
 
-				// #TODO
-				auto process_transition_entry = [to_int, to_float](const toml::value& entry)
+				auto process_transition_entry = [to_uint, to_int, to_float](const toml::value& entry)
 					{
 						// we NEED conf, leafs and duration or speed
-						if (entry.contains("conf") && (entry.contains("leafs") || entry.contains("choreo")) && (entry.contains("duration") || entry.contains("speed")))
+						if (entry.contains("conf") && entry.contains("trigger") && (entry.contains("duration") || entry.contains("speed")))
 						{
 							std::string config_name;
 
 							try { config_name = entry.at("conf").as_string(); }
-							catch (toml::type_error& err) 
+							catch (toml::type_error& err)
 							{
 								game::console(); printf("%s\n", err.what());
 								return;
 							}
 
-							if (!config_name.empty()) 
+							if (!config_name.empty())
 							{
 								std::uint8_t mode = 0u;
-								api::remix_vars::EASE_TYPE ease = api::remix_vars::EASE_TYPE_LINEAR;
+								remix_vars::EASE_TYPE ease = remix_vars::EASE_TYPE_LINEAR;
 								float delay_in = 0.0f, delay_out = 0.0f, duration = 0.0f;
 
 								if (entry.contains("mode")) {
@@ -500,7 +700,7 @@ namespace components
 								}
 
 								if (entry.contains("ease")) {
-									ease = (api::remix_vars::EASE_TYPE)to_int(entry.at("ease"));
+									ease = (remix_vars::EASE_TYPE)to_int(entry.at("ease"));
 								}
 
 								if (entry.contains("delay_in")) {
@@ -515,24 +715,51 @@ namespace components
 									duration = to_float(entry.at("duration"));
 								}
 
-								const bool choreo_mode = entry.contains("choreo");
-								if (choreo_mode)
+								const auto& trigger = entry.at("trigger");
+
+								// choreo trigger
+								if (trigger.contains("choreo"))
 								{
 									std::string choreo_name;
-									try { choreo_name = entry.at("choreo").as_string(); }
-									catch (toml::type_error& err)
+									std::string choreo_actor;
+									std::string choreo_event;
+									std::string choreo_param1;
+
+									try { choreo_name = trigger.at("choreo").as_string(); }
+									CATCH_ERR;
+
+									if (trigger.contains("actor"))
 									{
-										game::console(); printf("%s\n", err.what());
-										return;
+										try { choreo_actor = trigger.at("actor").as_string(); }
+										CATCH_ERR;
+									}
+
+									if (trigger.contains("event"))
+									{
+										try { choreo_event = trigger.at("event").as_string(); }
+										CATCH_ERR;
+									}
+
+									if (trigger.contains("param1"))
+									{
+										try { choreo_param1 = trigger.at("param1").as_string(); }
+										CATCH_ERR;
 									}
 
 									if (!choreo_name.empty())
 									{
 										const auto hash = utils::string_hash64(utils::va("%s%s%.2f", choreo_name.c_str(), config_name.c_str(), duration));
-										m_map_settings.choreo_transitions.emplace_back(
+										m_map_settings.remix_transitions.emplace_back(
+											TRANSITION_TRIGGER_TYPE::CHOREO,
 											std::move(choreo_name),
+											std::move(choreo_actor),
+											std::move(choreo_event),
+											std::move(choreo_param1),
+											0u,
+											"",
+											std::unordered_set<std::uint32_t>(),
 											config_name,
-											(CHOREO_TRANS_MODE)mode,
+											(TRANSITION_MODE)mode,
 											ease,
 											delay_in,
 											delay_out,
@@ -540,36 +767,76 @@ namespace components
 											hash);
 									}
 								}
-								else
+
+								// sound trigger
+								else if (trigger.contains("sound"))
 								{
-									const bool leaf_mode = !choreo_mode && entry.contains("leafs");
-									if (leaf_mode)
+									std::uint32_t temp_sound_hash = 0u;
+									std::string temp_sound_name;
+
+									if (trigger.at("sound").type() == toml::value_t::integer)
 									{
-										std::unordered_set<std::uint32_t> leaf_set;
-										const auto& leafs = entry.at("leafs").as_array();
-										if (!leafs.empty())
-										{
-											for (const auto& leaf : leafs) {
-												leaf_set.insert(to_int(leaf));
-											}
+										temp_sound_hash = to_uint(trigger.at("sound"), 0u);
+									}
+									else
+									{
+										try { temp_sound_name = trigger.at("sound").as_string(); }
+										CATCH_ERR;
+									}
 
-											// create a unique hash for this transition
-											int leaf_sum = 0;
-											for (const auto& leaf : leaf_set) {
-												leaf_sum += leaf;
-											}
+									const auto hash = utils::string_hash64(utils::va("%d%s%s%.2f", temp_sound_hash, temp_sound_name.c_str(), config_name.c_str(), duration));
+									m_map_settings.remix_transitions.emplace_back(
+										TRANSITION_TRIGGER_TYPE::SOUND,
+										"",
+										"",
+										"",
+										"",
+										temp_sound_hash,
+										std::move(temp_sound_name),
+										std::unordered_set<std::uint32_t>(),
+										config_name,
+										(TRANSITION_MODE)mode,
+										ease,
+										delay_in,
+										delay_out,
+										duration,
+										hash);
+								}
 
-											const auto hash = utils::string_hash64(utils::va("%d%s%.2f", leaf_sum, config_name.c_str(), duration));
-											m_map_settings.leaf_transitions.emplace_back(
-												std::move(leaf_set),
-												config_name,
-												(LEAF_TRANS_MODE)mode,
-												ease,
-												delay_in,
-												delay_out,
-												duration,
-												hash);
+								// leaf trigger
+								else if (trigger.contains("leafs") && trigger.at("leafs").is_array())
+								{
+									std::unordered_set<std::uint32_t> leaf_set;
+									const auto& leafs = trigger.at("leafs").as_array();
+									if (!leafs.empty())
+									{
+										for (const auto& leaf : leafs) {
+											leaf_set.insert(to_int(leaf));
 										}
+
+										// create a unique hash for this transition
+										std::uint32_t leaf_sum = 0;
+										for (const auto& leaf : leaf_set) {
+											leaf_sum += leaf;
+										}
+
+										const auto hash = utils::string_hash64(utils::va("%d%s%.2f", leaf_sum, config_name.c_str(), duration));
+										m_map_settings.remix_transitions.emplace_back(
+											TRANSITION_TRIGGER_TYPE::LEAF,
+											"",
+											"",
+											"",
+											"",
+											0u,
+											"",
+											std::move(leaf_set),
+											config_name,
+											(TRANSITION_MODE)mode,
+											ease,
+											delay_in,
+											delay_out,
+											duration,
+											hash);
 									}
 								}
 							}
@@ -584,7 +851,7 @@ namespace components
 					{
 						if (map.contains("startup"))
 						{
-							if (auto& startup = map.at("startup").as_array(); 
+							if (auto& startup = map.at("startup").as_array();
 								!startup.empty())
 							{
 								for (const auto& conf : startup)
@@ -647,8 +914,8 @@ namespace components
 										if (p0_pos.size() == 3 && p0_rot.size() == 3 && p0_scale.size() == 2
 											&& p1_pos.size() == 3 && p1_rot.size() == 3 && p1_scale.size() == 2)
 										{
-											api::remix_rayportal::get()->add_pair(
-												(api::remix_rayportal::PORTAL_PAIR)static_cast<std::uint32_t>(to_int(entry.at("pair"))),
+											remix_rayportal::get()->add_pair(
+												(remix_rayportal::PORTAL_PAIR)static_cast<std::uint32_t>(to_int(entry.at("pair"))),
 												{ to_float(p0_pos[0]),   to_float(p0_pos[1]), to_float(p0_pos[2]) },
 												{ to_float(p0_rot[0]),   to_float(p0_rot[1]), to_float(p0_rot[2]) },
 												{ to_float(p0_scale[0]), to_float(p0_scale[1]) },
@@ -685,16 +952,27 @@ namespace components
 				auto& light_table = config["LIGHTS"];
 
 				// #
-				auto process_light_entry = [to_int, to_uint, to_float](const toml::value& entry)
+				auto process_light_entry = [to_bool, to_int, to_uint, to_float](const toml::value& entry)
 					{
 						if (entry.contains("points") && !entry.at("points").as_array().empty())
 						{
 							// - parse trigger
 
 							std::string temp_trigger_choreo_name;
+							std::string temp_trigger_choreo_actor;
+							std::string temp_trigger_choreo_event;
+							std::string temp_trigger_choreo_param1;
+
 							std::uint32_t temp_trigger_sound = 0u;
 							float temp_trigger_delay = 0.0f;
 							bool temp_trigger_always = false;
+
+							std::string temp_comment;
+							if (!entry.comments().empty())
+							{
+								temp_comment = entry.comments().at(0);
+								temp_comment.erase(0, 2); // rem '# '
+							}
 
 							if (entry.contains("trigger"))
 							{
@@ -705,31 +983,46 @@ namespace components
 								if (trigger.contains("choreo"))
 								{
 									try { temp_trigger_choreo_name = trigger.at("choreo").as_string(); }
-									catch (toml::type_error& err)
+									CATCH_ERR;
+
+									if (trigger.contains("actor"))
 									{
-										game::console(); printf("%s\n", err.what());
-										return;
+										try { temp_trigger_choreo_actor = trigger.at("actor").as_string(); }
+										CATCH_ERR;
+									}
+
+									if (trigger.contains("event"))
+									{
+										try { temp_trigger_choreo_event = trigger.at("event").as_string(); }
+										CATCH_ERR;
+									}
+
+									if (trigger.contains("param1"))
+									{
+										try { temp_trigger_choreo_param1 = trigger.at("param1").as_string(); }
+										CATCH_ERR;
 									}
 
 									has_valid_trigger = true;
 								}
 								// sound trigger
-								else if (trigger.contains("sound")) 
+								else if (trigger.contains("sound"))
 								{
 									temp_trigger_sound = to_uint(trigger.at("sound"), 0u);
 									has_valid_trigger = true;
 								}
 
-								if (has_valid_trigger) 
+								if (has_valid_trigger)
 								{
 									if (trigger.contains("delay")) {
 										temp_trigger_delay = to_float(trigger.at("delay"), 0.0f);
 									}
 
 									if (trigger.contains("always")) {
-										temp_trigger_always = to_int(trigger.at("always"), 0);
+										temp_trigger_always = to_bool(trigger.at("always"), false);
 									}
-								} else { TOML_ERROR("[LIGHTS] #trigger", trigger, "defined trigger with no choreo / sound hash"); }
+								}
+								else { TOML_ERROR("[LIGHTS] #trigger", trigger, "defined trigger with no choreo / sound hash"); }
 							}
 
 							// - parse kill
@@ -747,11 +1040,7 @@ namespace components
 								if (kill.contains("choreo"))
 								{
 									try { temp_kill_choreo_name = kill.at("choreo").as_string(); }
-									catch (toml::type_error& err)
-									{
-										game::console(); printf("%s\n", err.what());
-										return;
-									}
+									CATCH_ERR;
 
 									has_valid_kill_trigger = true;
 								}
@@ -767,18 +1056,14 @@ namespace components
 									if (kill.contains("delay")) {
 										temp_kill_delay = to_float(kill.at("delay"), 0.0f);
 									}
-								} else { TOML_ERROR("[LIGHTS] #trigger", kill, "defined kill trigger with no choreo / sound hash"); }
+								}
+								else { TOML_ERROR("[LIGHTS] #trigger", kill, "defined kill trigger with no choreo / sound hash"); }
 							}
 
 							// - parse points
 
 							const auto& parray = entry.at("points").as_array();
 							std::vector<remix_light_settings_s::point_s> temp_points;
-
-							bool temp_loop_smoothing = false;
-							if (entry.contains("loop_smoothing")) {
-								temp_loop_smoothing = to_int(entry.at("loop_smoothing"), 0);
-							}
 
 							// for each point
 							for (auto i = 0u; i < parray.size(); i++)
@@ -795,7 +1080,7 @@ namespace components
 								}
 
 								if (!i && !point_has_valid_position) // first point needs to define a position
-								{	
+								{
 									TOML_ERROR("[LIGHTS] #position", p, "first point needs to define a position! Ignoring light");
 									break;
 								}
@@ -803,10 +1088,11 @@ namespace components
 								Vector temp_radiance = { 10.0f, 10.0f, 10.0f };
 								if (p.contains("radiance"))
 								{
-									if (const auto& radiance = p.at("radiance").as_array(); radiance.size() == 3) 
+									if (const auto& radiance = p.at("radiance").as_array(); radiance.size() == 3)
 									{
 										temp_radiance = Vector(to_float(radiance[0], 10.0f), to_float(radiance[1], 10.0f), to_float(radiance[2], 10.0f));
-									} else { TOML_ERROR("[LIGHTS] #radiance", p.at("radiance"), "expected a 3D vector but got => %d ", p.at("radiance").as_array().size()); }
+									}
+									else { TOML_ERROR("[LIGHTS] #radiance", p.at("radiance"), "expected a 3D vector but got => %d ", p.at("radiance").as_array().size()); }
 								}
 
 								float temp_radiance_scalar = 1.0f;
@@ -825,7 +1111,7 @@ namespace components
 								}
 
 								float temp_smoothness = 0.5f;
-								if (p.contains("smoothness")) 
+								if (p.contains("smoothness"))
 								{
 									temp_smoothness = to_float(p.at("smoothness"), 0.5f);
 									temp_smoothness = std::clamp<float>(temp_smoothness, 0.0f, 10.0f);
@@ -841,12 +1127,13 @@ namespace components
 									{
 										temp_direction = Vector(to_float(direction[0], 0.0f), to_float(direction[1], 0.0f), to_float(direction[2], 1.0f));
 										temp_direction.Normalize();
-									} else { TOML_ERROR("[LIGHTS] #direction", p.at("direction"), "expected a 3D vector but got => %d ", p.at("direction").as_array().size()); }
+									}
+									else { TOML_ERROR("[LIGHTS] #direction", p.at("direction"), "expected a 3D vector but got => %d ", p.at("direction").as_array().size()); }
 								}
 
 								bool temp_shaping_enabled = false;
 								float temp_degrees = 180.0f;
-								if (p.contains("degrees")) 
+								if (p.contains("degrees"))
 								{
 									temp_degrees = to_float(p.at("degrees"), 180.0f);
 									temp_degrees = std::clamp<float>(temp_degrees, 0.0f, 180.0f);
@@ -880,7 +1167,7 @@ namespace components
 
 								temp_points.emplace_back(
 									remix_light_settings_s::point_s(
-										pt, 
+										pt,
 										temp_radiance,
 										temp_radiance_scalar,
 										temp_radius,
@@ -894,18 +1181,64 @@ namespace components
 								);
 							}
 
+							// attach settings
+
+							float temp_attach_prop_radius = 0.0f;
+							std::string temp_attach_prop_str;
+							Vector temp_attach_prop_bounds_min;
+							Vector temp_attach_prop_bounds_max;
+
+							if (entry.contains("attach"))
+							{
+								bool has_valid_attach = false;
+								const auto& attach = entry.at("attach");
+
+								if (attach.contains("radius"))
+								{
+									temp_attach_prop_radius = to_float(attach.at("radius"), 0.0f);
+									has_valid_attach = true;
+								}
+								else if (attach.contains("name"))
+								{
+									try { temp_attach_prop_str = attach.at("name").as_string(); }
+									CATCH_ERR;
+
+									has_valid_attach = true;
+								}
+
+								if (has_valid_attach)
+								{
+									m_map_settings.using_any_light_attached_to_prop = true;
+
+									if (attach.contains("bounds"))
+									{
+										if (const auto& bounds = attach.at("bounds").as_array();
+											bounds.size() == 6u)
+										{
+											temp_attach_prop_bounds_min = Vector(to_float(bounds[0]), to_float(bounds[1]), to_float(bounds[2]));
+											temp_attach_prop_bounds_max = Vector(to_float(bounds[3]), to_float(bounds[4]), to_float(bounds[5]));
+										}
+									}
+								}
+							}
+
 							// - parse general settings
 
 							if (!temp_points.empty())
 							{
 								bool temp_run_once = false;
 								if (entry.contains("run_once")) {
-									temp_run_once = to_int(entry.at("run_once"), 0);
+									temp_run_once = to_bool(entry.at("run_once"), false);
 								}
 
 								bool temp_loop = false;
 								if (entry.contains("loop")) {
-									temp_loop = to_int(entry.at("loop"), 0);
+									temp_loop = to_bool(entry.at("loop"), false);
+								}
+
+								bool temp_loop_smoothing = false;
+								if (entry.contains("loop_smoothing")) {
+									temp_loop_smoothing = to_bool(entry.at("loop_smoothing"), false);
 								}
 
 								m_map_settings.remix_lights.push_back(
@@ -916,11 +1249,19 @@ namespace components
 										temp_loop_smoothing,
 										temp_trigger_always,
 										std::move(temp_trigger_choreo_name),
+										std::move(temp_trigger_choreo_actor),
+										std::move(temp_trigger_choreo_event),
+										std::move(temp_trigger_choreo_param1),
 										temp_trigger_sound,
 										temp_trigger_delay,
 										std::move(temp_kill_choreo_name),
 										temp_kill_sound,
-										temp_kill_delay)
+										temp_kill_delay,
+										temp_attach_prop_radius,
+										std::move(temp_attach_prop_str),
+										temp_attach_prop_bounds_min,
+										temp_attach_prop_bounds_max,
+										std::move(temp_comment))
 								);
 							}
 						}
@@ -958,7 +1299,7 @@ namespace components
 
 	void map_settings::open_and_set_var_config(const std::string& config, const bool no_error, const bool ignore_hashes, const char* custom_path)
 	{
-		std::string path = "portal2-rtx\\map_configs";
+		std::string path = COMPMOD_ASSET_DIR "map_configs";
 		if (custom_path)
 		{
 			path = custom_path;
@@ -988,10 +1329,10 @@ namespace components
 						continue;
 					}
 
-					if (const auto o = api::remix_vars::get_option(pair[0].c_str()); o)
+					if (const auto o = remix_vars::get_option(pair[0].c_str()); o)
 					{
-						const auto& v = api::remix_vars::string_to_option_value(o->second.type, pair[1]);
-						api::remix_vars::set_option(o, v, true);
+						const auto& v = remix_vars::string_to_option_value(o->second.type, pair[1]);
+						remix_vars::set_option(o, v, true);
 					}
 				}
 			}
@@ -1001,7 +1342,7 @@ namespace components
 		else if (!no_error)
 		{
 			game::console();
-			printf("[MapSettings] Failed to find config: \"%s\" in %s \n", config.c_str(), custom_path ? custom_path : "\"portal2-rtx\\map_configs\"");
+			printf("[MapSettings] Failed to find config: \"%s\" in %s \n", config.c_str(), custom_path ? custom_path : "\"" COMPMOD_ASSET_DIR "map_configs\"");
 		}
 	}
 
@@ -1024,14 +1365,14 @@ namespace components
 
 	void map_settings::clear_map_settings()
 	{
-		api::remix_rayportal::get()->destroy_all_pairs();
-
-		api::remix_lights::get()->destroy_and_clear_all_map_lights();
+		remix_lights::get()->destroy_and_clear_all_active_lights();
 		m_map_settings.remix_lights.clear();
+		m_map_settings.using_any_light_sound_hash = false;
+		m_map_settings.using_any_transition_sound_hash = false;
+		m_map_settings.using_any_transition_sound_name = false;
 
 		m_map_settings.area_settings.clear();
-		m_map_settings.leaf_transitions.clear();
-		m_map_settings.choreo_transitions.clear();
+		m_map_settings.remix_transitions.clear();
 
 		destroy_markers();
 		m_map_settings.map_markers.clear();
@@ -1044,7 +1385,7 @@ namespace components
 	}
 
 	ConCommand xo_mapsettings_update {};
-	void xo_mapsettings_update_fn()
+	void map_settings::reload()
 	{
 		map_settings::get()->clear_map_settings();
 		map_settings::get()->set_settings_for_map("");
@@ -1053,6 +1394,8 @@ namespace components
 	map_settings::map_settings()
 	{
 		p_this = this;
-		game::con_add_command(&xo_mapsettings_update, "xo_mapsettings_update", xo_mapsettings_update_fn, "Reloads the map_settings.toml file + map.conf");
+		game::con_add_command(&xo_mapsettings_update, "xo_mapsettings_update", map_settings::reload, "Reloads the map_settings.toml file + map.conf");
 	}
+
+#undef CATCH_ERR
 }

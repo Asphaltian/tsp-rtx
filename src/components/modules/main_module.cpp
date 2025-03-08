@@ -13,262 +13,19 @@
 
 namespace components
 {
-	int g_player_current_leaf = -1;
-	int g_player_current_area = -1;
+	namespace cmd
+	{
+		bool debug_node_vis = false;
+	}
+
+	int g_current_leaf = -1;
+	int g_current_area = -1;
 	int g_current_area_all_views = -1; // updated on each view-scene (eg. monitor + main)
 	bool g_player_leaf_update = false;
 	Vector g_player_view_org = {};
 
 	// contains overrides for the current area, nullptr if no overrides exist
 	map_settings::area_overrides_s* g_player_current_area_override = nullptr;
-
-	namespace cmd
-	{
-		bool disable_frustum_culling = false;
-		bool sound_debug_printing = false;
-	}
-
-	namespace api
-	{
-		bool m_initialized = false;
-		remixapi_Interface bridge = {};
-
-		remixapi_MaterialHandle remix_debug_line_materials[3];
-		remixapi_MeshHandle remix_debug_line_list[128] = {};
-		std::uint32_t remix_debug_line_amount = 0u;
-		std::uint64_t remix_debug_last_line_hash = 0u;
-		bool remix_debug_node_vis = false; // show/hide debug vis of bsp nodes/leafs
-
-		// forward declaration
-		void begin_scene_callback();
-
-		// called on device->Present
-		void on_present_callback()
-		{
-			// Draw current node/leaf as HUD
-			if (api::remix_debug_node_vis && main_module::d3d_font)
-			{
-				RECT rect;
-
-				if (!map_settings::get_map_name().empty())
-				{
-					SetRect(&rect, 20, 100, 512, 512);
-					main_module::d3d_font->DrawTextA
-					(
-						nullptr,
-						map_settings::get_map_name().c_str(),
-						-1,       // text length (-1 = null-terminated)
-						&rect,
-						DT_NOCLIP,
-						D3DCOLOR_XRGB(255, 255, 255)
-					);
-				}
-
-				if (g_player_current_area != -1)
-				{
-					SetRect(&rect, 20, 125, 512, 512);
-					auto text = utils::va("Area: %d", g_player_current_area);
-					main_module::d3d_font->DrawTextA
-					(
-						nullptr,
-						text,
-						-1,       // text length (-1 = null-terminated)
-						&rect,
-						DT_NOCLIP,
-						D3DCOLOR_XRGB(255, 255, 255)
-					);
-				}
-
-				if (g_player_current_leaf != -1)
-				{
-					SetRect(&rect, 20, 145, 512, 512);
-					auto text = utils::va("Leaf: %d", g_player_current_leaf);
-					main_module::d3d_font->DrawTextA
-					(
-						nullptr,
-						text,
-						-1,       // text length (-1 = null-terminated)
-						&rect,
-						DT_NOCLIP,
-						D3DCOLOR_XRGB(50, 255, 20)
-					);
-				}
-
-				//if (player_current_node != -1)
-				//{
-				//	SetRect(&rect, 10, 140, 512, 512);
-				//	auto text = utils::va("Node: %d", player_current_node);
-				//	main_module::d3d_font->DrawTextA
-				//	(
-				//		nullptr,
-				//		text,
-				//		-1,       // text length (-1 = null-terminated)
-				//		&rect,
-				//		DT_NOCLIP,
-				//		D3DCOLOR_XRGB(0, 255, 255)
-				//	);
-				//}
-			}
-		}
-
-		// called once from the main_module constructor
-		void init()
-		{
-			const auto status = remixapi::bridge_initRemixApi(&api::bridge);
-			if (status == REMIXAPI_ERROR_CODE_SUCCESS)
-			{
-				m_initialized = true;
-				remixapi::bridge_setRemixApiCallbacks(begin_scene_callback, nullptr, on_present_callback);
-			}
-		}
-
-		void create_quad(remixapi_HardcodedVertex* v_out, uint32_t* i_out, const float scale)
-		{
-			if (!v_out || !i_out)
-			{
-				return;
-			}
-
-			auto make_vertex = [&](float x, float y, float z, float u, float v)
-			{
-				const remixapi_HardcodedVertex vert =
-				{
-				  .position = { x, y, z },
-				  .normal = { 0.0f, 0.0f, -1.0f },
-				  .texcoord = { u, v },
-				  .color = 0xFFFFFFFF,
-				};
-				return vert;
-			};
-
-			v_out[0] = make_vertex(-1.0f * scale, 1, -1.0f * scale, 0.0f, 0.0f); // bottom left
-			v_out[1] = make_vertex(-1.0f * scale, 1, 1.0f * scale, 0.0f, 1.0f); // top left
-			v_out[2] = make_vertex(1.0f * scale, 1, -1.0f * scale, 1.0f, 0.0f); // bottom right
-			v_out[3] = make_vertex(1.0f * scale, 1, 1.0f * scale, 1.0f, 1.0f); // top right
-
-			i_out[0] = 0; i_out[1] = 1; i_out[2] = 2;
-			i_out[3] = 3; i_out[4] = 2; i_out[5] = 1;
-		}
-
-		void create_line_quad(remixapi_HardcodedVertex* v_out, uint32_t* i_out, const Vector& p1, const Vector& p2, const float width)
-		{
-			if (!v_out || !i_out)
-			{
-				return;
-			}
-
-			auto make_vertex = [&](const Vector& pos, float u, float v)
-				{
-					const remixapi_HardcodedVertex vert =
-					{
-					  .position = { pos.x, pos.y, pos.z },
-					  .normal = { 0.0f, 0.0f, -1.0f },
-					  .texcoord = { u, v },
-					  .color = 0xFFFFFFFF,
-					};
-					return vert;
-				};
-
-			Vector up = { 0.0f, 0.0f, 1.0f };
-
-			// dir of the line
-			Vector dir = p2 - p1;
-			dir.Normalize();
-
-			// check if dir is parallel or very close to the up vector
-			if (fabs(DotProduct(dir, up)) > 0.999f)
-			{
-				// if parallel, choose a different up vector
-				up = { 1.0f, 0.0f, 0.0f };
-			}
-
-			Vector perp = dir.Cross(up); // perpendicular vector to line
-			perp.Normalize(); // unit length
-
-			// scale by half width to offset vertices
-			const Vector offset = perp * (width * 0.5f);
-
-			v_out[0] = make_vertex(p1 - offset, 0.0f, 0.0f); // bottom left
-			v_out[1] = make_vertex(p1 + offset, 0.0f, 1.0f); // top left
-			v_out[2] = make_vertex(p2 - offset, 1.0f, 0.0f); // bottom right
-			v_out[3] = make_vertex(p2 + offset, 1.0f, 1.0f); // top right
-
-			i_out[0] = 0; i_out[1] = 1; i_out[2] = 2;
-			i_out[3] = 3; i_out[4] = 2; i_out[5] = 1;
-		}
-
-		void add_debug_line(const Vector& p1, const Vector& p2, const float width, DEBUG_REMIX_LINE_COLOR color)
-		{
-			if (remix_debug_line_materials[color])
-			{
-				remix_debug_line_amount++;
-				remixapi_HardcodedVertex verts[4] = {};
-				uint32_t indices[6] = {};
-				api::create_line_quad(verts, indices, p1, p2, width);
-
-				remixapi_MeshInfoSurfaceTriangles triangles =
-				{
-				  .vertices_values = verts,
-				  .vertices_count = ARRAYSIZE(verts),
-				  .indices_values = indices,
-				  .indices_count = 6,
-				  .skinning_hasvalue = FALSE,
-				  .skinning_value = {},
-				  .material = remix_debug_line_materials[color],
-				};
-
-				remixapi_MeshInfo info
-				{
-					.sType = REMIXAPI_STRUCT_TYPE_MESH_INFO,
-					.hash = utils::string_hash64(utils::va("line%d", remix_debug_last_line_hash ? remix_debug_last_line_hash : 1)),
-					.surfaces_values = &triangles,
-					.surfaces_count = 1,
-				};
-
-				api::bridge.CreateMesh(&info, &remix_debug_line_list[remix_debug_line_amount]);
-				remix_debug_last_line_hash = reinterpret_cast<std::uint64_t>(remix_debug_line_list[remix_debug_line_amount]);
-			}
-		}
-
-		// called on device->EndScene
-		void begin_scene_callback()
-		{
-			if (api::remix_debug_line_amount)
-			{
-				for (auto l = 1u; l < api::remix_debug_line_amount + 1; l++)
-				{
-					if (api::remix_debug_line_list[l])
-					{
-						remixapi_Transform t0 = {};
-						t0.matrix[0][0] = 1.0f;
-						t0.matrix[1][1] = 1.0f;
-						t0.matrix[2][2] = 1.0f;
-
-						const remixapi_InstanceInfo inst =
-						{
-							.sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO,
-							.pNext = nullptr,
-							.categoryFlags = 0,
-							.mesh = api::remix_debug_line_list[l],
-							.transform = t0,
-							.doubleSided = true
-						};
-
-						api::bridge.DrawInstance(&inst);
-					}
-				}
-			}
-
-			// reset first
-			for (auto i = 0u; i < 4; i++)
-			{
-				auto& p = model_render::game_portals[i];
-				p.portal = nullptr;
-				p.portal_owner = nullptr;
-				p.is_linked = false;
-			}
-		}
-	}
 
 	// #
 	// #
@@ -286,72 +43,6 @@ namespace components
 	// holds info about open portals
 	std::vector<portal_frustum_s> portal_frustums;
 
-	// draw 'nocull' map_setting marker meshes
-	void draw_nocull_markers()
-	{
-		const auto& msettings = map_settings::get_map_settings();
-
-		// early out
-		if (msettings.map_markers.empty()) {
-			return;
-		}
-
-		const auto dev = game::get_d3d_device();
-
-		struct vertex {
-			D3DXVECTOR3 position; D3DCOLOR color; float tu, tv;
-		};
-
-		// save & restore after drawing
-		IDirect3DVertexShader9* og_vs = nullptr;
-		dev->GetVertexShader(&og_vs);
-		dev->SetVertexShader(nullptr);
-
-		IDirect3DBaseTexture9* og_tex = nullptr;
-		dev->GetTexture(0, &og_tex);
-		dev->SetTexture(0, tex_addons::white);
-
-		DWORD og_rs;
-		dev->GetRenderState((D3DRENDERSTATETYPE)150, &og_rs);
-
-		dev->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
-		D3DXMATRIX mtx = game::IDENTITY;
-
-		for (auto& m : msettings.map_markers)
-		{
-			// ignore normal markers
-			if (!m.no_cull) {
-				continue;
-			}
-
-			const float f_index = static_cast<float>(m.index);
-			const vertex mesh_verts[4] =
-			{
-				D3DXVECTOR3(-1.337f - (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, 0), 0.0f, f_index / 100.0f,
-				D3DXVECTOR3( 1.337f + (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, m.index, 0), f_index / 100.0f, 0.0,
-				D3DXVECTOR3( 1.337f + (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, 0, m.index), 0.0f, f_index / 100.0f,
-				D3DXVECTOR3(-1.337f - (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, m.index), 0.0f, f_index / 100.0f,
-			};
-
-			mtx.m[3][0] = m.origin[0];
-			mtx.m[3][1] = m.origin[1];
-			mtx.m[3][2] = m.origin[2];
-
-			// set remix texture hash ~req. dxvk-runtime changes - not really needed
-			dev->SetRenderState((D3DRENDERSTATETYPE)150, 100 + m.index);
-
-			dev->SetTransform(D3DTS_WORLD, &mtx);
-			dev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, mesh_verts, sizeof(vertex));
-		}
-
-		// restore
-		dev->SetVertexShader(og_vs);
-		dev->SetTexture(0, og_tex);
-		dev->SetRenderState((D3DRENDERSTATETYPE)150, og_rs);
-		dev->SetFVF(NULL);
-		dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
-	}
-
 	/**
 	 * Called from CViewRender::RenderView (main scene rendering)
 	 * - Pass world, view, projection to D3D
@@ -361,6 +52,9 @@ namespace components
 	{
 		auto enginerender = game::get_engine_renderer();
 		const auto dev = game::get_d3d_device();
+
+		// helper for nocull markers
+		model_render::get()->m_drew_model = false;
 
 		// setup main camera
 		{
@@ -394,24 +88,41 @@ namespace components
 		// ----
 
 		choreo_events::on_client_frame();
-		api::remix_vars::on_client_frame();
-		api::remix_lights::on_client_frame();
+		remix_vars::on_client_frame();
+		remix_lights::on_client_frame();
+		main_module::force_cvars();
 
 		// force cvars per frame just to make sure
-		main_module::setup_required_cvars();
+		main_module::force_cvars();
 
 		// TODO - find better spot to call this
 		map_settings::spawn_markers_once();
+
+
+		// CM_PointLeafnum :: get current leaf
+		const auto current_leaf = game::get_leaf_from_position(*game::get_current_view_origin());
+		g_player_leaf_update = g_current_leaf != current_leaf;
+		g_current_leaf = current_leaf;
+
+		// CM_LeafArea :: get current area the camera is in
+		g_current_area = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + 0x14C2C0)(g_current_leaf); // #OFFS 2501
+
+
+		remix_api::get()->on_renderview();
 
 		// fog
 		if (static bool allow_fog = !flags::has_flag("no_fog"); allow_fog)
 		{
 			const auto& s = map_settings::get_map_settings();
-			if (s.fog_dist > 0.0f)
+			const bool has_dist = s.fog_dist > 0.0f;
+			const bool has_density = s.fog_density > 0.0f;
+
+			if (has_dist || has_density)
 			{
 				const float fog_start = 1.0f; // not useful
 				dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
-				dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+				dev->SetRenderState(D3DRS_FOGTABLEMODE, has_dist ? D3DFOG_LINEAR : has_density ? D3DFOG_EXP : D3DFOG_NONE);
+				dev->SetRenderState(D3DRS_FOGDENSITY, *(DWORD*)&s.fog_density); // 0-1
 				dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fog_start);
 				dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s.fog_dist);
 				dev->SetRenderState(D3DRS_FOGCOLOR, s.fog_color);
@@ -420,63 +131,6 @@ namespace components
 			{
 				dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
 			}
-		}
-
-		// api debug lines
-		if (!api::remix_debug_line_materials[0])
-		{
-			remixapi_MaterialInfo info
-			{
-				.sType = REMIXAPI_STRUCT_TYPE_MATERIAL_INFO,
-				.hash = utils::string_hash64("linemat0"),
-				.albedoTexture = L"",
-				.normalTexture = L"",
-				.tangentTexture = L"",
-				.emissiveTexture = L"",
-				.emissiveIntensity = 1.0f,
-				.emissiveColorConstant = { 1.0f, 0.0f, 0.0f },
-			};
-
-			info.albedoTexture = L"";
-			info.normalTexture = L"";
-			info.tangentTexture = L"";
-			info.emissiveTexture = L"";
-
-			remixapi_MaterialInfoOpaqueEXT ext = {};
-			{
-				ext.sType = REMIXAPI_STRUCT_TYPE_MATERIAL_INFO_OPAQUE_EXT;
-				ext.useDrawCallAlphaState = 1;
-				ext.opacityConstant = 1.0f;
-				ext.roughnessTexture = L"";
-				ext.metallicTexture = L"";
-				ext.heightTexture = L"";
-			}
-			info.pNext = &ext;
-
-			api::bridge.CreateMaterial(&info, &api::remix_debug_line_materials[0]);
-
-			info.hash = utils::string_hash64("linemat1");
-			info.emissiveColorConstant = { 0.0f, 1.0f, 0.0f };
-			api::bridge.CreateMaterial(&info, &api::remix_debug_line_materials[1]);
-
-			info.hash = utils::string_hash64("linemat3");
-			info.emissiveColorConstant = { 0.0f, 1.0f, 1.0f };
-			api::bridge.CreateMaterial(&info, &api::remix_debug_line_materials[2]);
-		}
-
-		// destroy all lines added the prev. frame
-		if (api::remix_debug_line_amount)
-		{
-			for (auto& line : api::remix_debug_line_list)
-			{
-				if (line)
-				{
-					api::bridge.DestroyMesh(line);
-					line = nullptr;
-				}
-			}
-
-			api::remix_debug_line_amount = 0;
 		}
 
 #if defined(BENCHMARK)
@@ -500,12 +154,10 @@ namespace components
 
 		// needs portal fade-in effect fix:
 		// https://github.com/NVIDIAGameWorks/dxvk-remix/pull/83
-		if (!api::remix_rayportal::get()->empty())
+		if (!remix_rayportal::get()->empty())
 		{
-			api::remix_rayportal::get()->draw_all_pairs();
+			remix_rayportal::get()->draw_all_pairs();
 		}
-
-		draw_nocull_markers();
 	}
 
 	HOOK_RETN_PLACE_DEF(cviewrenderer_renderview_retn);
@@ -562,89 +214,6 @@ namespace components
 		}
 	}
 
-
-	// #
-	// #
-
-	// TODO: move to separate cpp
-
-	// each of these stands for something .. that we don't care about
-	char* skip_sound_chars(const char* pch)
-	{
-		auto str = (char*)pch;
-		while (true)
-		{
-			if (*str != '*' && *str != '?' && *str != '!' && *str != '#' && *str != '@' && *str != '(' && 
-				*str != '>' && *str != '<' && *str != '^' && *str != ')' && *str != '}' && *str != '$') 
-			{
-				break;
-			} str++;
-		}
-		return str;
-	}
-
-	void on_start_sound_hk(const StartSoundParams_t* parms)
-	{
-		if (parms->pSfx) 
-		{
-			char buff[264];
-
-			if (const char* sound_name = skip_sound_chars(parms->pSfx->vftable->getname(parms->pSfx, buff, 260u)); 
-				sound_name)
-			{
-				int pool_idx = 0;
-				if (parms->pSfx) {
-					pool_idx = parms->pSfx->m_namePoolIndex;
-				}
-
-				// check if we need to hash sounds
-				const bool any_hash_use = api::remix_lights::on_sound_start_require_hash();
-				
-				uint32_t hash = 0u;
-				if (any_hash_use || cmd::sound_debug_printing)
-				{
-					hash = utils::hash32_combine(hash, sound_name);
-					//hash = utils::hash32_combine(hash, pool_idx); // changing
-					hash = utils::hash32_combine(hash, parms->delay);
-					hash = utils::hash32_combine(hash, parms->fvol);
-					hash = utils::hash32_combine(hash, parms->origin.x);
-					hash = utils::hash32_combine(hash, parms->origin.y);
-					hash = utils::hash32_combine(hash, parms->origin.z);
-
-					if (any_hash_use) {
-						api::remix_lights::on_sound_start(hash);
-					}
-
-					if (cmd::sound_debug_printing) 
-					{
-						game::print_ingame("[sound_hk] HASH: ( 0x%x ) -- %s -- delay: %.2f -- vol: %.2f -- origin: [%.5f %.5f %.5f] @ time: %.2f\n", 
-							hash, sound_name ? sound_name : "NULL", parms->delay, parms->fvol, 
-							parms->origin.x, parms->origin.y, parms->origin.z, game::get_global_vars()->curtime);
-					}
-				}
-			}
-		}
-	}
-
-	__declspec(naked) void on_start_sound_stub()
-	{
-		__asm
-		{
-			pushad;
-			push	ebx;
-			call	on_start_sound_hk;
-			add		esp, 4;
-			popad;
-
-			// og
-			pop     edi;
-			pop		ebx;
-			mov		esp, ebp;
-			pop		ebp;
-			retn;
-		}
-	}
-
 	// #
 	// #
 	
@@ -679,10 +248,11 @@ namespace components
 	 */
 	void on_map_load_hk(const char* map_name)
 	{
-		api::remix_vars::on_map_load();
-		api::remix_lights::on_map_load();
+		imgui::on_map_load();
+		remix_vars::on_map_load();
+		remix_lights::on_map_load();
 		map_settings::on_map_load(map_name);
-		main_module::setup_required_cvars();
+		main_module::force_cvars();
 
 		// reset portal vars
 		for (auto i = 0u; i < 4; i++)
@@ -693,6 +263,53 @@ namespace components
 			p->portal_owner = nullptr;
 			p->is_linked = false;
 		}
+
+		game::cvar_uncheat("r_propsmaxdist");
+		game::cvar_uncheat("cl_detaildist");
+		game::cvar_uncheat("cl_detailfade");
+		game::cvar_uncheat("cl_footstep_fx");
+		game::cvar_uncheat("cl_fov");
+		game::cvar_uncheat("cl_impacteffects");
+		game::cvar_uncheat("cl_interpolate");
+		game::cvar_uncheat("cl_particle_batch_mode");
+		game::cvar_uncheat("cl_particle_fallback_base");
+		game::cvar_uncheat("cl_particle_fallback_multiplier");
+		game::cvar_uncheat("cl_smoke_alpha");
+		game::cvar_uncheat("cl_smoke_far");
+		game::cvar_uncheat("cl_viewbob");
+		game::cvar_uncheat("cpu_level");
+		game::cvar_uncheat("gpu_level");
+		game::cvar_uncheat("gpu_mem_level");
+		game::cvar_uncheat("fx_drawimpactdebris");
+		game::cvar_uncheat("fx_drawimpactdust");
+		game::cvar_uncheat("fx_drawmetalspark");
+		game::cvar_uncheat("r_decals");
+		game::cvar_uncheat("r_decalstaticprops");
+		game::cvar_uncheat("r_draw_flashlight_3rd_person");
+		game::cvar_uncheat("r_draw_lasersight_1st_person");
+		game::cvar_uncheat("r_draw_lasersight_3rd_person");
+		game::cvar_uncheat("r_drawbatchdecals");
+		game::cvar_uncheat("r_drawflecks");
+		game::cvar_uncheat("r_drawmodeldecals");
+		game::cvar_uncheat("r_drawunderwaterfogblocker");
+		game::cvar_uncheat("r_fade360style");
+		game::cvar_uncheat("r_flashlight_3rd_person_range");
+		game::cvar_uncheat("r_frustumcullworld");
+		game::cvar_uncheat("r_impactparticles");
+		game::cvar_uncheat("r_maxmodeldecal");
+		game::cvar_uncheat("r_occlusion");
+		game::cvar_uncheat("r_particle_timescale");
+		game::cvar_uncheat("r_queued_decals");
+		game::cvar_uncheat("r_queued_ropes");
+		game::cvar_uncheat("r_RainParticleDensity");
+		game::cvar_uncheat("r_ropetranslucent");
+		game::cvar_uncheat("r_ShowViewerArea");
+		game::cvar_uncheat("r_snapportal");
+		game::cvar_uncheat("r_staticlight_streams");
+		game::cvar_uncheat("r_staticpropinfo");
+		game::cvar_uncheat("r_teeth");
+		game::cvar_uncheat("r_3dsky");
+		game::cvar_uncheat("scene_print");
 	}
 
 	HOOK_RETN_PLACE_DEF(on_map_load_stub_retn);
@@ -730,6 +347,9 @@ namespace components
 		// ----------
 
 		map_settings::on_map_unload();
+
+		// reload rtx.conf
+		remix_vars::xo_vars_parse_options_fn();
 	}
 
 	HOOK_RETN_PLACE_DEF(on_host_disconnect_retn);
@@ -874,54 +494,6 @@ namespace components
 	}
 
 
-
-
-	/**
-	 * Draw a wireframe box using the remix api
-	 * @param center		Center of the cube
-	 * @param half_diagonal Half diagonal distance of the box
-	 * @param width			Line width
-	 * @param color			Line color
-	 */
-	void main_module::debug_draw_box(const VectorAligned& center, const VectorAligned& half_diagonal, const float width, const api::DEBUG_REMIX_LINE_COLOR& color)
-	{
-		Vector min, max;
-		Vector corners[8];
-
-		// calculate min and max positions based on the center and half diagonal
-		min = center - half_diagonal;
-		max = center + half_diagonal;
-
-		// get the corners of the cube
-		corners[0] = Vector(min.x, min.y, min.z);
-		corners[1] = Vector(min.x, min.y, max.z);
-		corners[2] = Vector(min.x, max.y, min.z);
-		corners[3] = Vector(min.x, max.y, max.z);
-		corners[4] = Vector(max.x, min.y, min.z);
-		corners[5] = Vector(max.x, min.y, max.z);
-		corners[6] = Vector(max.x, max.y, min.z);
-		corners[7] = Vector(max.x, max.y, max.z);
-
-		// define the edges
-		Vector lines[12][2];
-		lines[0][0]  = corners[0];	lines[0][1]  = corners[1]; // Edge 1
-		lines[1][0]  = corners[0];	lines[1][1]  = corners[2]; // Edge 2
-		lines[2][0]  = corners[0];	lines[2][1]  = corners[4]; // Edge 3
-		lines[3][0]  = corners[1];	lines[3][1]  = corners[3]; // Edge 4
-		lines[4][0]  = corners[1];	lines[4][1]  = corners[5]; // Edge 5
-		lines[5][0]  = corners[2];	lines[5][1]  = corners[3]; // Edge 6
-		lines[6][0]  = corners[2];	lines[6][1]  = corners[6]; // Edge 7
-		lines[7][0]  = corners[3];	lines[7][1]  = corners[7]; // Edge 8
-		lines[8][0]  = corners[4];	lines[8][1]  = corners[5]; // Edge 9
-		lines[9][0]  = corners[4];	lines[9][1]  = corners[6]; // Edge 10
-		lines[10][0] = corners[5];	lines[10][1] = corners[7]; // Edge 11
-		lines[11][0] = corners[6];	lines[11][1] = corners[7]; // Edge 12
-
-		for (auto e = 0u; e < 12; e++) {
-			api::add_debug_line(lines[e][0], lines[e][1], width, color);
-		}
-	}
-
 	/**
 	 * Force visibility of a specific node
 	 * @param node_index	The node to force vis for
@@ -1000,21 +572,159 @@ namespace components
 		g_player_current_area_override = nullptr;
 	}
 
+	// called from remix_api::on_present_callback()
+	void main_module::hud_draw_area_info()
+	{
+		// Draw current node/leaf as HUD
+		if (cmd::debug_node_vis && d3d_font)
+		{
+			RECT rect;
+			if (g_current_area != -1)
+			{
+				SetRect(&rect, get()->m_hud_debug_node_vis_pos[0], get()->m_hud_debug_node_vis_pos[1], 512, 512);
+				d3d_font->DrawTextA(nullptr, utils::va("Area: %d", g_current_area), -1, &rect, DT_NOCLIP, D3DCOLOR_XRGB(255, 255, 255)); // text length (-1 = null-terminated)
+			}
+
+			if (g_current_leaf != -1)
+			{
+				SetRect(&rect, get()->m_hud_debug_node_vis_pos[0], get()->m_hud_debug_node_vis_pos[1] + 15, 512, 512);
+				d3d_font->DrawTextA(nullptr, utils::va("Leaf: %d", g_current_leaf), -1, &rect, DT_NOCLIP, D3DCOLOR_XRGB(50, 255, 20));
+			}
+
+			if (get()->m_hud_debug_node_vis_has_forced_leafs)
+			{
+				SetRect(&rect, get()->m_hud_debug_node_vis_pos[0], get()->m_hud_debug_node_vis_pos[1] + 40, 512, 512);
+				d3d_font->DrawTextA(nullptr, "Individual forced leafs", -1, &rect, DT_NOCLIP, D3DCOLOR_XRGB(0, 255, 255));
+			}
+
+			if (get()->m_hud_debug_node_vis_has_forced_arealeafs)
+			{
+				SetRect(&rect, get()->m_hud_debug_node_vis_pos[0], get()->m_hud_debug_node_vis_pos[1] + 55, 512, 512);
+				d3d_font->DrawTextA(nullptr, "Leafs of a forced area", -1, &rect, DT_NOCLIP, D3DCOLOR_XRGB(255, 0, 0));
+			}
+		}
+	}
+
+	// check if a boundingbox is within a specified radius around the player
+	bool is_aabb_within_distance(const VectorAligned& center, const VectorAligned& half_diagonal, const Vector& player_origin, const float radius)
+	{
+		const Vector min_bounds = center - half_diagonal;
+		const Vector max_bounds = center + half_diagonal;
+
+		auto sq_dist = 0.0f;
+		for (auto i = 0; i < 3; ++i)
+		{
+			if (player_origin[i] < min_bounds[i])
+			{
+				const auto d = min_bounds[i] - player_origin[i];
+				sq_dist += d * d;
+			}
+			else if (player_origin[i] > max_bounds[i])
+			{
+				const auto d = player_origin[i] - max_bounds[i];
+				sq_dist += d * d;
+			}
+
+			// return false if distance exceeds radius sqr
+			if (sq_dist > radius * radius) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 
 	// Called once before 'R_RecursiveWorldNode' is getting called for the first time
 	void pre_recursive_world_node()
 	{
+		if (*game::get_current_view_id() == VIEW_3DSKY || *game::get_current_view_id() == VIEW_MONITOR) {
+			return;
+		}
+
+		// reset
+		main_module::get()->m_hud_debug_node_vis_has_forced_leafs = false;
+		main_module::get()->m_hud_debug_node_vis_has_forced_arealeafs = false;
+
 		const auto world = game::get_hoststate_worldbrush_data();
 		auto& map_settings = map_settings::get_map_settings();
 
-		// show leaf index as 3D text
-		if (g_player_current_leaf < world->numleafs)
+		// visualize current leaf + forced leafs (map_settings)
+		if (g_current_leaf < world->numleafs)
 		{
-			if (api::remix_debug_node_vis)
+			if (cmd::debug_node_vis)
 			{
-				const auto curr_leaf = &world->leafs[g_player_current_leaf];
-				game::debug_add_text_overlay(&curr_leaf->m_vecCenter.x, 0.0f, utils::va("Leaf: %i", g_player_current_leaf));
-				main_module::debug_draw_box(curr_leaf->m_vecCenter, curr_leaf->m_vecHalfDiagonal, 2.0f, api::DEBUG_REMIX_LINE_COLOR::GREEN);
+				const auto curr_leaf = &world->leafs[g_current_leaf];
+				remix_api::get()->debug_draw_box(curr_leaf->m_vecCenter, curr_leaf->m_vecHalfDiagonal, 2.0f, remix_api::DEBUG_REMIX_LINE_COLOR::GREEN); // current leaf
+
+				// does the area the player is currently in have any overrides?
+				if (g_player_current_area_override)
+				{
+					// visualize forced leafs
+					for (const auto& l : g_player_current_area_override->leafs)
+					{
+						if (!remix_api::can_add_debug_lines()) {
+							break;
+						}
+
+						if (const auto	forced_leaf = &world->leafs[l];
+							forced_leaf != curr_leaf)
+						{
+							// visualize near-by leaf overrides (TEAL)
+							if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 2000.0f * 2000.0f)
+							{
+								remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::TEAL);
+								main_module::get()->m_hud_debug_node_vis_has_forced_leafs = true;
+							}
+						}
+					}
+
+					// visualize leafs of forced areas
+					for (const auto& a : g_player_current_area_override->areas)
+					{
+						for (auto i = 0u; i < (std::uint32_t)world->numleafs; i++)
+						{
+							if (!remix_api::can_add_debug_lines()) {
+								break;
+							}
+
+							// visualize near-by leafs that are part of area overrides (RED)
+							if (const auto	forced_leaf = &world->leafs[i];
+								forced_leaf != curr_leaf && a == (std::uint32_t)forced_leaf->area)
+							{
+								if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 350.0f * 350.0f)
+								{
+									remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+									main_module::get()->m_hud_debug_node_vis_has_forced_arealeafs = true;
+								}
+							}
+						}
+					}
+
+					// visualize leafs of forced areas defined in leaf_tweaks
+					for (const auto& lt : g_player_current_area_override->leaf_tweaks)
+					{
+						if (lt.in_leafs.contains(g_current_leaf))
+						{
+							for (auto i = 0u; i < (std::uint32_t)world->numleafs; i++)
+							{
+								if (!remix_api::can_add_debug_lines()) {
+									break;
+								}
+
+								// visualize near-by leafs that are part of area overrides (RED)
+								if (const auto	forced_leaf = &world->leafs[i];
+									forced_leaf != curr_leaf && lt.areas.contains((std::uint32_t)forced_leaf->area))
+								{
+									if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 350.0f * 350.0f)
+									{
+										remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+										main_module::get()->m_hud_debug_node_vis_has_forced_arealeafs = true;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -1032,7 +742,7 @@ namespace components
 			{
 				g_player_current_area_override = nullptr;
 
-				if (const auto& t = map_settings.area_settings.find(g_player_current_area);
+				if (const auto& t = map_settings.area_settings.find(g_current_area);
 					t != map_settings.area_settings.end())
 				{
 					g_player_current_area_override = &t->second; // cache
@@ -1057,42 +767,6 @@ namespace components
 							}
 						}
 					}
-
-
-					// hide all specified leafs/nodes
-					//for (const auto& l : g_player_current_area_override->hide_leafs)
-					//{
-					//	if (l < static_cast<std::uint32_t>(world->numleafs)) {
-					//		force_leaf_vis(l, true);
-					//	}
-					//}
-
-					//// hide all specified leafs/nodes in area
-					//for (const auto& a : g_player_current_area_override->hide_areas)
-					//{
-					//	// also force nodes?
-					//	for (auto i = 0; i < world->numleafs; i++)
-					//	{
-					//		if (auto& l = world->leafs[i];
-					//			(std::uint32_t)l.area == a)
-					//		{
-					//			//auto parent_node_index = &l.parent[0] - &world->nodes[0];
-					//			l.visframe = 0;
-
-					//			// force nodes
-					//			//force_node_vis(parent_node_index, true);
-					//		}
-					//	}
-
-					//	for (auto i = 0; i < world->numnodes; i++)
-					//	{
-					//		if (auto& l = world->nodes[i];
-					//			(std::uint32_t)l.area == a)
-					//		{
-					//			l.visframe = 0;
-					//		}
-					//	}
-					//}
 				}
 			}
 		}
@@ -1100,24 +774,95 @@ namespace components
 			g_player_current_area_override = nullptr;
 		}
 
-		// MODE: force all leafs/nodes in current area
-		if (!g_player_current_area_override || g_player_current_area_override->cull_mode == map_settings::AREA_CULL_MODE_FRUSTUM_FORCE_AREA)
+		const map_settings::AREA_CULL_MODE cmode = !g_player_current_area_override ? map_settings::AREA_CULL_INFO_DEFAULT : g_player_current_area_override->cull_mode;
+		const float nocull_dist = !g_player_current_area_override ? map_settings.default_nocull_dist : g_player_current_area_override->nocull_distance;
+
+		const bool check_area = cmode == map_settings::AREA_CULL_MODE_FORCE_AREA_DISTANCE;
+
+		// MODE: force all leafs/nodes within a certain dist to the player (+ only in current area modifier)
+		if ((check_area
+			|| cmode == map_settings::AREA_CULL_MODE_DISTANCE)
+			&& nocull_dist > 0.0f)
 		{
 			for (auto i = 0; i < world->numleafs; i++)
 			{
 				if (auto& l = world->leafs[i];
-					(int)l.area == g_player_current_area)
+					!check_area || (int)l.area == g_current_area) // ignore area check if distance mode
+				{
+					if (is_aabb_within_distance(l.m_vecCenter, l.m_vecHalfDiagonal, *game::get_current_view_origin(), nocull_dist)) {
+						force_leaf_vis(i);
+					}
+				}
+			}
+		}
+
+		// MODE: force all leafs/nodes in current area
+		else if (cmode == map_settings::AREA_CULL_MODE_FORCE_AREA)
+		{
+			for (auto i = 0; i < world->numleafs; i++)
+			{
+				if (auto& l = world->leafs[i];
+					(int)l.area == g_current_area)
 				{
 					force_leaf_vis(i);
 				}
 			}
 		}
 
-		// leaf transitions
-		if (g_player_leaf_update && !map_settings.leaf_transitions.empty())
+		if (g_player_current_area_override)
 		{
-			for (auto t = map_settings.leaf_transitions.begin(); t != map_settings.leaf_transitions.end();)
+			// leaf tweaks: this forces all leafs of an area that is forced per leaf
+			if (!g_player_current_area_override->leaf_tweaks.empty())
 			{
+				for (const auto& lt : g_player_current_area_override->leaf_tweaks)
+				{
+					if (lt.in_leafs.contains(g_current_leaf))
+					{
+						for (auto i = 0u; i < (std::uint32_t)world->numleafs; i++)
+						{
+							// visualize near-by leafs that are part of area overrides (RED)
+							if (const auto	forced_leaf = &world->leafs[i];
+								lt.areas.contains((std::uint32_t)forced_leaf->area)
+								|| lt.leafs.contains(i))
+							{
+								force_leaf_vis(i);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// update visibility of nocull markers
+		if (g_player_leaf_update)
+		{
+			for (auto& m : map_settings.map_markers)
+			{
+				// ignore normal markers
+				if (!m.no_cull || m.areas.empty()) {
+					continue;
+				}
+
+				// hide marker
+				m.is_hidden = true;
+
+				// check if player is in specified area & not in specified leaf
+				if (m.areas.contains(g_current_area) && !m.when_not_in_leafs.contains(g_current_leaf)) {
+					m.is_hidden = false; // show marker
+				}
+			}
+		}
+
+		// leaf transitions
+		if (g_player_leaf_update && !map_settings.remix_transitions.empty())
+		{
+			for (auto t = map_settings.remix_transitions.begin(); t != map_settings.remix_transitions.end();)
+			{
+				// only handle leaf transitions
+				if (t->trigger_type != map_settings::TRANSITION_TRIGGER_TYPE::LEAF) {
+					++t; continue;
+				}
+
 				bool iterpp = false;
 				bool trigger_transition = false;
 
@@ -1125,7 +870,7 @@ namespace components
 				const bool trigger_on_enter = t->mode == map_settings::ONCE_ON_ENTER || t->mode == map_settings::ALWAYS_ON_ENTER;
 				const bool trigger_on_leave = t->mode == map_settings::ONCE_ON_LEAVE || t->mode == map_settings::ALWAYS_ON_LEAVE;
 
-				if (t->leafs.contains(g_player_current_leaf))
+				if (t->leafs.contains(g_current_leaf))
 				{
 					if (!t->_state_enter) // first time we enter the leafset
 					{
@@ -1155,7 +900,7 @@ namespace components
 					bool can_add_transition = true;
 
 					// do not allow the same transition twice
-					for (const auto& ip : api::remix_vars::interpolate_stack)
+					for (const auto& ip : remix_vars::interpolate_stack)
 					{
 						if (ip.identifier == t->hash)
 						{
@@ -1166,7 +911,7 @@ namespace components
 
 					if (can_add_transition)
 					{
-						api::remix_vars::parse_and_apply_conf_with_lerp(
+						remix_vars::parse_and_apply_conf_with_lerp(
 							t->config_name,
 							t->hash,
 							t->interpolate_type,
@@ -1176,7 +921,7 @@ namespace components
 
 						if (!keep_transition)
 						{
-							t = map_settings.leaf_transitions.erase(t);
+							t = map_settings.remix_transitions.erase(t);
 							iterpp = true; // erase returns the next iterator
 						}
 					}
@@ -1330,15 +1075,10 @@ namespace components
 		planes_out[FRUSTUM_TOP].Init(normal_neg, normal_neg.Dot(origin));
 	}
 
-
 	// Stub before calling 'R_CullNode' in 'R_RecursiveWorldNode'
 	// Return 0 to NOT cull the node
 	int r_cullnode_wrapper(mnode_t* node)
 	{
-		// default culling mode or no culling if cmd was used
-		map_settings::AREA_CULL_MODE cmode = cmd::disable_frustum_culling ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_MODE_DEFAULT;
-		int node_index = 0;
-
 		const auto view_id = game::get_current_view_id();
 		const bool is_monitor = *view_id == VIEW_MONITOR || (*view_id == VIEW_ILLEGAL && game::saved_view_id == VIEW_MONITOR);
 
@@ -1358,9 +1098,12 @@ namespace components
 			return 1;
 		}
 
+		// default culling mode or no culling if cmd was used
+		map_settings::AREA_CULL_MODE cmode = imgui::get()->m_disable_cullnode ? map_settings::AREA_CULL_MODE_NO_FRUSTUM : map_settings::AREA_CULL_INFO_DEFAULT;
+		int node_index = 0;
 
 		// check if we have area overrides
-		if (g_player_current_area_override) 
+		if (g_player_current_area_override)
 		{
 			// set area cull mode
 			cmode = g_player_current_area_override->cull_mode;
@@ -1373,6 +1116,7 @@ namespace components
 				node_index = node - &game::get_hoststate_worldbrush_data()->nodes[0];
 			}
 
+			// HIDE
 			// check if this node was forced visible
 			if (!g_player_current_area_override->leafs.contains(node_index))
 			{
@@ -1381,7 +1125,7 @@ namespace components
 				{
 					// check if node is part of a hidden area but only cull if the player is not in a specified leaf
 					if (hidden_area.areas.contains((std::uint32_t)node->area)
-						&& !hidden_area.when_not_in_leafs.contains(g_player_current_leaf))
+						&& !hidden_area.when_not_in_leafs.contains(g_current_leaf))
 					{
 						return 1;
 					}
@@ -1400,18 +1144,96 @@ namespace components
 		}
 
 
+		// "global" nocull distance if area has no overrides
+		float nocull_dist = map_settings::get_map_settings().default_nocull_dist;
+		const bool using_distance_based_mode = cmode >= map_settings::AREA_CULL_INFO_NOCULLDIST_START && cmode <= map_settings::AREA_CULL_INFO_NOCULLDIST_END;
+
+		if (using_distance_based_mode && g_player_current_area_override)
+		{
+			// nocull distance if area has override
+			nocull_dist = g_player_current_area_override->nocull_distance;
+
+			// if any leaf tweak has a nocull override
+			if (g_player_current_area_override->nocull_distance_overrides_in_leaf_twk)
+			{
+				for (const auto& lt : g_player_current_area_override->leaf_tweaks)
+				{
+					// check if node the player is currently in has any overrides
+					if (lt.in_leafs.contains(g_current_leaf))
+					{
+						nocull_dist = lt.nocull_dist;
+						break;
+					}
+				}
+			}
+		}
+
+		// if no area override or if cull mode is distance based
+		if (!g_player_current_area_override
+			|| using_distance_based_mode)
+		{
+			if (is_aabb_within_distance(node->m_vecCenter, node->m_vecHalfDiagonal, *game::get_current_view_origin(), nocull_dist)) {
+				return 0;
+			}
+
+			// if forcing current area + distance
+			if (cmode == map_settings::AREA_CULL_MODE_FORCE_AREA_DISTANCE)
+			{
+				if ((int)node->area == g_current_area) {
+					return 0;
+				}
+			}
+		}
+
+		// MODE: force all leafs/nodes in CURRENT area
+		else if (cmode == map_settings::AREA_CULL_MODE_NO_FRUSTUM_IN_CURRENT_AREA
+			|| cmode == map_settings::AREA_CULL_MODE_FORCE_AREA)
+		{
+			// force draw this node/leaf if it's within the forced area
+			if ((int)node->area == g_current_area) {
+				return 0;
+			}
+		}
+
+
 		// R_CullNode - uses area frustums if avail. and not in a solid - uses player frustum otherwise
 		if (!utils::hook::call<bool(__cdecl)(mnode_t*)>(ENGINE_BASE + USE_OFFSET(0x10F950, 0x10E7E0))(node)) { // 0125
 			return 0;
 		}
 
-		// ^ R_CullNode would cull the node if we reach this point
-		// MODE: force all leafs/nodes in CURRENT area
-		if (!g_player_current_area_override || cmode == map_settings::AREA_CULL_MODE_FRUSTUM_FORCE_AREA)
+		// check if we have area overrides
+		if (g_player_current_area_override)
 		{
-			// force draw this node/leaf if it's within the forced area
-			if ((int)node->area == g_current_area_all_views) {
+			// check if this leaf/node is part of a forced area
+			if (g_player_current_area_override->areas.contains((std::uint32_t)node->area)) {
 				return 0;
+			}
+
+			// check if this leaf/node is force enabled
+			if (g_player_current_area_override->leafs.contains(node_index)) {
+				return 0;
+			}
+
+			// check if there are leaf specific tweaks
+			if (!g_player_current_area_override->leaf_tweaks.empty())
+			{
+				for (const auto& lt : g_player_current_area_override->leaf_tweaks)
+				{
+					// check if node the player is currently in has any overrides
+					if (lt.in_leafs.contains(g_current_leaf))
+					{
+						// if so, check if the current node to be culled is part of a forced area
+						// note: areas are not vis forced - this only disables frustum culling and relies on PVS
+						if (lt.areas.contains((std::uint32_t)node->area)) {
+							return 0;
+						}
+
+						// force individual leafs
+						if (lt.leafs.contains(node_index)) {
+							return 0;
+						}
+					}
+				}
 			}
 		}
 
@@ -1451,20 +1273,6 @@ namespace components
 			}
 		}
 #endif
-
-		// check if we have area overrides
-		if (g_player_current_area_override)
-		{
-			// check if this leaf/node is part of a forced area
-			if (g_player_current_area_override->areas.contains((std::uint32_t)node->area)) {
-				return 0;
-			}
-
-			// check if this leaf/node is force enabled
-			if (g_player_current_area_override->leafs.contains(node_index)) {
-				return 0;
-			}
-		}
 
 		// #
 		// check if node is visible through portals if above checks would cull the current node
@@ -1568,7 +1376,7 @@ namespace components
 					}
 					 
 					const auto portal_area = (int)game::get_hoststate_worldbrush_data()->leafs[game::get_leaf_from_position(p->portal->m_ptOrigin)].area;
-					const auto player_area = g_player_current_area;
+					const auto player_area = g_current_area;
 
 					// tweakable portal visibility check (culling area at exit portal might lead to light leaks or light deletion through the entry portal)
 					bool ignore_portal_vis_check = !game_settings::get()->portal_visibility_culling.get_as<bool>()
@@ -1799,9 +1607,9 @@ namespace components
 				|| (*view_id == VIEW_ILLEGAL && game::saved_view_id == VIEW_MAIN))
 			{
 				// update globals
-				g_player_leaf_update = g_player_current_leaf != current_leaf;
-				g_player_current_leaf = current_leaf;
-				g_player_current_area = g_current_area_all_views;
+				g_player_leaf_update = g_current_leaf != current_leaf;
+				g_current_leaf = current_leaf;
+				g_current_area = g_current_area_all_views;
 
 				// debug
 				/*std::uint16_t copy_visible_areas[256] = {};
@@ -2135,13 +1943,7 @@ namespace components
 	ConCommand xo_debug_toggle_node_vis_cmd{};
 	void xo_debug_toggle_node_vis_fn()
 	{
-		api::remix_debug_node_vis = !api::remix_debug_node_vis;
-	}
-
-	ConCommand xo_debug_toggle_sound_print_cmd{};
-	void xo_debug_toggle_sound_print_fn()
-	{
-		cmd::sound_debug_printing = !cmd::sound_debug_printing;
+		cmd::debug_node_vis = !cmd::debug_node_vis;
 	}
 
 #if defined(BENCHMARK)
@@ -2156,20 +1958,10 @@ namespace components
 	}
 #endif
 
-	ConCommand xo_cull_toggle_frustum_cmd{};
-	void xo_cull_toggle_frustum_fn()
-	{
-		cmd::disable_frustum_culling = !cmd::disable_frustum_culling;
-		game::print_ingame(
-			"[CMD] Set default culling mode to <%s>\n"
-			"|> Reload the map or use cmd: 'xo_mapsettings_update'\n"
-			, cmd::disable_frustum_culling ? "None" : "Frustum Culling + Force Current Area");
-	}
-
 	// #
 	// #
 
-	void main_module::setup_required_cvars()
+	void main_module::force_cvars()
 	{
 		// #
 		// force / uncheat cvars
@@ -2188,6 +1980,14 @@ namespace components
 			game::cvar_uncheat_and_set_int("r_lod", 0);
 			game::cvar_uncheat_and_set_int("r_lod_switch_scale", 1); // hidden cvar
 		}
+
+		// TODO
+		/*if (game_settings::get()->force_graphic_settings.get_as<bool>())
+		{
+			game::cvar_uncheat_and_set_int("cpu_level", 2);
+			game::cvar_uncheat_and_set_int("gpu_level", 0);
+			game::cvar_uncheat_and_set_int("gpu_mem_level", 2);
+		}*/
 
 		game::cvar_uncheat_and_set_int("r_dopixelvisibility", 0); // hopefully fix random crash (dxvk cmdBindPipeline) on map load
 
@@ -2261,18 +2061,28 @@ namespace components
 		//printf("[ %.3f ms ]\n", ms);
 	}
 
+	// logic after loading either map or game settings
+	void main_module::cross_handle_map_and_game_settings()
+	{
+		if (remix_api::is_initialized())
+		{
+			// rtx.skyAutoDetect
+			//const auto is_3d_sky_enabled = game_settings::get()->enable_3d_sky.get_as<bool>();
+			//remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, is_3d_sky_enabled ? "1" : "0"));
+		}
+	}
+
 	// #
 	// #
 
 	main_module::main_module()
 	{
+		p_this = this;
+
 		{ // init filepath var
 			char path[MAX_PATH]; GetModuleFileNameA(nullptr, path, MAX_PATH);
 			game::root_path = path; utils::erase_substring(game::root_path, "portal2.exe");
 		}
-		
-		// init remixAPI
-		api::init();
 
 		{ // init d3d font
 			D3DXFONT_DESC desc =
@@ -2292,15 +2102,6 @@ namespace components
 			D3DXCreateFontIndirect(game::get_d3d_device(), &desc, &d3d_font);
 		}
 
-		// parse rtx.conf once
-		api::remix_vars::parse_rtx_options();
-
-		// init addon textures
-		model_render::init_texture_addons();
-
-		// force cvars on init (too late as we init after CL_Init)
-		main_module::setup_required_cvars();
-
 #if defined(BENCHMARK)
 		game::console();
 #endif
@@ -2309,14 +2110,10 @@ namespace components
 		// commands
 
 		game::con_add_command(&xo_debug_toggle_node_vis_cmd, "xo_debug_toggle_node_vis", xo_debug_toggle_node_vis_fn, "Toggle bsp node/leaf debug visualization using the remix api");
-		game::con_add_command(&xo_debug_toggle_sound_print_cmd, "xo_debug_toggle_sound_print", xo_debug_toggle_sound_print_fn, "Toggle sound debug prints (HASH for map_settings)");
-
+		
 #if defined(BENCHMARK)
 		game::con_add_command(&xo_debug_toggle_benchmark_cmd, "xo_debug_toggle_benchmark", xo_debug_toggle_benchmark_fn, "Toggle benchmark printing");
 #endif
-
-		game::con_add_command(&xo_cull_toggle_frustum_cmd, "xo_cull_toggle_frustum", xo_cull_toggle_frustum_fn, "Toggle frustum culling (sets default Mode of MapSetting -> CULL to Mode 0)");
-
 
 		// #
 		// events
@@ -2341,9 +2138,6 @@ namespace components
 		// CViewRender::DrawOneMonitor
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x1EEDB4, 0x1E92F4), cviewrenderer_drawonemonitor_stub).install()->quick(); // 0125
 		HOOK_RETN_PLACE(cviewrenderer_drawonemonitor_retn, CLIENT_BASE + USE_OFFSET(0x1EEDB9, 0x1E92F9)); // 0125
-
-		// S_StartSound
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x1BF47, 0x1BD27), on_start_sound_stub).install()->quick(); // 0125
 
 		// #
 		// culling

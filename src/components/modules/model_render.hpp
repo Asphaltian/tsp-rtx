@@ -2,6 +2,11 @@
 
 namespace components
 {
+	namespace cmd
+	{
+		extern bool model_info_vis;
+	}
+
 	namespace tbl_hk::model_renderer
 	{
 		inline utils::vtable table;
@@ -495,8 +500,12 @@ namespace components
 		model_render();
 		~model_render() = default;
 
-		static void init_texture_addons(bool release = false);
+		static inline model_render* p_this = nullptr;
+		static model_render* get() { return p_this; }
 
+		static void draw_nocull_markers();
+
+		static void init_texture_addons(bool release = false);
 		static inline prim_fvf_context primctx {};
 
 #if defined(BENCHMARK)
@@ -521,6 +530,7 @@ namespace components
 		static inline benchmark_data m_benchmark = {};
 #endif
 
+		bool m_drew_model = false;
 		static inline float vgui_progress_board_scalar = 1.0f;
 
 		struct game_portal_info_s
