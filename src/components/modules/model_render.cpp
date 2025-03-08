@@ -646,7 +646,7 @@ namespace components
 			}
 
 			// this requires dxvk-remix modifications (https://github.com/NVIDIAGameWorks/dxvk-remix/pull/79)
-			set_remix_texture_categories(dev, ctx, IgnoreOpacityMicromap | DecalStatic);
+			set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_OPACITY_MICROMAP | REMIXAPI_INSTANCE_CATEGORY_BIT_DECAL_STATIC);
 			set_remix_texture_hash(dev, ctx, 0x1337);
 		}
 	}
@@ -1627,7 +1627,7 @@ namespace components
 				// render bik using shaders
 				else if (ctx.info.material_name.starts_with("videobik") || ctx.info.material_name.starts_with("media/"))
 				{
-					set_remix_texture_categories(dev, ctx, DecalStatic);
+					set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_DECAL_STATIC);
 					set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
 
 					// works but not of much use if we cant use the albedo as emissive
@@ -2081,7 +2081,7 @@ namespace components
 					bool is_world_ui_text = ctx.info.buffer_state.m_Transform[0].m[3][0] != 0.0f && ctx.info.material_name == "vgui__fontpage";
 
 					if (is_world_ui_text) {
-						set_remix_texture_categories(dev, ctx, WorldUI);
+						set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_UI);
 					}
 
 					// vgui/screens/vgui_coop_progress_board
@@ -3165,7 +3165,7 @@ namespace components
 				ctx.save_rs(dev, D3DRS_ZENABLE);
 				dev->SetRenderState(D3DRS_ZENABLE, FALSE);
 
-				set_remix_texture_categories(dev, ctx, WorldMatte | IgnoreOpacityMicromap);
+				set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_MATTE | REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_OPACITY_MICROMAP);
 			}
 
 			// re-draw surface
