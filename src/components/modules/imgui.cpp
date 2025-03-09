@@ -60,12 +60,14 @@ namespace components
 			return true;
 		}
 
-		/*if (message_type == WM_SYSCOMMAND) {
-			game::console(); printf("MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam);
+		// stop shooting portals with RMB
+		if (imgui::get()->is_imgui_game_input_allowed()) {
+			if (message_type == WM_MOUSEMOVE) {
+				return true;
+			}
 		}
-		else {
-			game::console(); printf("MSG 0x%x\n", message_type);
-		}*/
+
+		//game::console(); printf("MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam);
 			
 		return CallWindowProc(g_game_wndproc, window, message_type, wparam, lparam);
 	}
