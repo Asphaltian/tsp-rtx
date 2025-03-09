@@ -2748,6 +2748,16 @@ namespace components
 					}*/
 				}
 
+				if (ctx.info.material_name == "particle/confetti/confetti") 
+				{
+					//ctx.modifiers.do_not_render = true;
+					//ctx.save_rs(dev, D3DRS_SRCBLEND);
+					//ctx.save_rs(dev, D3DRS_DESTBLEND);
+					//dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+					//dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+					set_remix_emissive_intensity(dev, ctx, 0.01f);
+				}
+
 				if (!disable_vertex_color_modulation) 
 				{
 					ctx.save_tss(dev, D3DTSS_COLOROP);
