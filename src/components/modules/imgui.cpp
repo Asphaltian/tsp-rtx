@@ -3287,6 +3287,10 @@ namespace components
 
 				if (im->m_initialized_device)
 				{
+					// fix imgui colors / background if no hud elem is visible
+					dev->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, 1);
+					dev->SetRenderState(D3DRS_SRGBWRITEENABLE, 1);
+
 					ImGui_ImplDX9_NewFrame();
 					ImGui_ImplWin32_NewFrame();
 					ImGui::NewFrame();
