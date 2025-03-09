@@ -1443,41 +1443,43 @@ namespace components
 							var = nullptr;
 							const auto has_bottom_mat = has_materialvar(ctx.info.material, "$bottommaterial", &var);
 
-							if (!has_bottom_mat)
+							if (has_bottom_mat)
 							{
-								// do not render water surfaces that have no bottom material (this is the surface below the water)
-								// could just check $abovewater I guess? lmao
+								const auto& ms = map_settings::get_map_settings();
 
 								// we only need one surface
-								ctx.modifiers.do_not_render = true;
-							}
+								ctx.modifiers.as_water = true;
+								ctx.modifiers.og_mesh_z_offset = ms.water_offset_bottom;
+								ctx.modifiers.dual_render_with_specified_texture = true;
+								ctx.modifiers.dual_render_texture_z_offset = ms.water_offset_top; //0.5f;
+								ctx.modifiers.dual_render_texture = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[2]);
 
-							// put the normalmap into texture slot 0
-							else
-							{
-								//  BindTexture( SHADER_SAMPLER2, TEXTURE_BINDFLAGS_NONE, NORMALMAP, BUMPFRAME );
-								IDirect3DBaseTexture9* tex = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[2]);
+								// assign flowmap
+								IDirect3DBaseTexture9* tex = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[4]);
 								if (tex)
 								{
-									// save og texture
-									ctx.modifiers.as_water = true;
 									ctx.save_texture(dev, 0);
 									dev->SetTexture(0, tex);
 								}
-							}
-						}
 
-						// material has defined a $basetexture
-						else
-						{
-							//  sampler 10
-							IDirect3DBaseTexture9* tex = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[10]);
-							if (tex)
+								// scale water uv
+								D3DXMATRIX scaleMatrix; // create a scaling matrix
+								D3DXMatrixScaling(&scaleMatrix, 1.5f * ms.water_uv_scale, 1.5f * ms.water_uv_scale, 1.0f);
+
+								ctx.save_ss(dev, D3DSAMP_ADDRESSU);
+								ctx.save_ss(dev, D3DSAMP_ADDRESSV);
+								dev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+								dev->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+
+								ctx.set_texture_transform(dev, &scaleMatrix);
+								ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
+								dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+							}
+
+							// ignore 'beneath'
+							else
 							{
-								// save og texture
-								ctx.modifiers.as_water = true;
-								ctx.save_texture(dev, 0);
-								dev->SetTexture(0, tex);
+								ctx.modifiers.do_not_render = true;
 							}
 						}
 					}
@@ -3037,7 +3039,20 @@ namespace components
 				dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_ADD);
 			}
 
+			if (ctx.modifiers.og_mesh_z_offset != 0.0f)
+			{
+				ctx.info.buffer_state.m_Transform[0].m[3][2] += ctx.modifiers.og_mesh_z_offset;
+				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+			}
+
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+
+			// restore transform
+			if (ctx.modifiers.og_mesh_z_offset != 0.0f)
+			{
+				ctx.info.buffer_state.m_Transform[0].m[3][2] -= ctx.modifiers.og_mesh_z_offset;
+				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+			}
 
 			// restore emissive sky settings
 			if (ctx.modifiers.as_sky)
@@ -3166,7 +3181,10 @@ namespace components
 				dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
 				dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_ADD);
 
-				//state.m_Transform[0].m[3][2] += 40.0f;
+				if (ctx.modifiers.dual_render_texture_z_offset != 0.0f) {
+					ctx.info.buffer_state.m_Transform[0].m[3][2] += ctx.modifiers.dual_render_texture_z_offset;
+				}
+
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
 				// draw second surface 
@@ -3264,6 +3282,16 @@ namespace components
 				dev->SetRenderState(D3DRS_ZENABLE, FALSE);
 
 				set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_MATTE | REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_OPACITY_MICROMAP);
+			}
+
+			if (ctx.modifiers.dual_render_texture_z_offset != 0.0f)
+			{
+				ctx.info.buffer_state.m_Transform[0].m[3][2] += ctx.modifiers.dual_render_texture_z_offset;
+				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+			}
+
+			if (ctx.modifiers.as_water) {
+				set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
 			}
 
 			// re-draw surface
