@@ -412,8 +412,8 @@ namespace components
 			const vertex mesh_verts[4] =
 			{
 				D3DXVECTOR3(-1.337f - (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, 0), 0.0f, f_index / 100.0f,
-				D3DXVECTOR3(1.337f + (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, m.index, 0), f_index / 100.0f, 0.0,
-				D3DXVECTOR3(1.337f + (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, 0, m.index), 0.0f, f_index / 100.0f,
+				D3DXVECTOR3( 1.337f + (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, m.index, 0), f_index / 100.0f, 0.0,
+				D3DXVECTOR3( 1.337f + (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, 0, m.index), 0.0f, f_index / 100.0f,
 				D3DXVECTOR3(-1.337f - (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, m.index), 0.0f, f_index / 100.0f,
 			};
 
@@ -2618,7 +2618,7 @@ namespace components
 				//ctx.modifiers.do_not_render = true;
 
 				// scale the projection matrix for viewmodel particles so that they match the scaled remix viewmodel (currently set to a scale of 0.4)
-				if (ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f) 
+				if (ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f)
 				{
 					// #TODO - remove when floating point perc. gets better with shaders
 					//if (map_settings::get_map_name() == "sp_a1_wakeup")  

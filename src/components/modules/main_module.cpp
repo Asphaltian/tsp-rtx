@@ -1237,6 +1237,17 @@ namespace components
 			}
 		}
 
+		// force area of linked portals - when portal is in view
+		for (auto& f : portal_frustums)
+		{
+			if (f.portal && f.portal->m_pLinkedPortal)
+			{ 
+				if (is_aabb_within_distance(node->m_vecCenter, node->m_vecHalfDiagonal, f.portal->m_ptOrigin, nocull_dist)) {
+					return 0;
+				}
+			}
+		}
+
 #if 0
 		// force area of linked portals - when portal is in view
 		for (auto& f : portal_frustums)
@@ -1280,7 +1291,7 @@ namespace components
 		// calling 'OverrideViewFrustum' overrides the global 'g_Frustum' var so we have to save & restore it when we are done
 		Frustum_t* g_frustum_ptr = game::get_g_frustum();
 
-		Frustum_t frustum_backup = {};
+		Frustum_t frustum_backup = {}; 
 		memcpy_s(&frustum_backup, sizeof(Frustum_t), g_frustum_ptr, sizeof(Frustum_t));
 
 		for (auto& f : portal_frustums)
@@ -1290,12 +1301,12 @@ namespace components
 				if ((g_player_view_org - f.portal->m_ptOrigin).Dot(f.portal->m_vForward) < -0.1f)
 				{
 					// player is behind portal, ignore
-					continue;
+					//continue;
 				}
 			}
 
 			// CRender::OverrideViewFrustum - writes to 'g_Frustum' (g_frustum_ptr)
-			utils::hook::call<void(__fastcall)(void* null_ptr1, void* null_ptr2, VPlane* custom)>(ENGINE_BASE + USE_OFFSET(0xDD270, 0xDC8F0))(nullptr, nullptr, f.frustum_planes);
+			utils::hook::call<void(__fastcall)(void* null_ptr1, void* null_ptr2, VPlane* custom)>(ENGINE_BASE + USE_OFFSET(0xDD270, 0xDC8F0))(nullptr, nullptr, (VPlane*)&f.frustum.planes[1].nX);
 
 			// CullNodeSIMD - frustum check
 			if (!utils::hook::call<bool(__cdecl)(const Frustum_t* , mnode_t*)>(ENGINE_BASE + USE_OFFSET(0xC0840, 0xC0260))(g_frustum_ptr, node))
