@@ -83,7 +83,7 @@ namespace common::toml
 			has_attach_radius || !def.attach_prop_name.empty())
 		{
 			if (has_attach_radius) {
-				toml_str += " attach = { radius = " + format_float(def.attach_prop_radius);
+				toml_str += " attach = { radius = " + std::to_string(def.attach_prop_radius); //format_float(def.attach_prop_radius);
 			}
 			else { // name str
 				toml_str += " attach = { name = \"" + def.attach_prop_name + "\"";

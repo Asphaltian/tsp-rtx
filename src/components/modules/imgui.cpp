@@ -1749,7 +1749,7 @@ namespace components
 				if (attachprop_settings_state)
 				{
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					if (ImGui::DragFloat("Prop Radius##Attach", &edit_active_light->def.attach_prop_radius, 0.05f, 0.0f)) 
+					if (ImGui::DragFloat("Prop Radius##Attach", &edit_active_light->def.attach_prop_radius, 0.001f, 0.0f, 0.0f, "%.6f")) 
 					{
 						edit_active_light->def.attach_prop_radius = edit_active_light->def.attach_prop_radius < 0.0f ? 0.0f : edit_active_light->def.attach_prop_radius;
 						if (edit_active_light->def.attach_prop_radius > 0.0f) {
