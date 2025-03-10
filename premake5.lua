@@ -212,45 +212,9 @@ end
 
 dependencies.load()
 
--- 
--- launcher deps
-
-dependencies_launcher = {
-	basePath = "./deps"
-}
-
-function dependencies_launcher.load()
-	dir = path.join(dependencies_launcher.basePath, "premake_launcher/*.lua")
-	deps = os.matchfiles(dir)
-
-	for i, dep in pairs(deps) do
-		dep = dep:gsub(".lua", "")
-		require(dep)
-	end
-end
-
-function dependencies_launcher.imports()
-	for i, proj in pairs(dependencies_launcher) do
-		if type(i) == 'number' then
-			proj.import()
-		end
-	end
-end
-
-function dependencies_launcher.projects()
-	for i, proj in pairs(dependencies_launcher) do
-		if type(i) == 'number' then
-			proj.project()
-		end
-	end
-end
-
-dependencies_launcher.load()
-
-
 workspace "p2-rtx"
 
-	startproject "p2-rtx-launcher"
+	startproject "p2-rtx"
 	location "./build"
 	objdir "%{wks.location}/obj"
 	targetdir "%{wks.location}/bin/%{cfg.buildcfg}"
@@ -367,8 +331,6 @@ workspace "p2-rtx"
 			"./src/**.cpp",
 		}
 
-		removefiles { "./src/launcher/**" }
-
 		includedirs {
 			"%{prj.location}/src",
 			"./src",
@@ -389,7 +351,7 @@ workspace "p2-rtx"
 				print ("Setup paths using environment variable 'PORTAL2_ROOT' :: '" .. os.getenv("PORTAL2_ROOT") .. "'")
 				targetdir(os.getenv("PORTAL2_ROOT"))
 				debugdir (os.getenv("PORTAL2_ROOT"))
-				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "p2-rtx-launcher.exe")
+				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "run-p2-rtx.bat")
 			end
 		filter {}
 
@@ -398,7 +360,7 @@ workspace "p2-rtx"
 				print ("Setup paths using environment variable 'PORTAL2_SEC_ROOT' :: '" .. os.getenv("PORTAL2_SEC_ROOT") .. "'")
 				targetdir(os.getenv("PORTAL2_SEC_ROOT"))
 				debugdir (os.getenv("PORTAL2_SEC_ROOT"))
-				debugcommand (os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "p2-rtx-launcher.exe")
+				debugcommand (os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "run-p2-rtx.bat")
 			end
 		filter {}
 		
@@ -422,59 +384,3 @@ workspace "p2-rtx"
             dependencies.projects()
 		group ""
 	
-
-	project "p2-rtx-launcher"
-		kind "ConsoleApp"
-        language "C++"
-
-		dependson { "p2-rtx" }
-
-        files { "src/launcher/**"}
-		flags { "NoPCH" }
-
-		linkoptions {
-			"/PDBCompress"
-		}
-		
-		resincludedirs {
-			"$(ProjectDir)src/launcher/res"
-		}
-
-		includedirs {
-			"%{prj.location}/src"
-		}
-		
-		filter "configurations:Debug or configurations:Release"
-			if(os.getenv("PORTAL2_ROOT")) then
-				print ("Setup paths using environment variable 'PORTAL2_ROOT' :: '" .. os.getenv("PORTAL2_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_ROOT"))
-				debugdir (os.getenv("PORTAL2_ROOT"))
-				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "p2-rtx-launcher.exe")
-			end
-		filter {}
-
-		filter "configurations:Dev"
-			if(os.getenv("PORTAL2_SEC_ROOT")) then
-				print ("Setup paths using environment variable 'PORTAL2_SEC_ROOT' :: '" .. os.getenv("PORTAL2_SEC_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_SEC_ROOT"))
-				debugdir (os.getenv("PORTAL2_SEC_ROOT"))
-				debugcommand (os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "p2-rtx-launcher.exe")
-			end
-		filter {}
-
-		-- Pre-build
-		prebuildcommands {
-			"pushd %{_MAIN_SCRIPT_DIR}",
-			"tools\\premake5 generate-buildinfo",
-			"popd",
-		}
-
-		-- Post-build
-		postbuildcommands {
-			"MOVE /Y \"$(TargetDir)p2-rtx-launcher.exe\" \"$(TargetDir)p2-rtx-launcher.exe\"",
-		}
-
-		dependencies_launcher.imports()
-		group "Dependencies"
-			dependencies_launcher.projects()
-		group ""
