@@ -27,7 +27,7 @@ namespace components
 			"ExpoInOut",
 		};
 
-		enum EASE_TYPE
+		enum EASE_TYPE : std::uint8_t
 		{
 			EASE_TYPE_LINEAR,
 			EASE_TYPE_SIN_IN,
@@ -93,6 +93,8 @@ namespace components
 		typedef std::pair<const std::string, option_s>* option_handle;
 		static inline std::unordered_map<std::string, option_s> options;
 		static inline std::unordered_map<std::string, option_s> custom_options;
+
+		static std::string		get_config_string_for_option(const std::pair<const std::string, option_s>& o);
 
 		static option_handle	add_custom_option(const std::string& name, const option_s& o);
 		static option_handle	get_custom_option(const char* o);

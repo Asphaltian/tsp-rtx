@@ -1537,6 +1537,10 @@ namespace components
 				{
 					ctx.save_texture(dev, 0);
 					dev->SetTexture(0, tex_addons::glass_shards);
+
+					if (map_settings::is_level.sp_a1_intro1) {
+						set_remix_texture_hash(dev, ctx, 0xB9C1E4B); // glass_shards_intro1
+					}
 				}
 			}
 			else if (ctx.info.material_name.starts_with("gla"))

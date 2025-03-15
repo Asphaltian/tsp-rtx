@@ -1801,7 +1801,7 @@ namespace components
 							const auto mdl_name = std::string_view(mdl->m_pModel->szPathName);
 							if (light_string_blacklist(mdl_name))
 							{
-								if (utils::vector::is_point_in_aabb(ent->m_vecAbsOrigin, mdl->m_WorldRenderBBoxMin, mdl->m_WorldRenderBBoxMax, 2.0f)
+								if (utils::vector::is_point_in_scaled_aabb(ent->m_vecAbsOrigin, mdl->m_WorldRenderBBoxMin, mdl->m_WorldRenderBBoxMax, 2.0f)
 									|| ent->m_vecAbsOrigin.DistToSqr(mdl->m_Origin) < 400.0f * 400.0f)
 								{
 									return 1;

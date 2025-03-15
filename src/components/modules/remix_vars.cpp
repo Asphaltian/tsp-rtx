@@ -12,6 +12,67 @@ namespace components
 			});
 	}
 
+	/**
+	 * Builds a remix config string from the given option 
+	 * @param o		option handle
+	 * @return		string in remix conf format
+	 */
+	std::string remix_vars::get_config_string_for_option(const std::pair<const std::string, option_s>& o)
+	{
+		auto format_float = [](const float num)
+			{
+				if (utils::float_equal(num, (float)static_cast<int>(num))) {
+					return std::format("{:.0f}", num);
+				}
+
+				std::string s = std::to_string(num);
+
+				// remove trailing zeros
+				while (s.back() == '0') {
+					s.pop_back();
+				}
+
+				// remove decimal point (should not happen)
+				if (s.back() == '.') {
+					s.pop_back();
+				}
+				return s;
+			};
+
+		std::string var_str = o.first + " = ";
+		switch (o.second.type)
+		{
+		case OPTION_TYPE_BOOL:
+			var_str += o.second.current.enabled ? "True" : "False";
+			break;
+
+		case OPTION_TYPE_INT:
+			var_str += std::to_string(o.second.current.integer);
+			break;
+
+		case OPTION_TYPE_FLOAT:
+			var_str += format_float(o.second.current.value);
+			break;
+
+		case OPTION_TYPE_VEC2:
+			var_str += format_float(o.second.current.vector[0]) + ", ";
+			var_str += format_float(o.second.current.vector[1]);
+			break;
+
+		case OPTION_TYPE_VEC3:
+			var_str += format_float(o.second.current.vector[0]) + ", ";
+			var_str += format_float(o.second.current.vector[1]) + ", ";
+			var_str += format_float(o.second.current.vector[2]);
+			break;
+		
+		case OPTION_TYPE_NONE:
+			break;
+		}
+
+		var_str += "\n";
+		return var_str;
+	}
+
 	remix_vars::option_handle remix_vars::add_custom_option(const std::string& name, const option_s& o)
 	{
 		custom_options[name] = o;
