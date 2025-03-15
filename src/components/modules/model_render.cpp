@@ -1487,6 +1487,10 @@ namespace components
 			}
 		}
 
+		dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+		dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]);
+		dev->SetTransform(D3DTS_PROJECTION, &ctx.info.buffer_state.m_Transform[2]);
+
 		/*if (ctx.info.material_name.contains("props_foliage"))
 		{
 			int break_me = 1;    
