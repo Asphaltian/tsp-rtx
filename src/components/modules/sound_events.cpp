@@ -31,10 +31,12 @@ namespace components
 			if (const char* sound_name = skip_sound_chars(parms->pSfx->vftable->getname(parms->pSfx, buff, 260u)); 
 				sound_name)
 			{
+				const auto& ms = map_settings::get_map_settings();
+
 				// check if we need to hash sounds
-				bool lights_use_hash = map_settings::get_map_settings().using_any_light_sound_hash;
-				bool transition_use_hash = map_settings::get_map_settings().using_any_transition_sound_hash;
-				bool transition_use_name = map_settings::get_map_settings().using_any_transition_sound_name;
+				bool lights_use_hash = ms.using_any_light_sound_hash;
+				bool transition_use_hash = ms.using_any_transition_sound_hash;
+				bool transition_use_name = ms.using_any_transition_sound_name;
 
 				std::string forward_slashes = sound_name;
 				utils::replace_all(forward_slashes, "\\", "/");
