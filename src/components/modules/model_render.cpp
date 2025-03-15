@@ -2238,6 +2238,8 @@ namespace components
 							vcol_r * scalar, 
 							vcol_g * scalar, 
 							vcol_b * scalar, 1.0f));
+
+						set_remix_emissive_intensity(dev, ctx, model_render::vgui_progress_board_scalar);
 					}
 
 					else if (is_world_ui_text
