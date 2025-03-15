@@ -56,7 +56,7 @@ namespace components
 		// helper for nocull markers
 		model_render::get()->m_drew_model = false;
 
-		// setup main camera
+		// setup main camera (currently req. for nocull markers)
 		{
 			float colView[4][4] = {};
 			utils::row_major_to_column_major(enginerender->m_matrixView.m[0], colView[0]);
@@ -67,7 +67,9 @@ namespace components
 			dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
 			dev->SetTransform(D3DTS_VIEW, reinterpret_cast<const D3DMATRIX*>(colView));
 			dev->SetTransform(D3DTS_PROJECTION, reinterpret_cast<const D3DMATRIX*>(colProj));
+		}
 
+		{
 			// set a default material with diffuse set to a warm white
 			// so that add light to texture works and does not require rtx.effectLightPlasmaBall (animated)
 			D3DMATERIAL9 dmat = {};
@@ -98,6 +100,7 @@ namespace components
 		// TODO - find better spot to call this
 		map_settings::spawn_markers_once();
 
+		model_render::draw_nocull_markers(); 
 
 		// CM_PointLeafnum :: get current leaf
 		const auto current_leaf = game::get_leaf_from_position(*game::get_current_view_origin());
@@ -105,8 +108,7 @@ namespace components
 		g_current_leaf = current_leaf;
 
 		// CM_LeafArea :: get current area the camera is in
-		g_current_area = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + 0x14C2C0)(g_current_leaf); // #OFFS 2501
-
+		g_current_area = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + USE_OFFSET(0x15ACE0, 0x159470))(current_leaf); // 0125
 
 		remix_api::get()->on_renderview();
 

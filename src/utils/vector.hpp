@@ -417,6 +417,24 @@ public:
 		return false;
 	}
 
+	bool operator>(const Vector& vec) const
+	{
+		if (x > vec.x && y > vec.y && z > vec.z) {
+			return true;
+		}
+
+		return false;
+	}
+
+	bool operator<(const Vector& vec) const
+	{
+		if (x < vec.x && y < vec.y && z < vec.z) {
+			return true;
+		}
+
+		return false;
+	}
+
 	float Length(void) const
 	{
 		return sqrtf(x * x + y * y + z * z);
@@ -659,23 +677,16 @@ namespace utils::vector
 		const Vector scaled_mins = center - half_size;
 		const Vector scaled_maxs = center + half_size;
 
-		return (point.x >= scaled_mins.x && point.x <= scaled_maxs.x
-			&& point.y >= scaled_mins.y && point.y <= scaled_maxs.y
-			&& point.z >= scaled_mins.z && point.z <= scaled_maxs.z);
+		return	  (point.x >= scaled_mins.x && point.x <= scaled_maxs.x
+				&& point.y >= scaled_mins.y && point.y <= scaled_maxs.y
+				&& point.z >= scaled_mins.z && point.z <= scaled_maxs.z);
 	}
 
-	inline bool is_point_in_aabb(const Vector& point, const Vector& mins, const Vector& maxs, const float scale = 1.0f)
+	inline bool is_point_in_aabb(const Vector& point, const Vector& min_bounds, const Vector& max_bounds)
 	{
-		const Vector center = (mins + maxs) * 0.5f;
-		const Vector half_size = (maxs - mins) * 0.5f * scale;
-
-		// Compute the scaled AABB bounds
-		const Vector scaled_mins = center - half_size;
-		const Vector scaled_maxs = center + half_size;
-
-		return (point.x >= scaled_mins.x && point.x <= scaled_maxs.x 
-			 && point.y >= scaled_mins.y && point.y <= scaled_maxs.y 
-			 && point.z >= scaled_mins.z && point.z <= scaled_maxs.z);
+		return	point.x >= min_bounds.x && point.x <= max_bounds.x &&
+				point.y >= min_bounds.y && point.y <= max_bounds.y &&
+				point.z >= min_bounds.z && point.z <= max_bounds.z;
 	}
 
 	struct matrix3x3

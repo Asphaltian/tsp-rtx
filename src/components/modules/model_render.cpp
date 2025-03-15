@@ -411,10 +411,10 @@ namespace components
 			const float f_index = static_cast<float>(m.index);
 			const vertex mesh_verts[4] =
 			{
-				D3DXVECTOR3(-1.337f - (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, 0), 0.0f, f_index / 100.0f,
-				D3DXVECTOR3( 1.337f + (f_index * 0.01f), -1.337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, m.index, 0), f_index / 100.0f, 0.0,
-				D3DXVECTOR3( 1.337f + (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, 0, m.index), 0.0f, f_index / 100.0f,
-				D3DXVECTOR3(-1.337f - (f_index * 0.01f),  1.337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, m.index), 0.0f, f_index / 100.0f,
+				D3DXVECTOR3(-4.1337f - (f_index * 0.01f), -4.1337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, 0), 0.0f, f_index / 100.0f,
+				D3DXVECTOR3( 4.1337f + (f_index * 0.01f), -4.1337f - (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, m.index, 0), f_index / 100.0f, 0.0,
+				D3DXVECTOR3( 4.1337f + (f_index * 0.01f),  4.1337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(0, 0, m.index), 0.0f, f_index / 100.0f,
+				D3DXVECTOR3(-4.1337f - (f_index * 0.01f),  4.1337f + (f_index * 0.01f), 0), D3DCOLOR_XRGB(m.index, 0, m.index), 0.0f, f_index / 100.0f,
 			};
 
 			D3DXMATRIX scale_matrix, rotation_x, rotation_y, rotation_z, mat_rotation, mat_translation, world;
@@ -445,12 +445,13 @@ namespace components
 
 	void __fastcall tbl_hk::model_renderer::DrawModelExecute::Detour(void* ecx, void* edx, void* oo, const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 	{
+		// works fine on l4d2 but causes issues on p2 (might not render in some cases -> now called from main_module::on_renderview)
 		// draw nocull markers before drawing the first model - no particular reason besides that we dont want to draw them before rendering the sky
-		if (*game::get_current_view_id() != VIEW_3DSKY && !model_render::get()->m_drew_model)
+		/*if (game::saved_view_id != VIEW_3DSKY && !model_render::get()->m_drew_model)
 		{
 			model_render::draw_nocull_markers();
 			model_render::get()->m_drew_model = true;
-		}
+		}*/
 
 		const auto dev = game::get_d3d_device();
 		dev->GetVertexShader(&ff_model::s_shader);
