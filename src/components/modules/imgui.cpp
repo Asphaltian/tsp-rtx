@@ -316,14 +316,20 @@ namespace components
 		ImGui::SameLine();
 		reload_mapsettings_button_with_popup("General");
 
+		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
+
 		ImGui::Checkbox("Show Area Debug Info", &cmd::debug_node_vis);
 		TT("Toggle bsp node/leaf debug visualization using the remix api\n~~ cmd: xo_debug_toggle_node_vis");
 
-		ImGui::Checkbox("Show Static Prop Debug Info", &cmd::model_info_vis);
+		ImGui::Checkbox("Draw Static Prop Debug Info", &cmd::model_info_vis);
 		TT("Toggle model name and radius visualizations\nUseful for HIDEMODEL (MapSettings)\n~~ cmd: xo_debug_toggle_model_info");
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
+		ImGui::Checkbox("Print Choreography (.vcd) Info", &cmd::scene_print);
+		TT("Toggle console prints about playing Choreographies (.vcd)\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_scene_print");
+
+		ImGui::Checkbox("Print Playing Sound Info", &cmd::sound_debug_printing);
+		TT("Toggle console prints about playing Sounds\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_sound_print");
 
 		{
 			auto default_nocull_dist = ms.default_nocull_dist;
@@ -1773,6 +1779,17 @@ namespace components
 					ImGui::BeginDisabled(!edit_active_light->has_attach_parms());
 					ImGui::Widget_PrettyDragVec3("Bounds Min", &edit_active_light->def.attach_prop_mins.x, true, 120.0f, 0.05f);
 					ImGui::Widget_PrettyDragVec3("Bounds Max", &edit_active_light->def.attach_prop_maxs.x, true, 120.0f, 0.05f);
+
+					// check if any val of max is smaller than any val of mins and warn the user 
+					if (edit_active_light->def.attach_prop_maxs < edit_active_light->def.attach_prop_mins)
+					{
+						ImGui::PushFont(common::imgui::font::BOLD);
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.15f, 0.15f, 1.0f));
+						ImGui::TextUnformatted("Invalid Bounds! MAX smaller than MIN (any of X Y Z)");
+						ImGui::PopStyleColor();
+						ImGui::PopFont();
+					}
+
 					ImGui::EndDisabled();
 
 					ImGui::Spacing(0, 4);
@@ -2801,16 +2818,32 @@ namespace components
 
 	void cont_mapsettings_confvar()
 	{
-		const auto& var = remix_vars::get();
+		const auto& vars = remix_vars::get();
 
 		ImGui::PushFont(common::imgui::font::BOLD);
 		if (ImGui::Button("Reset Vars to Level State   " ICON_FA_REPLY_ALL "##ConfvarReset", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0))) {
-			var->reset_all_modified(true);
+			vars->reset_all_modified(true);
 		} ImGui::PopFont(); TT("This resets all remix vars back to level state (same as when map loads)");
 
 		ImGui::SameLine();
 		reload_mapsettings_button_with_popup("Confvar");
 		ImGui::Spacing(0, 2);
+
+		// we have no info about settings changed via the in-game remix menu so this is not of much use rn
+		/*ImGui::PushFont(common::imgui::font::BOLD);
+		if (ImGui::Button("Copy Changed Vars to Clipboard   " ICON_FA_SAVE, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0)))
+		{
+			ImGui::LogToClipboard();
+			for (auto& v : vars->options)
+			{
+				if (v.second.modified) {
+					ImGui::LogText("%s", vars->get_config_string_for_option(v).c_str());
+				}
+			}
+
+			ImGui::LogFinish();
+		} ImGui::PopFont();
+		ImGui::SameLine();*/
 
 		static std::string conf_str1, conf_str2;
 		static float conf1_transition_time = 0.0f, conf2_transition_time = 0.0f;
@@ -2901,7 +2934,7 @@ namespace components
 					conf_name += ".conf";
 				}
 
-				var->parse_and_apply_conf_with_lerp(
+				vars->parse_and_apply_conf_with_lerp(
 					conf_name,
 					utils::string_hash64(conf_name),
 					conf1_mode,
@@ -2972,7 +3005,7 @@ namespace components
 					conf_name += ".conf";
 				}
 
-				var->parse_and_apply_conf_with_lerp(
+				vars->parse_and_apply_conf_with_lerp(
 					conf_name,
 					utils::string_hash64(conf_name),
 					conf2_mode,
@@ -3041,7 +3074,7 @@ namespace components
 
 	void cont_gamesettings_flashlight()
 	{
-		const auto gs = game_settings::get();
+		//const auto gs = game_settings::get();
 
 		/*ImGui::Widget_PrettyDragVec3("Offsets Player", gs->flashlight_offset_player.get_as<float*>(), true, 80.0f, 0.1f, -1000.0f, 1000.0f, "F", "H", "V");
 		TT(gs->flashlight_offset_player.get_tooltip_string().c_str());
@@ -3159,11 +3192,11 @@ namespace components
 		}
 
 		// flashlight
-		{
+		/*{
 			static float cont_flashlight_height = 0.0f;
 			cont_flashlight_height = ImGui::Widget_ContainerWithCollapsingTitle("Flashlight", cont_flashlight_height, cont_gamesettings_flashlight,
 				true, ICON_FA_LIGHTBULB, &ImGuiCol_ContainerBackground, &ImGuiCol_ContainerBorder);
-		}
+		}*/
 	}
 
 	// #
