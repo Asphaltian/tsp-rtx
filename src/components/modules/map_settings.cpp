@@ -1365,6 +1365,8 @@ namespace components
 
 	void map_settings::clear_map_settings()
 	{
+		remix_rayportal::get()->destroy_all_pairs();
+
 		remix_lights::get()->destroy_and_clear_all_active_lights();
 		m_map_settings.remix_lights.clear();
 		m_map_settings.using_any_light_sound_hash = false;
