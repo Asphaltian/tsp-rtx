@@ -2996,6 +2996,8 @@ namespace components
 
 	void imgui::tab_map_settings()
 	{
+		m_was_mapsettings_tab_open = true;
+
 		// general settings
 		{
 			static float cont_general_height = 0.0f;
@@ -3327,6 +3329,7 @@ namespace components
 	// called before mapsettings are applied 
 	void imgui::on_map_load()
 	{
+		get()->m_was_mapsettings_tab_open = false;
 		get()->m_light_edit_mode = false;
 	}
 

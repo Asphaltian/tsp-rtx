@@ -7,7 +7,7 @@ namespace components
 	{
 	public:
 		map_settings();
-		~map_settings() = default;
+		~map_settings();
 
 		static inline map_settings* p_this = nullptr;
 		static map_settings* get() { return p_this; }
