@@ -218,37 +218,59 @@ namespace components
 
 	void cont_general_quickcommands()
 	{
-		if (ImGui::Button("Director Start")) {
-			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; director_start");
+		if (ImGui::Button("Fizzle Portals")) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; ent_fire prop_portal fizzle");
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("Director Stop")) {
-			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; director_stop");
+		if (ImGui::Button("Give Portal Gun")) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; give_portalgun; upgrade_portalgun");
 		}
 
-		ImGui::SameLine();
-		if (ImGui::Button("Kick Survivor Bots")) {
-			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; kick rochelle; kick coach; kick ellis; kick roach; kick louis; kick zoey; kick francis; kick bill");
-		}
+		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
 
-		ImGui::SameLine();
-		if (ImGui::Button("Give Autoshotgun")) {
-			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; give autoshotgun");
-		}
+		ImGui::Checkbox("Show Area Debug Info", &cmd::debug_node_vis);
+		TT("Toggle bsp node/leaf debug visualization using the remix api\n~~ cmd: xo_debug_toggle_node_vis");
 
-		ImGui::Spacing();
+		ImGui::Checkbox("Draw Static Prop Debug Info", &cmd::model_info_vis);
+		TT("Toggle model name and radius visualizations\nUseful for HIDEMODEL (MapSettings)\n~~ cmd: xo_debug_toggle_model_info");
 
-		static bool im_zignore_player = false;
-		if (ImGui::Checkbox("Infected Ignore Player", &im_zignore_player))
+		ImGui::Checkbox("Print Choreography (.vcd) Info", &cmd::scene_print);
+		TT("Toggle console prints about playing Choreographies (.vcd)\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_scene_print");
+
+		ImGui::Checkbox("Print Playing Sound Info", &cmd::sound_debug_printing);
+		TT("Toggle console prints about playing Sounds\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_sound_print");
+
+#if DEBUG
 		{
-			if (!im_zignore_player) {
-				interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; nb_vision_ignore_survivors 0");
-			}
-			else {
-				interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; nb_vision_ignore_survivors 1");
+			const auto im = imgui::get();
+
+			ImGui::Spacing(0, 8);
+			if (ImGui::CollapsingHeader("DEBUG Build Section", ImGuiTreeNodeFlags_SpanFullWidth))
+			{
+				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Disable R_CullNode", &im->m_disable_cullnode);
+				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
+
+				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
+
+				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBg", &im->ImGuiCol_ContainerBackground.x, coloredit_flags);
+				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBorder", &im->ImGuiCol_ContainerBorder.x, coloredit_flags);
+
+				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonGreen", &im->ImGuiCol_ButtonGreen.x, coloredit_flags);
+				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonYellow", &im->ImGuiCol_ButtonYellow.x, coloredit_flags);
+				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonRed", &im->ImGuiCol_ButtonRed.x, coloredit_flags);
+
+				const auto glob = game::get_global_vars();
+
+				ImGui::Text("Realtime: %.4f", glob->realtime);
+				ImGui::Text("Curtime Abs: %.4f", glob->curtime);
+				ImGui::Text("MaxClients: %.4f", glob->maxClients);
+				ImGui::Text("Frametime Abs: %.4f", glob->absoluteframetime);
+				ImGui::Text("Frametime: %.4f", glob->frametime);
 			}
 		}
+#endif
 	}
 
 	void imgui::tab_general()
@@ -316,21 +338,6 @@ namespace components
 		ImGui::SameLine();
 		reload_mapsettings_button_with_popup("General");
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
-
-		ImGui::Checkbox("Show Area Debug Info", &cmd::debug_node_vis);
-		TT("Toggle bsp node/leaf debug visualization using the remix api\n~~ cmd: xo_debug_toggle_node_vis");
-
-		ImGui::Checkbox("Draw Static Prop Debug Info", &cmd::model_info_vis);
-		TT("Toggle model name and radius visualizations\nUseful for HIDEMODEL (MapSettings)\n~~ cmd: xo_debug_toggle_model_info");
-
-		ImGui::Checkbox("Print Choreography (.vcd) Info", &cmd::scene_print);
-		TT("Toggle console prints about playing Choreographies (.vcd)\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_scene_print");
-
-		ImGui::Checkbox("Print Playing Sound Info", &cmd::sound_debug_printing);
-		TT("Toggle console prints about playing Sounds\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_sound_print");
-
 		{
 			auto default_nocull_dist = ms.default_nocull_dist;
 			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
@@ -362,36 +369,6 @@ namespace components
 			ImGui::DragFloat("Bottom Layer Offset", &ms.water_offset_bottom, 0.05f, -100.0f, 100.0f, "%.2f");
 			TT("This can offset the original water mesh along the Z-Axis (usually the surface defining water color)");
 		}
-
-#if DEBUG
-		{
-			const auto im = imgui::get();
-
-			ImGui::Spacing(0,8);
-			if (ImGui::CollapsingHeader("DEBUG Build Section", ImGuiTreeNodeFlags_SpanFullWidth))
-			{
-				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Disable R_CullNode", &im->m_disable_cullnode);
-				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
-
-				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
-
-				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBg", &im->ImGuiCol_ContainerBackground.x, coloredit_flags);
-				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBorder", &im->ImGuiCol_ContainerBorder.x, coloredit_flags);
-
-				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonGreen", &im->ImGuiCol_ButtonGreen.x, coloredit_flags);
-				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonYellow", &im->ImGuiCol_ButtonYellow.x, coloredit_flags);
-				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonRed", &im->ImGuiCol_ButtonRed.x, coloredit_flags);
-
-				const auto glob = game::get_global_vars();
-				
-				ImGui::Text("Realtime: %.4f", glob->realtime);
-				ImGui::Text("Curtime Abs: %.4f", glob->curtime);
-				ImGui::Text("MaxClients: %.4f", glob->maxClients);
-				ImGui::Text("Frametime Abs: %.4f", glob->absoluteframetime);
-				ImGui::Text("Frametime: %.4f", glob->frametime);
-			}
-		}
-#endif
 	}
 
 	void cont_mapsettings_fog()
@@ -3100,17 +3077,19 @@ namespace components
 
 	void cont_gamesettings_quick_cmd()
 	{
-		if (ImGui::Button("Save Current Settings", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0))) {
+		ImGui::PushFont(common::imgui::font::BOLD);
+		if (ImGui::Button("Save Current Settings    " ICON_FA_SAVE, ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0))) {
 			game_settings::write_toml();
-		}
+		} ImGui::PopFont();
 
 		ImGui::SameLine();
-		if (ImGui::Button("Reload GameSettings", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+		ImGui::PushFont(common::imgui::font::BOLD);
+		if (ImGui::Button("Reload GameSettings    " ICON_FA_REDO, ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 		{
 			if (!ImGui::IsPopupOpen("Reload GameSettings?")) {
 				ImGui::OpenPopup("Reload GameSettings?");
 			}
-		}
+		} ImGui::PopFont();
 
 		// popup
 		if (ImGui::BeginPopupModal("Reload GameSettings?", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
@@ -3159,6 +3138,11 @@ namespace components
 	{
 		const auto gs = game_settings::get();
 		ImGui::Checkbox("Enable LOD Forcing", gs->lod_forcing.get_as<bool*>()); TT(gs->lod_forcing.get_tooltip_string().c_str());
+		ImGui::Checkbox("Force Graphic Settings", gs->force_graphic_settings.get_as<bool*>()); TT(gs->force_graphic_settings.get_tooltip_string().c_str());
+		ImGui::Checkbox("Portal Visibility Culling", gs->portal_visibility_culling.get_as<bool*>()); TT(gs->portal_visibility_culling.get_tooltip_string().c_str());
+		ImGui::Checkbox("Check Nodes (Visleafs) For Potential Lights", gs->check_nodes_for_potential_lights.get_as<bool*>()); TT(gs->check_nodes_for_potential_lights.get_tooltip_string().c_str());
+		ImGui::Checkbox("Spotlight Billboard Spawning", gs->spotlight_billboard_spawning.get_as<bool*>()); TT(gs->spotlight_billboard_spawning.get_tooltip_string().c_str());
+		ImGui::Checkbox("Emancipationgrill Emissive Proxy", gs->emancipationgrill_emissive_proxy.get_as<bool*>()); TT(gs->emancipationgrill_emissive_proxy.get_tooltip_string().c_str());
 
 		/*if (ImGui::Checkbox("Enable 3D Skybox (very unstable)", gs->enable_3d_sky.get_as<bool*>())) {
 			remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, gs->enable_3d_sky.get_as<bool>() ? "1" : "0"));
