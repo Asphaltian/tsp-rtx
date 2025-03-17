@@ -438,6 +438,13 @@ namespace components
 		int planenum;
 	};
 
+	struct IMesh;
+	struct IIndexBuffer_vtbl;
+	struct IVertexBuffer_vtbl;
+	struct IMaterial;
+	struct IMaterial_vtbl;
+	struct IMaterialVar_vtbl;
+
 	struct mtexinfo_t
 	{
 		Vector4D textureVecsTexelsPerWorldUnits[2];
@@ -446,7 +453,7 @@ namespace components
 		float worldUnitsPerLuxel;
 		unsigned __int16 flags;
 		unsigned __int16 texinfoFlags;
-		void* material; // IMaterial
+		IMaterial* material; // IMaterial
 	};
 
 	struct csurface_t
@@ -491,6 +498,22 @@ namespace components
 		void* sprite; // CEngineSprite
 	};
 
+	struct msurface2_t
+	{
+		unsigned int flags;
+		cplane_t* plane;
+		int firstvertindex;
+		unsigned __int16 decals;
+		unsigned __int16 m_ShadowDecals;
+		unsigned __int16 m_nFirstOverlayFragment;
+		__int16 materialSortID;
+		unsigned __int16 vertBufferIndex;
+		unsigned __int16 m_bDynamicShadowsEnabled : 1;
+		unsigned __int16 texinfo : 15;
+		void* pDispInfo; // IDispInfo
+		int visframe;
+	};
+
 	struct worldbrushdata_t
 	{
 		int numsubmodels;
@@ -524,7 +547,7 @@ namespace components
 		void* hDispInfos;
 		int numsurfaces;
 		void* surfaces1; // msurface1_t
-		void* surfaces2; // msurface2_t
+		msurface2_t* surfaces2;
 		void* surfacelighting; // msurfacelighting_t
 		msurfacenormal_t* surfacenormals;
 		unsigned __int16* m_pSurfaceBrushes;
@@ -532,7 +555,7 @@ namespace components
 		int numvertindices;
 		unsigned __int16* vertindices;
 		int nummarksurfaces;
-		void** marksurfaces; // msurface2_t
+		msurface2_t** marksurfaces;
 		void* lightdata; // ColorRGBExp32
 		int m_nLightingDataSize;
 		int numworldlights;
@@ -771,13 +794,6 @@ namespace components
 		int m_nFirstVertex;
 		unsigned int m_nOffset;
 	};
-
-	struct IMesh;
-	struct IIndexBuffer_vtbl;
-	struct IVertexBuffer_vtbl;
-	struct IMaterial;
-	struct IMaterial_vtbl;
-	struct IMaterialVar_vtbl;
 
 	struct IVertexBuffer
 	{
@@ -1132,7 +1148,7 @@ namespace components
 	struct IClientRenderable_vtbl;
 	struct IClientRenderable
 	{
-		IClientRenderable_vtbl* vftable;
+		IClientRenderable_vtbl* vftable_iclientrenderable;
 	};
 
 	const struct RenderableInstance_t
@@ -1726,7 +1742,7 @@ namespace components
 	struct IHandleEntity_vtbl;
 	struct IHandleEntity
 	{
-		IHandleEntity_vtbl* vftable;
+		IHandleEntity_vtbl* vftable_ihandleent;
 	};
 
 	struct IHandleEntity_vtbl
@@ -1779,8 +1795,10 @@ namespace components
 		void(__thiscall* Release)(IClientThinkable*);
 	};
 
+	struct IClientEntity_vtbl;
 	struct IClientEntity : IClientUnknown, IClientRenderable, IClientNetworkable, IClientThinkable
 	{
+		//IClientEntity_vtbl* vtbl_icliententity;
 	};
 
 	struct C_BaseEntity;
@@ -2523,22 +2541,6 @@ namespace components
 		bool(__thiscall* InLocalTeam)(C_Prop_Portal*);
 		bool(__thiscall* IsValidIDTarget)(C_Prop_Portal*);
 		char* (__thiscall* GetIDString)(C_Prop_Portal*);
-	};
-
-	struct msurface2_t
-	{
-		unsigned int flags;
-		cplane_t* plane;
-		int firstvertindex;
-		unsigned __int16 decals;
-		unsigned __int16 m_ShadowDecals;
-		unsigned __int16 m_nFirstOverlayFragment;
-		__int16 materialSortID;
-		unsigned __int16 vertBufferIndex;
-		unsigned __int16 m_bDynamicShadowsEnabled : 1;
-		unsigned __int16 texinfo : 15;
-		void* pDispInfo; // IDispInfo
-		int visframe;
 	};
 
 	struct __declspec(align(4)) CIndexBuilder : IndexDesc_t

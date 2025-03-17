@@ -140,26 +140,6 @@ namespace components
 		return found;
 	}
 
-	// adds '$nocull' material var to material - returns true if exists
-	//bool add_nocull_materialvar(IMaterialInternal* cmat)
-	//{
-	//	bool found = false;
-	//	auto cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
-	//	//auto varname = cullvar->vftable->GetName(cullvar);
-
-	//	if (!found)
-	//	{
-	//		utils::function<IMaterialVar* (IMaterialInternal* pMaterial, const char* pKey, int val)> IMaterialVar_Create = MATERIALSTYSTEM_BASE + 0x1A2F0;
-	//		auto var = IMaterialVar_Create(cmat, "$nocull", 1);
-
-	//		cmat->vftable->AddMaterialVar(cmat, nullptr, var);
-	//		cullvar = cmat->vftable->FindVar(cmat, nullptr, "$nocull", &found, false);
-	//	}
-
-	//	return found;
-	//}
-
-
 	D3DCOLORVALUE g_old_light_to_texture_color = {};
 	bool g_light_to_texture_modified = false;
 
@@ -2355,9 +2335,10 @@ namespace components
 					// fix particles on intro1 after breaking the wall
 					else if (ctx.info.material_name.starts_with("particle/"))
 					{
+						//ctx.modifiers.do_not_render = true;
 						//lookat_vertex_decl(dev, primlist);
 						ctx.save_vs(dev);
-						dev->SetVertexShader(nullptr);
+						dev->SetVertexShader(nullptr); 
 						dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1);
 						dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]); 
 						dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]);
@@ -3235,10 +3216,16 @@ namespace components
 			ctx.save_texture(dev, 0); 
 			dev->SetTexture(0, tex_addons::emancipation_grill_bg);
 
+			ctx.save_rs(dev, D3DRS_TEXTUREFACTOR);
+			ctx.save_tss(dev, D3DTSS_ALPHAOP);
+			ctx.save_tss(dev, D3DTSS_ALPHAARG2);
+
 			const auto& cs = ctx.modifiers.emancipation_color_scale;
 			dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_COLORVALUE(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs));
-			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE2X);
 			dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
+
+			//add_light_to_texture_color_edit(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs);
 
 			// draw surface a second time
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
@@ -3257,8 +3244,12 @@ namespace components
 				ctx.info.buffer_state.m_Transform[0].m[3][1] += 0.01f;
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
+				//set_remix_emissive_intensity(dev, ctx, cs);
+
 				// draw surface a third time
 				dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+
+				ctx.restore_texture_transform(dev);
 			}
 		}
 
@@ -3361,6 +3352,22 @@ namespace components
 	{
 		const auto dev = game::get_d3d_device();
 		dev->GetVertexShader(&ff_bmodel::s_shader); 
+
+		if (auto ent = (C_BaseEntity*)baseentity; ent)
+		{
+			// emancipation grill on intro4 ---- if (origin->x == 367.500000) // y = 160.000000 z = 64.0000000
+			// render one of the two emancipaction grill surfaces dual sided so that the emissive proxy gets drawn when standing between grid surface 1 and 2
+			if (std::string_view(ent->m_iName) == "fizzler_brush")
+			{
+				//for (auto num = model->___u10.brush.firstmodelsurface; num < model->___u10.brush.firstmodelsurface + 1 /*model->___u10.brush.nummodelsurfaces*/; num++)
+				{
+					const auto surf = &model->___u10.brush.pShared->surfaces2[model->___u10.brush.firstmodelsurface]; // num
+					surf->flags |= 0x20; // & check in CBrushBatchRender::BuildTransLists_r
+					surf->flags |= 0x200; // & check in CBrushBatchRender::BuildTransLists_r
+					//0x2000 = nocull -- 0x40 = side check in CBrushBatchRender::BuildTransLists_r
+				}
+			}
+		}
 
 		tbl_hk::bmodel_renderer::table.original<FN>(Index)(ecx, o1, baseentity, model, origin, angles, mode);
 
