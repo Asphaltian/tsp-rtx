@@ -3244,7 +3244,7 @@ namespace components
 				ctx.info.buffer_state.m_Transform[0].m[3][1] += 0.01f;
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
-				//set_remix_emissive_intensity(dev, ctx, cs);
+				set_remix_emissive_intensity(dev, ctx, cs);
 
 				// draw surface a third time
 				dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
