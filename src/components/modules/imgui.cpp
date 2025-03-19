@@ -252,6 +252,14 @@ namespace components
 				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Disable R_CullNode", &im->m_disable_cullnode);
 				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
 
+				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)")) {
+					remix_api::get()->m_bridge.AddTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Remove Texture Hash (ignore Textures)(PortalGun)")) {
+					remix_api::get()->m_bridge.RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
+				}
+
 				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
 
 				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBg", &im->ImGuiCol_ContainerBackground.x, coloredit_flags);

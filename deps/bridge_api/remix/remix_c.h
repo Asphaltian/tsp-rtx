@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@
 #define REMIXAPI_VERSION_GET_PATCH(version) (((uint64_t)(version)      ) & (uint64_t)0xFFFF)
 
 #define REMIXAPI_VERSION_MAJOR 0
-#define REMIXAPI_VERSION_MINOR 5
+#define REMIXAPI_VERSION_MINOR 6
 #define REMIXAPI_VERSION_PATCH 1
 
 
@@ -562,6 +562,14 @@ extern "C" {
     const char*               key,
     const char*               value);
 
+  typedef remixapi_ErrorCode(REMIXAPI_PTR* PFN_remixapi_AddTextureHash)(
+		const char* textureCategory,
+		const char* textureHash);
+
+  typedef remixapi_ErrorCode(REMIXAPI_PTR* PFN_remixapi_RemoveTextureHash)(
+		const char* textureCategory,
+    const char* textureHash);
+
   typedef struct remixapi_PresentInfo {
     remixapi_StructType       sType;
     void*                     pNext;
@@ -642,6 +650,8 @@ extern "C" {
     PFN_remixapi_DestroyLight       DestroyLight;
     PFN_remixapi_DrawLightInstance  DrawLightInstance;
     PFN_remixapi_SetConfigVariable  SetConfigVariable;
+    PFN_remixapi_AddTextureHash     AddTextureHash;
+    PFN_remixapi_RemoveTextureHash  RemoveTextureHash;
 
     // DXVK interoperability
     PFN_remixapi_dxvk_CreateD3D9            dxvk_CreateD3D9;
