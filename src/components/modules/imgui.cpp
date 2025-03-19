@@ -2592,6 +2592,11 @@ namespace components
 					active_point_selection->radius = active_point_selection->radius < 0.0f ? 0.0f : active_point_selection->radius;
 				} TT("Radius of light (defaults to 1.0)");
 
+				SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+				if (ImGui::DragFloat("Volumetric Radiance Scale", &active_point_selection->volumetric_scale, 0.005f, 0.0f, 20.0f, "%.2f")) {
+					active_point_selection->volumetric_scale = active_point_selection->volumetric_scale < 0.0f ? 0.0f : active_point_selection->volumetric_scale;
+				} TT("Volumetric Radiance Scale of light (defaults to 1.0)");
+
 				//ImGui::Draw3DCircle(ImGui::GetBackgroundDrawList(), &edit_active_light->ext.position.x, Vector(0.0f, 0.0f, 1.0f), active_point_selection->radius, false, debug_color, 2.0f);
 				//ImGui::Draw3DCircle(ImGui::GetBackgroundDrawList(), &edit_active_light->ext.position.x, Vector(0.0f, 1.0f, 0.0f), active_point_selection->radius, false, debug_color, 2.0f);
 				//ImGui::Draw3DCircle(ImGui::GetBackgroundDrawList(), &edit_active_light->ext.position.x, Vector(1.0f, 0.0f, 0.0f), active_point_selection->radius, false, debug_color, 2.0f);

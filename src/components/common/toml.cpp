@@ -121,6 +121,8 @@ namespace common::toml
 				toml_str += ", exponent = " + format_float(p.exponent);
 			}
 
+			toml_str += ", volumetric_scale = " + format_float(p.volumetric_scale);
+
 			// ignore t0
 			if (!utils::float_equal(p.timepoint, 0.0f)) {
 				toml_str += ", timepoint = " + format_float(p.timepoint);

@@ -99,16 +99,17 @@ namespace components
 	/**
 	 * Calculate light properties for the current tick \n
 	 * All arguments are optional - use nullptr to not update a specific property
-	 * @param position			(LightInfoEXT)
-	 * @param radiance			(LightInfo)
-	 * @param radius			(LightInfo)
-	 * @param direction			(LightInfoEXT)
-	 * @param degrees			(LightInfoEXT)
-	 * @param softness			(LightInfoEXT)
-	 * @param exponent			(LightInfoEXT)
+	 * @param position			(remixapi_LightInfoSphereEXT)
+	 * @param radiance			(remixapi_LightInfo)
+	 * @param radius			(remixapi_LightInfo)
+	 * @param direction			(remixapi_LightInfoSphereEXT)
+	 * @param degrees			(remixapi_LightInfoSphereEXT)
+	 * @param softness			(remixapi_LightInfoSphereEXT)
+	 * @param exponent			(remixapi_LightInfoSphereEXT)
+	 * @param volumetric_scale	(remixapi_LightInfoSphereEXT)
 	 */
 	void light_interpolator::interpolate(remixapi_Float3D* position, remixapi_Float3D* radiance, float* radius,
-		remixapi_Float3D* direction, float* degrees, float* softness, float* exponent)
+		remixapi_Float3D* direction, float* degrees, float* softness, float* exponent, float* volumetric_scale)
 	{
 		{
 			map_settings::remix_light_settings_s::point_s* temp_pt = nullptr;
@@ -128,7 +129,7 @@ namespace components
 				if (degrees) { *degrees = temp_pt->degrees; }
 				if (softness) { *softness = temp_pt->softness; }
 				if (exponent) { *exponent = temp_pt->exponent; }
-
+				if (volumetric_scale) { *volumetric_scale = temp_pt->volumetric_scale; }
 				return;
 			}
 		}
@@ -193,6 +194,10 @@ namespace components
 					*exponent = lerp(p1.exponent, p2.exponent, t);
 				}
 
+				if (volumetric_scale) {
+					*volumetric_scale = lerp(p1.volumetric_scale, p2.volumetric_scale, t);
+				}
+
 				return;
 			}
 
@@ -207,6 +212,7 @@ namespace components
 		if (degrees) { *degrees = m_points.back().degrees; }
 		if (softness) { *softness = m_points.back().softness; }
 		if (exponent) { *exponent = m_points.back().exponent; }
+		if (volumetric_scale) { *volumetric_scale = m_points.back().volumetric_scale; }
 	}
 
 	// ----
@@ -237,6 +243,7 @@ namespace components
 			light->ext.shaping_value.coneAngleDegrees = pt->degrees;
 			light->ext.shaping_value.coneSoftness = pt->softness;
 			light->ext.shaping_value.focusExponent = pt->exponent;
+			light->ext.volumetricRadianceScale = pt->volumetric_scale;
 
 			// not updating these can result in a crash in bridge::remix_api?
 			light->ext.pNext = nullptr;
@@ -276,7 +283,8 @@ namespace components
 				&light->ext.shaping_value.direction,
 				&light->ext.shaping_value.coneAngleDegrees,
 				&light->ext.shaping_value.coneSoftness,
-				&light->ext.shaping_value.focusExponent);
+				&light->ext.shaping_value.focusExponent,
+				&light->ext.volumetricRadianceScale);
 
 			light->ext.shaping_hasvalue = light->ext.shaping_value.coneAngleDegrees != 180.0f;
 
@@ -321,6 +329,7 @@ namespace components
 			light->ext.shaping_value.coneAngleDegrees = pt.degrees;
 			light->ext.shaping_value.coneSoftness = pt.softness;
 			light->ext.shaping_value.focusExponent = pt.exponent;
+			light->ext.volumetricRadianceScale = pt.volumetric_scale;
 
 			light->info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
 			light->info.pNext = &light->ext;
@@ -567,6 +576,7 @@ namespace components
 					.radius = 1.2f,
 					.shaping_hasvalue = TRUE,
 					.shaping_value = {},
+					.volumetricRadianceScale = 5.0f,
 				};
 
 				if (ext.shaping_hasvalue)
@@ -608,6 +618,8 @@ namespace components
 				ext.position = { pos.x, pos.y, pos.z };
 				ext.radius = 1.5f;
 				ext.shaping_hasvalue = FALSE;
+				ext.volumetricRadianceScale = 0.0f;
+
 				info.hash = utils::string_hash64("bts3flsp");
 				info.radiance = { info.radiance.x * 0.2f, info.radiance.y * 0.25f, info.radiance.z * 0.35f };
 

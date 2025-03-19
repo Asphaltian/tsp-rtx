@@ -92,6 +92,9 @@ namespace components
 				float degrees = 180.0; // cone angle
 				float softness = 0.0f; // cone
 				float exponent = 0.0f; // focus
+
+				// volumetric
+				float volumetric_scale = 1.0f;
 			};
 
 			std::vector<point_s> points;
