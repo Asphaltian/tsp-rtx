@@ -1995,12 +1995,12 @@ namespace components
 		}
 
 		// TODO
-		/*if (game_settings::get()->force_graphic_settings.get_as<bool>())
+		if (game_settings::get()->force_graphic_settings.get_as<bool>())
 		{
-			game::cvar_uncheat_and_set_int("cpu_level", 2);
+			game::cvar_uncheat_and_set_int("cpu_level", 0);
 			game::cvar_uncheat_and_set_int("gpu_level", 0);
 			game::cvar_uncheat_and_set_int("gpu_mem_level", 2);
-		}*/
+		}
 
 		game::cvar_uncheat_and_set_int("r_dopixelvisibility", 0); // hopefully fix random crash (dxvk cmdBindPipeline) on map load
 
