@@ -1509,6 +1509,9 @@ namespace components
 				ctx.save_projection_transform(dev);
 				dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]);
 				dev->SetTransform(D3DTS_PROJECTION, &ctx.info.buffer_state.m_Transform[2]);
+
+				//viewmodel_view_matrix = ctx.info.buffer_state.m_Transform[1];
+				//viewmodel_proj_matrix = ctx.info.buffer_state.m_Transform[2];
 			}
 			else if (ctx.info.material_name.contains("models/props_destruction/glass_")) 
 			{
@@ -2551,8 +2554,69 @@ namespace components
 
 				//ctx.modifiers.do_not_render = true;
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
-				dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]); 
+				dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]);
 				dev->SetTransform(D3DTS_PROJECTION, &ctx.info.buffer_state.m_Transform[2]);
+
+#if 0			// portal gun effect test: move effect to correct position -> effect "too large" for "scaled down" gun (remix projection hack for viewmodel)
+				if (ctx.info.material_name.contains("beam_generic_2")) 
+				{
+					D3DXMATRIX viewMatrix = viewmodel_view_matrix;
+
+					// Identity world transform for the gun
+					D3DXMATRIX identityMatrix;
+					D3DXMatrixIdentity(&identityMatrix);
+
+					const auto& im = imgui::get();
+					float offsetX = im->m_debug_vector.x; //2.8f;  // Move right 
+					float offsetY = im->m_debug_vector.y; //7.1f;  // Move up
+					float offsetZ = im->m_debug_vector.z; // 6.0f; // Move forward (negative Z is often forward in FPS viewmodels)
+
+					// Desired scale for the effect
+					float scaleX = im->m_debug_vector2.x;  // Scale X by 1.5x
+					float scaleY = im->m_debug_vector2.y;  // Scale Y by 1.5x
+					float scaleZ = im->m_debug_vector2.z;  // Scale Z by 1.5x
+
+					// Create the scaling matrix
+					D3DXMATRIX effectScale;
+					D3DXMatrixScaling(&effectScale, scaleX, scaleY, scaleZ);
+
+					// Create the offset matrix in viewmodel space
+					D3DXMATRIX effectOffset;
+					D3DXMatrixTranslation(&effectOffset, offsetX, offsetY, offsetZ);
+
+					// Get the cameras world transform (inverse of view matrix)
+					D3DXMATRIX cameraWorldMatrix;
+					D3DXMatrixInverse(&cameraWorldMatrix, nullptr, &viewMatrix);
+					cameraWorldMatrix._41 = 0.0f; // Clear translation
+					cameraWorldMatrix._42 = 0.0f;
+					cameraWorldMatrix._43 = 0.0f;
+
+					// Combine scale and offset: Scale * Offset
+					D3DXMATRIX scaleAndOffset;
+					D3DXMatrixMultiply(&scaleAndOffset, &effectScale, &effectOffset);
+
+					// Transform the offset by the cameras rotation
+					D3DXMATRIX orientedOffset;
+					D3DXMatrixMultiply(&orientedOffset, &scaleAndOffset, &cameraWorldMatrix);
+
+					//effectWorldMatrix.m[3][0] = im->m_debug_vector.x;
+					//effectWorldMatrix.m[3][1] = im->m_debug_vector.y;
+					//effectWorldMatrix.m[3][2] = im->m_debug_vector.z;
+
+					identityMatrix._41 = orientedOffset._41; // X translation
+					identityMatrix._42 = orientedOffset._42; // Y translation
+					identityMatrix._43 = orientedOffset._43; // Z translation
+
+					identityMatrix._11 = scaleX; // X scale
+					identityMatrix._22 = scaleY; // Y scale
+					identityMatrix._33 = scaleZ; // Z scale
+
+					dev->SetTransform(D3DTS_WORLD, &identityMatrix /*&ctx.info.buffer_state.m_Transform[0]*/);
+					dev->SetTransform(D3DTS_VIEW, &viewmodel_view_matrix);
+					dev->SetTransform(D3DTS_PROJECTION, &viewmodel_proj_matrix);
+					int break_me = 1;
+				}
+#endif
 			}
 #endif
 

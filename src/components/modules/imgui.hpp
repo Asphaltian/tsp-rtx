@@ -40,6 +40,9 @@ namespace components
 		float m_debugvis_cone_height = 60.0f;
 		int m_debugvis_cone_steps = 3u;
 
+		Vector m_debug_vector = { 0.0f, 0.0f, 0.0f };
+		Vector m_debug_vector2 = { 0.0f, 0.0f, 0.0f };
+
 		bool m_was_mapsettings_tab_open = false;
 
 		bool is_imgui_game_input_allowed() const {

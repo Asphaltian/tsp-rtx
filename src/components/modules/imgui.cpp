@@ -260,6 +260,9 @@ namespace components
 					remix_api::get()->m_bridge.RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
 				}
 
+				ImGui::DragFloat3("Debug Vector", &im->m_debug_vector.x, 0.01f);
+				ImGui::DragFloat3("Debug Vector 2", &im->m_debug_vector2.x, 0.01f);
+
 				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
 
 				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ContainerBg", &im->ImGuiCol_ContainerBackground.x, coloredit_flags);
