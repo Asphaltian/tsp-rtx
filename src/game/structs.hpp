@@ -2321,9 +2321,26 @@ namespace components
 	STATIC_ASSERT_OFFSET(DynamicState_t, m_SamplerState, 2172); // <6240 (offset from shaderapi 0x0> - <40 (m_TextureEnable offset)> - <4028 (pad in IShaderAPIDX8)>
 	STATIC_ASSERT_OFFSET(DynamicState_t, m_RenderState, 2972);
 
+	enum MaterialFogMode_t : __int32
+	{
+		MATERIAL_FOG_NONE = 0x0,
+		MATERIAL_FOG_LINEAR = 0x1,
+		MATERIAL_FOG_LINEAR_BELOW_FOG_Z = 0x2,
+	};
+
 	struct IShaderAPIDX8_vtbl
 	{
-		char pad[1016];
+		long double(__thiscall* CurrentTime)(void* shaderapi_ptr);
+		void(__thiscall* GetLightmapDimensions)(void* shaderapi_ptr, int*, int*);
+		MaterialFogMode_t(__thiscall* GetSceneFogMode)(void* shaderapi_ptr);
+		void(__thiscall* GetSceneFogColor)(void* shaderapi_ptr, std::uint8_t*);
+		void(__thiscall* SetVertexShaderConstant)(void* shaderapi_ptr, int, const float*, int, bool);
+		void(__thiscall* SetPixelShaderConstant)(void* shaderapi_ptr, int, const float*, int, bool);
+		void(__thiscall* SetDefaultState)(void* shaderapi_ptr);
+		void(__thiscall* GetWorldSpaceCameraPosition)(void* shaderapi_ptr, float*);
+		void(__thiscall* GetWorldSpaceCameraDirection)(void* shaderapi_ptr, float*);
+		int(__thiscall* GetCurrentNumBones)(void* shaderapi_ptr);
+		char pad[976]; //[1016];
 		IDirect3DBaseTexture9* (__fastcall* GetD3DTexture)(void* shaderapi_ptr, void* ecx, int handle);
 		void* pad97;
 		void* pad98;
@@ -2541,6 +2558,33 @@ namespace components
 		bool(__thiscall* InLocalTeam)(C_Prop_Portal*);
 		bool(__thiscall* IsValidIDTarget)(C_Prop_Portal*);
 		char* (__thiscall* GetIDString)(C_Prop_Portal*);
+	};
+
+	struct mstudio_modelvertexdata_t
+	{
+		const void* pVertexData;
+		const void* pTangentData;
+	};
+
+	struct mstudio_meshvertexdata_t
+	{
+		const mstudio_modelvertexdata_t* modelvertexdata;
+		int numLODVertexes[8];
+	};
+
+	struct mstudioboneweight_t
+	{
+		float weight[3];
+		unsigned __int8 bone[3];
+		unsigned __int8 numbones;
+	};
+
+	struct mstudiovertex_t
+	{
+		mstudioboneweight_t m_BoneWeights;
+		Vector m_vecPosition;
+		Vector m_vecNormal;
+		Vector2D m_vecTexCoord;
 	};
 
 	struct __declspec(align(4)) CIndexBuilder : IndexDesc_t

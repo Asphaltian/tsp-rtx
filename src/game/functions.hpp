@@ -1,7 +1,7 @@
 #pragma once
 
 #define RENDERER_BASE			game::shaderapidx9_module	// 0125: offsets unchanged
-//#define STUDIORENDER_BASE		game::studiorender_module
+#define STUDIORENDER_BASE		game::studiorender_module
 //#define MATERIALSTYSTEM_BASE	game::materialsystem_module
 #define ENGINE_BASE				game::engine_module			// 0125: offsets changed
 #define CLIENT_BASE				game::client_module			// 0125: offsets changed

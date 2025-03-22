@@ -1386,10 +1386,12 @@ namespace components
 		}
 	}
 
+	//matrix3x4_t saved_posetoworld = {};
+	D3DXMATRIX hacked_posetoworld_transform = game::IDENTITY;
 	// 
 	// main render path for every surface
 
-	void cmeshdx8_renderpass_pre_draw(CMeshDX8* mesh, [[maybe_unused]] CPrimList* primlist)
+	void cmeshdx8_renderpass_pre_draw(CMeshDX8* mesh, [[maybe_unused]] CPrimList* primlist, [[maybe_unused]] MeshInstanceData_t* info = nullptr)
 	{
 
 #if defined(BENCHMARK)
@@ -1502,6 +1504,8 @@ namespace components
 		{
 			//ctx.modifiers.do_not_render = true;
 
+			const auto numbones = shaderapi->vtbl->GetCurrentNumBones(shaderapi);
+
 			// viewmodel
 			if (ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f)
 			{
@@ -1548,8 +1552,56 @@ namespace components
 				}
 			}
 
-			dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
-			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX6);
+			dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]); 
+
+			if (ctx.info.material_name == "models/props/portal_door_02")
+			{
+				int yy = 1; 
+			}
+
+			// wall_dest_003
+			if (ctx.info.material_name.contains("wall_dest_003")) 
+			{
+				int x = 1;
+			}
+
+			if (ctx.info.material_name.contains("turret_casing"))
+			{
+				int x = 1; 
+			}
+
+#if 1
+			//const auto cshader = game::get_cshaderapi();
+			//if (ctx.info.material_name != "models/props/portal_door_02")
+			{
+				//float wrld[4][4] = {};
+				//utils::row_major_to_column_major(saved_posetoworld.m_flMatVal[0], wrld[0]);
+				//dev->SetTransform(D3DTS_WORLD, reinterpret_cast<const D3DMATRIX*>(wrld));
+
+				dev->SetTransform(D3DTS_WORLD, &hacked_posetoworld_transform);
+
+ 				//hacked_posetoworld_transform = game::IDENTITY;
+
+				//saved_posetoworld.m_flMatVal[0][0] = 1.0f;
+				//saved_posetoworld.m_flMatVal[0][1] = 0.0f;
+				//saved_posetoworld.m_flMatVal[0][2] = 0.0f;
+				//saved_posetoworld.m_flMatVal[1][0] = 0.0f;
+				//saved_posetoworld.m_flMatVal[1][1] = 1.0f;
+				//saved_posetoworld.m_flMatVal[1][2] = 0.0f;
+				//saved_posetoworld.m_flMatVal[2][0] = 0.0f;
+				//saved_posetoworld.m_flMatVal[2][1] = 0.0f;
+				//saved_posetoworld.m_flMatVal[2][2] = 1.0f;
+				//saved_posetoworld.m_flMatVal[0][3] = 0.0f;
+				//saved_posetoworld.m_flMatVal[1][3] = 0.0f;
+				//saved_posetoworld.m_flMatVal[2][3] = 0.0f; 
+			}
+			/*else
+			{
+				int x = 1;
+			}*/
+#endif
+
+			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX6); 
 			dev->SetVertexShader(nullptr); // vertexformat 0x00000000000a0003 
 		}
 
@@ -2991,6 +3043,37 @@ namespace components
 				dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX3);
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 			}
+
+			// fastpath model
+			else if (mesh->m_VertexFormat == 0xa2183)
+			{
+				VMatrix mat = {};
+				mat.m[0][0] = info->m_pPoseToWorld->m_flMatVal[0][0];
+				mat.m[1][0] = info->m_pPoseToWorld->m_flMatVal[0][1];
+				mat.m[2][0] = info->m_pPoseToWorld->m_flMatVal[0][2];
+
+				mat.m[0][1] = info->m_pPoseToWorld->m_flMatVal[1][0];
+				mat.m[1][1] = info->m_pPoseToWorld->m_flMatVal[1][1];
+				mat.m[2][1] = info->m_pPoseToWorld->m_flMatVal[1][2];
+
+				mat.m[0][2] = info->m_pPoseToWorld->m_flMatVal[2][0];
+				mat.m[1][2] = info->m_pPoseToWorld->m_flMatVal[2][1];
+				mat.m[2][2] = info->m_pPoseToWorld->m_flMatVal[2][2];
+
+				mat.m[3][0] = info->m_pPoseToWorld->m_flMatVal[0][3];
+				mat.m[3][1] = info->m_pPoseToWorld->m_flMatVal[1][3];
+				mat.m[3][2] = info->m_pPoseToWorld->m_flMatVal[2][3];
+				mat.m[3][3] = game::IDENTITY.m[3][3];
+
+				dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mat.m));
+				dev->SetTransform(D3DTS_VIEW, &ctx.info.buffer_state.m_Transform[1]);
+
+				lookat_vertex_decl(dev);
+				ctx.save_vs(dev);
+				dev->SetFVF(D3DFVF_XYZB2 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_TEX6);
+				dev->SetVertexShader(nullptr); // vertexformat 0x00000000000a0003 
+			}
+
 #ifdef DEBUG
 			else
 			{
@@ -3669,6 +3752,205 @@ namespace components
 	}
 
 
+
+
+
+	void cmeshdx8_renderpass_pass_for_instances_pre_draw(CMeshDX8* mesh, MeshInstanceData_t* info)
+	{
+		if (mesh && info)
+		{
+			cmeshdx8_renderpass_pre_draw(mesh, nullptr, info);
+		}
+	}
+
+	void cmeshdx8_renderpass_pass_for_instances_post_draw([[maybe_unused]] void* device_ptr, D3DPRIMITIVETYPE type, std::int32_t base_vert_index, std::uint32_t min_vert_index, std::uint32_t num_verts, std::uint32_t start_index, std::uint32_t prim_count)
+	{
+		const auto dev = game::get_d3d_device();
+		dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+	}
+
+	//DWORD* instance_info_ptr = nullptr;
+
+	HOOK_RETN_PLACE_DEF(cmeshdx8_renderpass_pass_for_instances_retn_addr);
+	void __declspec(naked) cmeshdx8_renderpass_pass_for_instances_stub()
+	{
+		__asm
+		{
+			//mov		instance_info_ptr, eax;
+			push    eax; // og
+			mov     eax, [edx]; // og
+
+			pushad;
+			push	ebx; // MeshInstanceData_t
+			push	ecx; // CMeshDX8
+			call	cmeshdx8_renderpass_pass_for_instances_pre_draw;
+			add		esp, 8;
+			popad;
+
+
+			// og code
+			call    eax; // mesh->VertexCount
+			mov     ecx, [ebp - 4];
+			mov     edx, [esi + 0x148];
+			push    eax;
+			push    0;
+			push    0;
+			push    ecx;
+			push    edi;
+			//call    edx; // DrawIndexedPrimitive
+			call	cmeshdx8_renderpass_pass_for_instances_post_draw;
+			add		esp, 0x1C;
+			//call	cmeshdx8_renderpass_post_draw; // instead of 'edx' (DrawIndexedPrimitive)
+			//add		esp, 0x1C;
+
+			jmp		cmeshdx8_renderpass_pass_for_instances_retn_addr;
+		}
+	}
+	
+	// either only do this to specific models or check boneweights and reset ?
+	
+	void xyz(int numVertices, matrix3x4_t* pPoseToWorld, mstudio_meshvertexdata_t* vertData)
+	{
+		const auto shaderapi = game::get_shaderapi();
+		BufferedState_t buffer_state{};
+
+		shaderapi->vtbl->GetBufferedState(shaderapi, nullptr, &buffer_state);
+		std::string_view mat_name;
+		int numbone = 0;
+
+		if (const auto material = shaderapi->vtbl->GetBoundMaterial(shaderapi, nullptr);
+			material)
+		{
+			mat_name = material->vftable->GetName(material);
+			numbone = shaderapi->vtbl->GetCurrentNumBones(shaderapi);
+		}
+
+		if (mat_name == "models/props/portal_door_02")
+		{
+			int x = 1;
+		}
+
+		// debris_metaljunk_01 -> wall_dest renders fine
+		// -> turret_casing renders at 0 0 0
+		if (mat_name.contains("wall_dest"))
+		{
+			int x = 1;
+		}
+
+		if (mat_name.contains("turret_casing"))
+		{
+			int x = 1;
+		}
+
+
+		mstudiovertex_t* pVertices = (mstudiovertex_t*)vertData->modelvertexdata->pVertexData;
+		bool skip_model = false; 
+
+		for (int j = 0; j < numVertices; ++j)
+		{
+			mstudiovertex_t& vert = pVertices[j];
+			auto xyy = vert.m_BoneWeights.bone;
+
+			if (vert.m_BoneWeights.bone[0] || vert.m_BoneWeights.bone[1] || vert.m_BoneWeights.bone[2])
+			{
+				skip_model = true;
+				break;
+			}
+		}
+
+#if 1
+		if (skip_model)
+		{
+			hacked_posetoworld_transform = game::IDENTITY;
+			//saved_posetoworld.m_flMatVal[0][0] = 1.0f;
+			//saved_posetoworld.m_flMatVal[0][1] = 0.0f;
+			//saved_posetoworld.m_flMatVal[0][2] = 0.0f;
+			//saved_posetoworld.m_flMatVal[1][0] = 0.0f;
+			//saved_posetoworld.m_flMatVal[1][1] = 1.0f;
+			//saved_posetoworld.m_flMatVal[1][2] = 0.0f;
+			//saved_posetoworld.m_flMatVal[2][0] = 0.0f;
+			//saved_posetoworld.m_flMatVal[2][1] = 0.0f;
+			//saved_posetoworld.m_flMatVal[2][2] = 1.0f;
+			//saved_posetoworld.m_flMatVal[0][3] = 0.0f;
+			//saved_posetoworld.m_flMatVal[1][3] = 0.0f;
+			//saved_posetoworld.m_flMatVal[2][3] = 0.0f;
+			return;
+		}
+
+		//hacked_posetoworld_transform = 
+		//saved_posetoworld = *pPoseToWorld;
+
+		//D3DXMATRIX wrld = {};
+		//float wrld[4][4] = {};
+		//utils::row_major_to_column_major(saved_posetoworld.m_flMatVal[0], wrld.m[0]);
+		//buffer_state.m_Transform[0] = wrld;
+
+		utils::row_major_to_column_major(pPoseToWorld->m_flMatVal[0], hacked_posetoworld_transform.m[0]);
+
+		pPoseToWorld->m_flMatVal[0][0] = 1.0f;
+		pPoseToWorld->m_flMatVal[0][1] = 0.0f;
+		pPoseToWorld->m_flMatVal[0][2] = 0.0f;
+
+		pPoseToWorld->m_flMatVal[1][0] = 0.0f;
+		pPoseToWorld->m_flMatVal[1][1] = 1.0f;
+		pPoseToWorld->m_flMatVal[1][2] = 0.0f;
+
+		pPoseToWorld->m_flMatVal[2][0] = 0.0f;
+		pPoseToWorld->m_flMatVal[2][1] = 0.0f;
+		pPoseToWorld->m_flMatVal[2][2] = 1.0f;
+
+		pPoseToWorld->m_flMatVal[0][3] = 0.0f;
+		pPoseToWorld->m_flMatVal[1][3] = 0.0f;
+		pPoseToWorld->m_flMatVal[2][3] = 0.0f;
+		int wtf = 0;
+#endif
+	}
+
+	HOOK_RETN_PLACE_DEF(xyz_retn_addr);
+	void __declspec(naked) xyz_stub()
+	{
+		__asm
+		{
+			pushad;
+
+			push	ecx; // mstudio_meshvertexdata_t*
+			mov     eax, [ebx + 0xC];
+			push    eax;
+			mov		eax, [ebx + 0x18]; // numverts
+			push    eax;
+			call	xyz;
+			add		esp, 12;
+			popad;
+
+			xorps   xmm1, xmm1; // og
+			push    esi; // og
+			mov     esi, [ecx]; // og
+			jmp		xyz_retn_addr;
+		}
+	}
+
+	void xyz_restore()
+	{
+		hacked_posetoworld_transform = game::IDENTITY;
+	}
+
+	void __declspec(naked) xyz_restore_stub()
+	{
+		__asm
+		{
+			pushad;
+			call	xyz_restore;
+			popad;
+
+			// og
+			pop     edi;
+			pop     esi;
+			mov     esp, ebp;
+			pop     ebp;
+			retn    0x28;
+		}
+	}
+
 	// #
 	// Commands
 
@@ -3775,6 +4057,22 @@ namespace components
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), 6); // 0125
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), RenderSpriteCardNew_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(RenderSpriteCardNew_retn_addr, CLIENT_BASE + USE_OFFSET(0x6222D6, 0x619BA6)); // 0125
+
+
+
+		// model and tluc fastpaths
+
+		utils::hook(RENDERER_BASE + USE_OFFSET(0x0, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0x0, 0xA581));
+
+#if 1
+		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA587), 6);
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA587), xyz_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(xyz_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA58D));
+
+		// A7E9
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x0, 0x10C57), xyz_restore_stub, HOOK_JUMP).install()->quick();
+#endif
 
 		// #
 		// commands
