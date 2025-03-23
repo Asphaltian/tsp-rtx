@@ -53,16 +53,17 @@ namespace components
 		auto enginerender = game::get_engine_renderer();
 		const auto dev = game::get_d3d_device();
 
-		// helper for nocull markers
-		model_render::get()->m_drew_model = false;
+		// resets
+		model_render::get()->m_unbake_transforms_on_next_static_prop = false;
+		model_render::get()->m_unbake_transforms_p2w_transform = game::IDENTITY;
 
 		// setup main camera (currently req. for nocull markers)
 		{
 			float colView[4][4] = {};
-			utils::row_major_to_column_major(enginerender->m_matrixView.m[0], colView[0]);
+			utils::transpose_float4x4(enginerender->m_matrixView.m[0], colView[0]);
 
 			float colProj[4][4] = {};
-			utils::row_major_to_column_major(enginerender->m_matrixProjection.m[0], colProj[0]);
+			utils::transpose_float4x4(enginerender->m_matrixProjection.m[0], colProj[0]);
 
 			dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
 			dev->SetTransform(D3DTS_VIEW, reinterpret_cast<const D3DMATRIX*>(colView));
@@ -99,7 +100,6 @@ namespace components
 
 		// TODO - find better spot to call this
 		map_settings::spawn_markers_once();
-
 		model_render::draw_nocull_markers(); 
 
 		// CM_PointLeafnum :: get current leaf
@@ -190,10 +190,10 @@ namespace components
 		const auto dev = game::get_d3d_device();
 
 		float colView[4][4] = {};
-		utils::row_major_to_column_major(enginerender->m_matrixView.m[0], colView[0]);
+		utils::transpose_float4x4(enginerender->m_matrixView.m[0], colView[0]);
 
 		float colProj[4][4] = {};
-		utils::row_major_to_column_major(enginerender->m_matrixProjection.m[0], colProj[0]);
+		utils::transpose_float4x4(enginerender->m_matrixProjection.m[0], colProj[0]);
 
 		dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
 		dev->SetTransform(D3DTS_VIEW, reinterpret_cast<const D3DMATRIX*>(colView));
@@ -1620,9 +1620,9 @@ namespace components
 				|| (*view_id == VIEW_ILLEGAL && game::saved_view_id == VIEW_MAIN))
 			{
 				// update globals
-				g_player_leaf_update = g_current_leaf != current_leaf;
-				g_current_leaf = current_leaf;
-				g_current_area = g_current_area_all_views;
+				//g_player_leaf_update = g_current_leaf != current_leaf;
+				//g_current_leaf = current_leaf;
+				//g_current_area = g_current_area_all_views;
 
 				// debug
 				/*std::uint16_t copy_visible_areas[256] = {};

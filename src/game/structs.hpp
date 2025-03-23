@@ -1095,6 +1095,30 @@ namespace components
 	  int topologyOffset;
 	};*/
 
+	struct mstudio_modelvertexdata_t
+	{
+		const void* pVertexData;
+		const void* pTangentData;
+	};
+
+	struct mstudiomodel_t
+	{
+		char name[64];
+		int type;
+		float boundingradius;
+		int nummeshes;
+		int meshindex;
+		int numvertices;
+		int vertexindex;
+		int tangentsindex;
+		int numattachments;
+		int attachmentindex;
+		int numeyeballs;
+		int eyeballindex;
+		mstudio_modelvertexdata_t vertexdata;
+		int unused[8];
+	};
+
 	struct studiomeshgroup_t
 	{
 		IMesh* m_pMesh;
@@ -2558,12 +2582,6 @@ namespace components
 		bool(__thiscall* InLocalTeam)(C_Prop_Portal*);
 		bool(__thiscall* IsValidIDTarget)(C_Prop_Portal*);
 		char* (__thiscall* GetIDString)(C_Prop_Portal*);
-	};
-
-	struct mstudio_modelvertexdata_t
-	{
-		const void* pVertexData;
-		const void* pTangentData;
 	};
 
 	struct mstudio_meshvertexdata_t

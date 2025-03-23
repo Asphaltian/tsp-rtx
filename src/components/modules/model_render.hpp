@@ -5,6 +5,8 @@ namespace components
 	namespace cmd
 	{
 		extern bool model_info_vis;
+		extern bool ms_unbake_info;
+		extern std::unordered_set<std::string_view> ms_unbake_info_logged_strings;
 	}
 
 	namespace tbl_hk::model_renderer
@@ -511,8 +513,10 @@ namespace components
 		static model_render* get() { return p_this; }
 
 		static void draw_nocull_markers();
-
 		static void init_texture_addons(bool release = false);
+		static void on_present();
+		static void xo_mapsettings_get_unbake_info_fn();
+
 		static inline prim_fvf_context primctx {};
 
 #if defined(BENCHMARK)
@@ -537,8 +541,10 @@ namespace components
 		static inline benchmark_data m_benchmark = {};
 #endif
 
-		bool m_drew_model = false;
 		static inline float vgui_progress_board_scalar = 1.0f;
+
+		bool m_unbake_transforms_on_next_static_prop = false;
+		D3DXMATRIX m_unbake_transforms_p2w_transform = game::IDENTITY;
 
 		struct game_portal_info_s
 		{

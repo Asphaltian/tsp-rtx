@@ -70,9 +70,9 @@
 #include <misc/cpp/imgui_stdlib.h>
 #pragma warning(pop)
 
+#include "game/structs.hpp"
 #include "utils/utils.hpp"
 #include "utils/vector.hpp"
-#include "game/structs.hpp"
 
 #include "sdk/engine/c_engine_client.hpp"
 #include "sdk/vgui/surface/c_surface_mgr.hpp"

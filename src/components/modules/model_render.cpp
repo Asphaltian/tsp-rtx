@@ -11,6 +11,8 @@ namespace components
 	namespace cmd
 	{
 		bool model_info_vis = false;
+		bool ms_unbake_info = false;
+		std::unordered_set<std::string_view> ms_unbake_info_logged_strings;
 	}
 
 	namespace ff_model
@@ -1386,11 +1388,8 @@ namespace components
 		}
 	}
 
-	//matrix3x4_t saved_posetoworld = {};
-	D3DXMATRIX hacked_posetoworld_transform = game::IDENTITY;
-	// 
-	// main render path for every surface
 
+	// main render path for every surface
 	void cmeshdx8_renderpass_pre_draw(CMeshDX8* mesh, [[maybe_unused]] CPrimList* primlist, [[maybe_unused]] MeshInstanceData_t* info = nullptr)
 	{
 
@@ -1504,8 +1503,6 @@ namespace components
 		{
 			//ctx.modifiers.do_not_render = true;
 
-			const auto numbones = shaderapi->vtbl->GetCurrentNumBones(shaderapi);
-
 			// viewmodel
 			if (ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f)
 			{
@@ -1552,54 +1549,25 @@ namespace components
 				}
 			}
 
-			dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]); 
-
-			if (ctx.info.material_name == "models/props/portal_door_02")
-			{
-				int yy = 1; 
+#if 0		// models that can cause problems with vertex transform unbaking (debug)
+			if (ctx.info.material_name.contains("incinerator_door")) {
+				int break_me = 1; 
 			}
 
 			// wall_dest_003
-			if (ctx.info.material_name.contains("wall_dest_003")) 
-			{
-				int x = 1;
+			if (ctx.info.material_name.contains("wall_dest_003")) {
+				int break_me = 1;
 			}
 
-			if (ctx.info.material_name.contains("turret_casing"))
-			{
-				int x = 1; 
+			if (ctx.info.material_name.contains("turret_casing")) {
+				int break_me = 1;
 			}
-
-#if 1
-			//const auto cshader = game::get_cshaderapi();
-			//if (ctx.info.material_name != "models/props/portal_door_02")
-			{
-				//float wrld[4][4] = {};
-				//utils::row_major_to_column_major(saved_posetoworld.m_flMatVal[0], wrld[0]);
-				//dev->SetTransform(D3DTS_WORLD, reinterpret_cast<const D3DMATRIX*>(wrld));
-
-				dev->SetTransform(D3DTS_WORLD, &hacked_posetoworld_transform);
-
- 				//hacked_posetoworld_transform = game::IDENTITY;
-
-				//saved_posetoworld.m_flMatVal[0][0] = 1.0f;
-				//saved_posetoworld.m_flMatVal[0][1] = 0.0f;
-				//saved_posetoworld.m_flMatVal[0][2] = 0.0f;
-				//saved_posetoworld.m_flMatVal[1][0] = 0.0f;
-				//saved_posetoworld.m_flMatVal[1][1] = 1.0f;
-				//saved_posetoworld.m_flMatVal[1][2] = 0.0f;
-				//saved_posetoworld.m_flMatVal[2][0] = 0.0f;
-				//saved_posetoworld.m_flMatVal[2][1] = 0.0f;
-				//saved_posetoworld.m_flMatVal[2][2] = 1.0f;
-				//saved_posetoworld.m_flMatVal[0][3] = 0.0f;
-				//saved_posetoworld.m_flMatVal[1][3] = 0.0f;
-				//saved_posetoworld.m_flMatVal[2][3] = 0.0f; 
-			}
-			/*else
-			{
-				int x = 1;
-			}*/
 #endif
+
+			// holds identity or transposed poseToMesh on unbaked meshes (MapSettings [UNBAKE]) - see R_StudioSoftwareProcessMesh_hk
+			auto wrld = &model_render::get()->m_unbake_transforms_p2w_transform;
+			dev->SetTransform(D3DTS_WORLD, wrld);
+			//dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
 			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX6); 
 			dev->SetVertexShader(nullptr); // vertexformat 0x00000000000a0003 
@@ -3484,6 +3452,60 @@ namespace components
 		}
 	}
 
+	// fastpath rendering tests (cl_modelfastpath/cl_tlucfastpath)
+#if 0
+	void cmeshdx8_renderpass_pass_for_instances_pre_draw(CMeshDX8* mesh, MeshInstanceData_t* info)
+	{
+		if (mesh && info)
+		{
+			cmeshdx8_renderpass_pre_draw(mesh, nullptr, info);
+		}
+	}
+
+	void cmeshdx8_renderpass_pass_for_instances_post_draw([[maybe_unused]] void* device_ptr, D3DPRIMITIVETYPE type, std::int32_t base_vert_index, std::uint32_t min_vert_index, std::uint32_t num_verts, std::uint32_t start_index, std::uint32_t prim_count)
+	{
+		const auto dev = game::get_d3d_device();
+		dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
+	}
+
+	//DWORD* instance_info_ptr = nullptr;
+
+	HOOK_RETN_PLACE_DEF(cmeshdx8_renderpass_pass_for_instances_retn_addr);
+	void __declspec(naked) cmeshdx8_renderpass_pass_for_instances_stub()
+	{
+		__asm
+		{
+			//mov		instance_info_ptr, eax;
+			push    eax; // og
+			mov     eax, [edx]; // og
+
+			pushad;
+			push	ebx; // MeshInstanceData_t
+			push	ecx; // CMeshDX8
+			call	cmeshdx8_renderpass_pass_for_instances_pre_draw;
+			add		esp, 8;
+			popad;
+
+
+			// og code
+			call    eax; // mesh->VertexCount
+			mov     ecx, [ebp - 4];
+			mov     edx, [esi + 0x148];
+			push    eax;
+			push    0;
+			push    0;
+			push    ecx;
+			push    edi;
+			//call    edx; // DrawIndexedPrimitive
+			call	cmeshdx8_renderpass_pass_for_instances_post_draw;
+			add		esp, 0x1C;
+			//call	cmeshdx8_renderpass_post_draw; // instead of 'edx' (DrawIndexedPrimitive)
+			//add		esp, 0x1C;
+
+			jmp		cmeshdx8_renderpass_pass_for_instances_retn_addr;
+		}
+	}
+#endif
 
 	// ##########################
 	// ##########################
@@ -3752,202 +3774,234 @@ namespace components
 	}
 
 
+	// #
+	// #
 
-
-
-	void cmeshdx8_renderpass_pass_for_instances_pre_draw(CMeshDX8* mesh, MeshInstanceData_t* info)
+	namespace unbake_transform
 	{
-		if (mesh && info)
+		matrix3x4_t og_pose = {};
+		void R_StudioDrawPoints_hk([[maybe_unused]] studiomeshdata_t* mesh_data, mstudiomodel_t* sub_model)
 		{
-			cmeshdx8_renderpass_pre_draw(mesh, nullptr, info);
-		}
-	}
+			auto& unbake_transform = model_render::get()->m_unbake_transforms_on_next_static_prop;
+			unbake_transform = false; // always reset
 
-	void cmeshdx8_renderpass_pass_for_instances_post_draw([[maybe_unused]] void* device_ptr, D3DPRIMITIVETYPE type, std::int32_t base_vert_index, std::uint32_t min_vert_index, std::uint32_t num_verts, std::uint32_t start_index, std::uint32_t prim_count)
-	{
-		const auto dev = game::get_d3d_device();
-		dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
-	}
+			if (imgui::get()->m_disable_ms_unbake_check) {
+				return;
+			}
 
-	//DWORD* instance_info_ptr = nullptr;
+			const auto model_str = std::string_view(sub_model->name);
 
-	HOOK_RETN_PLACE_DEF(cmeshdx8_renderpass_pass_for_instances_retn_addr);
-	void __declspec(naked) cmeshdx8_renderpass_pass_for_instances_stub()
-	{
-		__asm
-		{
-			//mov		instance_info_ptr, eax;
-			push    eax; // og
-			mov     eax, [edx]; // og
+			if (cmd::ms_unbake_info) {
+				cmd::ms_unbake_info_logged_strings.insert(model_str);
+			}
 
-			pushad;
-			push	ebx; // MeshInstanceData_t
-			push	ecx; // CMeshDX8
-			call	cmeshdx8_renderpass_pass_for_instances_pre_draw;
-			add		esp, 8;
-			popad;
-
-
-			// og code
-			call    eax; // mesh->VertexCount
-			mov     ecx, [ebp - 4];
-			mov     edx, [esi + 0x148];
-			push    eax;
-			push    0;
-			push    0;
-			push    ecx;
-			push    edi;
-			//call    edx; // DrawIndexedPrimitive
-			call	cmeshdx8_renderpass_pass_for_instances_post_draw;
-			add		esp, 0x1C;
-			//call	cmeshdx8_renderpass_post_draw; // instead of 'edx' (DrawIndexedPrimitive)
-			//add		esp, 0x1C;
-
-			jmp		cmeshdx8_renderpass_pass_for_instances_retn_addr;
-		}
-	}
-	
-	// either only do this to specific models or check boneweights and reset ?
-	
-	void xyz(int numVertices, matrix3x4_t* pPoseToWorld, mstudio_meshvertexdata_t* vertData)
-	{
-		const auto shaderapi = game::get_shaderapi();
-		BufferedState_t buffer_state{};
-
-		shaderapi->vtbl->GetBufferedState(shaderapi, nullptr, &buffer_state);
-		std::string_view mat_name;
-		int numbone = 0;
-
-		if (const auto material = shaderapi->vtbl->GetBoundMaterial(shaderapi, nullptr);
-			material)
-		{
-			mat_name = material->vftable->GetName(material);
-			numbone = shaderapi->vtbl->GetCurrentNumBones(shaderapi);
-		}
-
-		if (mat_name == "models/props/portal_door_02")
-		{
-			int x = 1;
-		}
-
-		// debris_metaljunk_01 -> wall_dest renders fine
-		// -> turret_casing renders at 0 0 0
-		if (mat_name.contains("wall_dest"))
-		{
-			int x = 1;
-		}
-
-		if (mat_name.contains("turret_casing"))
-		{
-			int x = 1;
-		}
-
-
-		mstudiovertex_t* pVertices = (mstudiovertex_t*)vertData->modelvertexdata->pVertexData;
-		bool skip_model = false; 
-
-		for (int j = 0; j < numVertices; ++j)
-		{
-			mstudiovertex_t& vert = pVertices[j];
-			auto xyy = vert.m_BoneWeights.bone;
-
-			if (vert.m_BoneWeights.bone[0] || vert.m_BoneWeights.bone[1] || vert.m_BoneWeights.bone[2])
+			if (const auto& unbake_model_names = map_settings::get_map_settings().unbake_models;
+				!unbake_model_names.empty())
 			{
-				skip_model = true;
-				break;
+				for (const auto& unbake_mdl_str : unbake_model_names)
+				{
+					if (model_str.contains(unbake_mdl_str))
+					{
+						unbake_transform = true;
+						break;
+					}
+				}
 			}
 		}
 
-#if 1
-		if (skip_model)
+		DWORD R_StudioDrawPoints_pSubModel_addr = 0u;
+		HOOK_RETN_PLACE_DEF(R_StudioDrawPoints_retn_addr);
+		void __declspec(naked) R_StudioDrawPoints_stub()
 		{
-			hacked_posetoworld_transform = game::IDENTITY;
-			//saved_posetoworld.m_flMatVal[0][0] = 1.0f;
-			//saved_posetoworld.m_flMatVal[0][1] = 0.0f;
-			//saved_posetoworld.m_flMatVal[0][2] = 0.0f;
-			//saved_posetoworld.m_flMatVal[1][0] = 0.0f;
-			//saved_posetoworld.m_flMatVal[1][1] = 1.0f;
-			//saved_posetoworld.m_flMatVal[1][2] = 0.0f;
-			//saved_posetoworld.m_flMatVal[2][0] = 0.0f;
-			//saved_posetoworld.m_flMatVal[2][1] = 0.0f;
-			//saved_posetoworld.m_flMatVal[2][2] = 1.0f;
-			//saved_posetoworld.m_flMatVal[0][3] = 0.0f;
-			//saved_posetoworld.m_flMatVal[1][3] = 0.0f;
-			//saved_posetoworld.m_flMatVal[2][3] = 0.0f;
-			return;
+			__asm
+			{
+				mov		R_StudioDrawPoints_pSubModel_addr, eax; // save addr
+				mov     eax, [edi + 0xB8]; // og
+
+				pushad;
+				push	R_StudioDrawPoints_pSubModel_addr;
+				push	eax;
+				call	R_StudioDrawPoints_hk;
+				add		esp, 8;
+				popad;
+
+				// og
+				mov     eax, [edi + 0xB8];
+				jmp		R_StudioDrawPoints_retn_addr;
+			}
 		}
 
-		//hacked_posetoworld_transform = 
-		//saved_posetoworld = *pPoseToWorld;
+		// do not bake position/normals into vertices of "dynamic" static props
+		void R_StudioSoftwareProcessMesh_hk([[maybe_unused]] int num_vertices, matrix3x4_t* pose_to_world, [[maybe_unused]] mstudio_meshvertexdata_t* vert_data)
+		{
+			og_pose = *pose_to_world;
 
-		//D3DXMATRIX wrld = {};
-		//float wrld[4][4] = {};
-		//utils::row_major_to_column_major(saved_posetoworld.m_flMatVal[0], wrld.m[0]);
-		//buffer_state.m_Transform[0] = wrld;
+#if 0
+			const auto shaderapi = game::get_shaderapi();
+			BufferedState_t buffer_state {};
 
-		utils::row_major_to_column_major(pPoseToWorld->m_flMatVal[0], hacked_posetoworld_transform.m[0]);
+			shaderapi->vtbl->GetBufferedState(shaderapi, nullptr, &buffer_state);
+			std::string_view mat_name;
 
-		pPoseToWorld->m_flMatVal[0][0] = 1.0f;
-		pPoseToWorld->m_flMatVal[0][1] = 0.0f;
-		pPoseToWorld->m_flMatVal[0][2] = 0.0f;
+			if (const auto material = shaderapi->vtbl->GetBoundMaterial(shaderapi, nullptr); material) {
+				mat_name = material->vftable->GetName(material);
+			}
 
-		pPoseToWorld->m_flMatVal[1][0] = 0.0f;
-		pPoseToWorld->m_flMatVal[1][1] = 1.0f;
-		pPoseToWorld->m_flMatVal[1][2] = 0.0f;
+			// mesh with multiple parts: debris_metaljunk_01
+			if (mat_name.contains("wall_dest_003")) {
+				int break_me = 1;
+			}
 
-		pPoseToWorld->m_flMatVal[2][0] = 0.0f;
-		pPoseToWorld->m_flMatVal[2][1] = 0.0f;
-		pPoseToWorld->m_flMatVal[2][2] = 1.0f;
+			bool skip = false;
+			if (mat_name.contains("incinerator")) { 
+				skip = false; 
+			}
 
-		pPoseToWorld->m_flMatVal[0][3] = 0.0f;
-		pPoseToWorld->m_flMatVal[1][3] = 0.0f;
-		pPoseToWorld->m_flMatVal[2][3] = 0.0f;
-		int wtf = 0;
+
+			const mstudiovertex_t* pVertices = (mstudiovertex_t*)vert_data->modelvertexdata->pVertexData;
+			bool skip_model = false; 
+
+			for (int j = 0; j < num_vertices; ++j)
+			{
+				auto vert = &pVertices[j];
+				if (vert->m_BoneWeights.bone[0] || vert->m_BoneWeights.bone[1] || vert->m_BoneWeights.bone[2])
+				{
+					skip_model = true;
+					break;
+				}
+
+				if (vert->m_BoneWeights.numbones > 1)
+				{
+					skip_model = true;
+					break;
+				}
+			}
+
+			if (fix_mesh_transform) {
+				int xx = 1;
+			}
 #endif
-	}
 
-	HOOK_RETN_PLACE_DEF(xyz_retn_addr);
-	void __declspec(naked) xyz_stub()
+			if (imgui::get()->m_disable_ms_unbake_check) {
+				return;
+			}
+
+			auto& unbake_transform = model_render::get()->m_unbake_transforms_on_next_static_prop;
+			if (!unbake_transform)
+			{
+				model_render::get()->m_unbake_transforms_p2w_transform = game::IDENTITY;
+				return;
+			}
+
+			auto& wrld = model_render::get()->m_unbake_transforms_p2w_transform;
+			utils::transpose_matrix3x4_to_d3dxmatrix(*pose_to_world, wrld);
+
+			pose_to_world->m_flMatVal[0][0] = 1.0f;
+			pose_to_world->m_flMatVal[0][1] = 0.0f;
+			pose_to_world->m_flMatVal[0][2] = 0.0f;
+			pose_to_world->m_flMatVal[0][3] = 0.0f; // transform x
+
+			pose_to_world->m_flMatVal[1][0] = 0.0f;
+			pose_to_world->m_flMatVal[1][1] = 1.0f;
+			pose_to_world->m_flMatVal[1][2] = 0.0f;
+			pose_to_world->m_flMatVal[1][3] = 0.0f; // transform y
+
+			pose_to_world->m_flMatVal[2][0] = 0.0f;
+			pose_to_world->m_flMatVal[2][1] = 0.0f;
+			pose_to_world->m_flMatVal[2][2] = 1.0f;
+			pose_to_world->m_flMatVal[2][3] = 0.0f; // transform z
+		}
+
+		HOOK_RETN_PLACE_DEF(R_StudioSoftwareProcessMesh_retn_addr);
+		void __declspec(naked) R_StudioSoftwareProcessMesh_stub()
+		{
+			__asm
+			{
+				pushad;
+
+				push	ecx; // mstudio_meshvertexdata_t*
+				mov     eax, [ebx + 0xC];
+				push    eax;
+				mov		eax, [ebx + 0x18]; // numverts
+				push    eax;
+				call	R_StudioSoftwareProcessMesh_hk;
+				add		esp, 12;
+				popad;
+
+				xorps   xmm1, xmm1; // og
+				push    esi; // og
+				mov     esi, [ecx]; // og
+				jmp		R_StudioSoftwareProcessMesh_retn_addr;
+			}
+		}
+
+
+		void R_StudioSoftwareProcessMesh_Restore_hk(matrix3x4_t* pose_to_world) {
+			*pose_to_world = og_pose; 
+		}
+
+		void __declspec(naked) R_StudioSoftwareProcessMesh_Restore_stub()
 	{
 		__asm
 		{
 			pushad;
 
-			push	ecx; // mstudio_meshvertexdata_t*
 			mov     eax, [ebx + 0xC];
 			push    eax;
-			mov		eax, [ebx + 0x18]; // numverts
-			push    eax;
-			call	xyz;
-			add		esp, 12;
-			popad;
-
-			xorps   xmm1, xmm1; // og
-			push    esi; // og
-			mov     esi, [ecx]; // og
-			jmp		xyz_retn_addr;
-		}
-	}
-
-	void xyz_restore()
-	{
-		hacked_posetoworld_transform = game::IDENTITY;
-	}
-
-	void __declspec(naked) xyz_restore_stub()
-	{
-		__asm
-		{
-			pushad;
-			call	xyz_restore;
+			call	R_StudioSoftwareProcessMesh_Restore_hk;
+			add		esp, 4;
 			popad;
 
 			// og
-			pop     edi;
-			pop     esi;
-			mov     esp, ebp;
-			pop     ebp;
-			retn    0x28;
+			mov     esp, ebx; 
+			pop     ebx;
+			retn;
+		}
+	}
+
+
+		void R_StudioRenderFinal_hk() {
+			model_render::get()->m_unbake_transforms_p2w_transform = game::IDENTITY;
+		}
+
+		void __declspec(naked) R_StudioRenderFinal_stub()
+		{
+			__asm
+			{
+				pushad;
+				call	R_StudioRenderFinal_hk;
+				popad;
+
+				// og
+				pop     edi;
+				pop     esi;
+				mov     esp, ebp;
+				pop     ebp;
+				retn    0x28;
+			}
+		}
+	}
+
+	// called from imgui::on_present
+	void model_render::on_present()
+	{
+		if (cmd::ms_unbake_info)
+		{
+			cmd::ms_unbake_info = false;
+
+			std::filesystem::create_directories(game::root_path + COMPMOD_ASSET_DIR "logs\\");
+
+			std::ofstream file;
+			file.open((game::root_path + COMPMOD_ASSET_DIR "logs\\mapsettings_unbake_info.log").c_str());
+
+			file << "MapSettings [UNBAKE] : Logfile containing names of models that were drawn in the capture frame." << "\n\n";
+
+			for (const auto& str : cmd::ms_unbake_info_logged_strings) {
+				file << str << "\n";
+			}
+
+			file.close();
+			cmd::ms_unbake_info_logged_strings.clear();
 		}
 	}
 
@@ -3958,6 +4012,12 @@ namespace components
 	void xo_debug_toggle_model_info_fn()
 	{
 		cmd::model_info_vis = !cmd::model_info_vis;
+	}
+
+	ConCommand xo_mapsettings_get_unbake_info_cmd{};
+	void model_render::xo_mapsettings_get_unbake_info_fn()
+	{
+		cmd::ms_unbake_info = true;
 	}
 
 	// #
@@ -3980,6 +4040,10 @@ namespace components
 
 		utils::hook(RENDERER_BASE + USE_OFFSET(0xB285, 0xADF5), cmeshdx8_renderpass_post_draw_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(cmeshdx8_renderpass_post_draw_retn_addr, RENDERER_BASE + USE_OFFSET(0xB28C, 0xADFC)); // 0125
+
+		// model and tluc fastpath test
+		//utils::hook(RENDERER_BASE + USE_OFFSET(0x0, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
+		//HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0x0, 0xA581));
 
 
 		// brushmodels - cubes - etc
@@ -4059,25 +4123,43 @@ namespace components
 		HOOK_RETN_PLACE(RenderSpriteCardNew_retn_addr, CLIENT_BASE + USE_OFFSET(0x6222D6, 0x619BA6)); // 0125
 
 
+		// Remove world-position baking for vertices of "dynamic" static props and use SetTransform(WORLD) to transform them into the world.
+		// This results in:
+		// - affected mesh instances having the same (remix) hash
+		// - stable hashes for some non-animated props (cube)
 
-		// model and tluc fastpaths
+		// CStudioRender::R_StudioRenderFinal -> 
+		// CStudioRender::R_StudioDrawPoints -> 
+		// CStudioRender::R_StudioDrawMesh -> 
+		// CStudioRender::R_StudioDrawStaticMesh ->
+		// CStudioRender::R_StudioSoftwareProcessMesh -> 
+		// CProcessMeshWrapper<0,0,0>::R_StudioSoftwareProcessMesh (hooked)
+		// :: transpose pPoseToWorld and use it as world-transform in 'cmeshdx8_renderpass_pre_draw'
+		// :: set pPoseToWorld to identity to remove position/normal baking
+		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0xA6E7, 0xA587), 6);
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0xA6E7, 0xA587), unbake_transform::R_StudioSoftwareProcessMesh_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(unbake_transform::R_StudioSoftwareProcessMesh_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0xA6ED, 0xA58D));
 
-		utils::hook(RENDERER_BASE + USE_OFFSET(0x0, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0x0, 0xA581));
+		// restore pPoseToWorld after building the mesh ^
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0xA949, 0xA7E9), unbake_transform::R_StudioSoftwareProcessMesh_Restore_stub, HOOK_JUMP).install()->quick();
 
-#if 1
-		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA587), 6);
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA587), xyz_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(xyz_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0x0, 0xA58D));
+		// CStudioRender::R_StudioRenderFinal
+		// :: some meshes are made up of multiple submodels or body parts, so 'cmeshdx8_renderpass_pre_draw' gets called multiple times
+		// :: we need to set the modified world-transform back to identity after we are done rendering the mesh to not affect subsequent meshes
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x10DB7, 0x10C57), unbake_transform::R_StudioRenderFinal_stub, HOOK_JUMP).install()->quick();
 
-		// A7E9
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x0, 0x10C57), xyz_restore_stub, HOOK_JUMP).install()->quick();
-#endif
+		// CStudioRender::R_StudioDrawPoints
+		// :: get info about the current mesh and decide if we will be fixing the baked transform or not
+		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), 6);
+		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), unbake_transform::R_StudioDrawPoints_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(unbake_transform::R_StudioDrawPoints_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0x10C42, 0x10AE2));
+
 
 		// #
 		// commands
 
 		game::con_add_command(&xo_debug_toggle_model_info_cmd, "xo_debug_toggle_model_info", xo_debug_toggle_model_info_fn, "Toggle model name and radius visualizations");
+		game::con_add_command(&xo_mapsettings_get_unbake_info_cmd, "xo_mapsettings_get_unbake_info", xo_mapsettings_get_unbake_info_fn, "This log names of drawn models in the current frame to a logfile in portal2-rtx/logs/. Useful for MapSettings : [UNBAKE]");
 	}
 }
 

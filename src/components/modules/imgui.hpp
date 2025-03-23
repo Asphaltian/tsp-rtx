@@ -11,7 +11,7 @@ namespace components
 		static inline imgui* p_this = nullptr;
 		static imgui* get() { return p_this; }
 
-		static void endscene_stub();
+		static void on_present();
 		static void on_map_load();
 
 		void devgui();
@@ -42,6 +42,8 @@ namespace components
 
 		Vector m_debug_vector = { 0.0f, 0.0f, 0.0f };
 		Vector m_debug_vector2 = { 0.0f, 0.0f, 0.0f };
+
+		bool m_disable_ms_unbake_check = false;
 
 		bool m_was_mapsettings_tab_open = false;
 

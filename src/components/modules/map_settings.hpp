@@ -196,6 +196,7 @@ namespace components
 			std::unordered_map<std::uint32_t, area_overrides_s> area_settings;
 			float default_nocull_dist = DEFAULT_NOCULL_DIST;
 			hide_models_s hide_models;
+			std::unordered_set<std::string> unbake_models;
 			std::vector<remix_transition_s> remix_transitions;
 			std::vector<marker_settings_s> map_markers;
 			std::vector<std::string> api_var_configs;

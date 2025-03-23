@@ -249,19 +249,26 @@ namespace components
 			ImGui::Spacing(0, 8);
 			if (ImGui::CollapsingHeader("DEBUG Build Section", ImGuiTreeNodeFlags_SpanFullWidth))
 			{
-				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Disable R_CullNode", &im->m_disable_cullnode);
-				SET_CHILD_WIDGET_WIDTH; ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
+				ImGui::Checkbox("Disable R_CullNode", &im->m_disable_cullnode);
+				ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
+				ImGui::Checkbox("Disable MS Unbake", &im->m_disable_ms_unbake_check);
 
-				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)")) {
+				ImGui::Spacing(0, 6);
+
+				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x * 0.49f, 0))) {
 					remix_api::get()->m_bridge.AddTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("Remove Texture Hash (ignore Textures)(PortalGun)")) {
+				if (ImGui::Button("Remove Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
 					remix_api::get()->m_bridge.RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
 				}
 
+				ImGui::Spacing(0, 6);
+
 				ImGui::DragFloat3("Debug Vector", &im->m_debug_vector.x, 0.01f);
 				ImGui::DragFloat3("Debug Vector 2", &im->m_debug_vector2.x, 0.01f);
+
+				ImGui::Spacing(0, 6);
 
 				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
 
@@ -272,11 +279,11 @@ namespace components
 				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonYellow", &im->ImGuiCol_ButtonYellow.x, coloredit_flags);
 				SET_CHILD_WIDGET_WIDTH; ImGui::ColorEdit4("ButtonRed", &im->ImGuiCol_ButtonRed.x, coloredit_flags);
 
-				const auto glob = game::get_global_vars();
+				ImGui::Spacing(0, 6);
 
+				const auto glob = game::get_global_vars();
 				ImGui::Text("Realtime: %.4f", glob->realtime);
 				ImGui::Text("Curtime Abs: %.4f", glob->curtime);
-				ImGui::Text("MaxClients: %.4f", glob->maxClients);
 				ImGui::Text("Frametime Abs: %.4f", glob->absoluteframetime);
 				ImGui::Text("Frametime: %.4f", glob->frametime);
 			}
@@ -349,6 +356,8 @@ namespace components
 		ImGui::SameLine();
 		reload_mapsettings_button_with_popup("General");
 
+		ImGui::Spacing(0, 6);
+
 		{
 			auto default_nocull_dist = ms.default_nocull_dist;
 			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
@@ -358,7 +367,12 @@ namespace components
 			TT("Default distance value for the default anti-cull mode (distance) if there is no override for the current area");
 		}
 
-		ImGui::Spacing(0, 4);
+		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		if (ImGui::Button("Log MapSettings [UNBAKE] Info", ImVec2(ImGui::CalcItemWidth(), 0))) {
+			model_render::xo_mapsettings_get_unbake_info_fn();
+		} TT("This log names of drawn models in the current frame to a logfile in portal2-rtx/logs/. Useful for MapSettings : [UNBAKE]");
+
+		ImGui::Spacing(0, 6);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
 		ImGui::TableHeaderDropshadow();
@@ -763,24 +777,6 @@ namespace components
 		} // selection
 
 		ImGui::Spacing();
-		ImGui::Spacing();
-		if (ImGui::TreeNodeEx("Help##Marker", ImGuiTreeNodeFlags_Selected | ImGuiTreeNodeFlags_SpanAvailWidth))
-		{
-			ImGui::TextUnformatted(
-				"# Spawn unique markers that can be used as anchor meshes (same one can be spawned multiple times)\n"
-				"# Parameters ---------------------------------------------------------------------------------------------------------------------------------\n"
-				"#\n"
-				"# marker    ]     THIS:     number of marker mesh - can get culled BUT that can be controlled via leaf/area forcing (initial spawning can't be forced)[int 0 - 100]\n"
-				"# nocull    ]  OR THAT:     number of marker mesh - never getting culled and spawned on map load (eg: useful for distant light) [int 0-inf.]\n"
-				"# nocull    |>   areas:     (optional) only show nocull marker when player is in specified area/s [int array]\n"
-				"# nocull    |> N_leafs:     (optional) only show nocull marker when player is in ^ and NOT in specified leaf/s [int array]\n"
-				"#\n"
-				"# position:                 X Y Z position of the marker mesh [3D Vector]\n"
-				"# rotation:                 X Y Z rotation of the marker mesh [3D Vector]\n"
-				"# scale:                    X Y Z scale of the marker mesh [3D Vector]\n");
-
-			ImGui::TreePop();
-		}
 	}
 
 	void cont_mapsettings_culling_manipulation()
@@ -1382,7 +1378,7 @@ namespace components
 		{
 			ImGui::BeginDisabled(!can_area_be_added);
 			ImGui::Style_ColorButtonPush(imgui::get()->ImGuiCol_ButtonGreen, true);
-			if (ImGui::Button("Add Current Area##Cull", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0)))
+			if (ImGui::Button("Add Current Area##Cull", ImVec2(ImGui::GetContentRegionAvail().x * (area_selection ? 0.5f : 1.0f), 0)))
 			{
 				areas.emplace((std::uint32_t)g_current_area, map_settings::area_overrides_s{
 						.cull_mode = map_settings::AREA_CULL_MODE::AREA_CULL_INFO_DEFAULT,
@@ -1392,11 +1388,11 @@ namespace components
 			}
 			ImGui::Style_ColorButtonPop();
 			ImGui::EndDisabled();
-			ImGui::SameLine();
 		}
 
 		if (area_selection)
 		{
+			ImGui::SameLine();
 			ImGui::Style_ColorButtonPush(imgui::get()->ImGuiCol_ButtonRed, true);
 			if (ImGui::Button("X Remove Selected Area Entry##Cull", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 			{
@@ -1423,43 +1419,6 @@ namespace components
 		}
 
 		ImGui::Spacing();
-		if (ImGui::TreeNodeEx("Help", ImGuiTreeNodeFlags_Selected | ImGuiTreeNodeFlags_SpanAvailWidth))
-		{
-			ImGui::TextUnformatted(
-				"# Override culling per game area\n"
-				"# :: Useful console command: 'xo_debug_toggle_node_vis'\n"
-				"# ~~ Parameters:\n"
-				"#\n"
-				"# in_area:          the area the player has to be in                [int]\n"
-				"# areas:            area/s with forced visibility                   [int array]\n"
-				"# leafs:            leaf/s with forced visibility                   [int array]\n"
-				"#\n"
-				"# cull:             [0] disable frustum culling                     [int 0-5]\n"
-				"#                   [1] disable frustum culling in current area\n"
-				"#                   [2] stock\n"
-				"#                   [3] frustum culling (outside current area) + force all nodes/leafs in current area\n"
-				"#                   [4] ^ + outside of current area within certain dist to player (param: nocull_dist)\n"
-				"#                   [5] force all leafs/nodes within certain dist to player (param: nocull_dist) << default\n"
-				"#\n"
-				"# nocull_dist:      |> Distance around the player where objects wont get culled - only used on certain cull modes [float] << defaults to 600.0\n"
-				"#\n"
-				"# -----------       :: This can be used to disable frustum culling for specified areas when the player is in specified leafs\n"
-				"#                   :: Useful at area crossings when used in conjunction with nocull - area-specific markers that block visibility\n"
-				"# leaf_tweak:																					[array of structure below]\n"
-				"#                   |>    in_leafs:     the leaf/s the player has to be in                     [int array]\n"
-				"#                   |>       areas:     area/s with forced visibility                          [int array]\n"
-				"#                   |>       leafs:     leaf/s with forced visibility                          [int array]\n"
-				"#                   |> nocull_dist:     uses per leaf value instead of area value if defined	[float]	<< defaults to 0.0 (off)\n"
-				"#\n"
-				"# -----------       :: This can be used to forcefully cull parts of the map\n"
-				"# hide_areas :																					[array of structure below]\n"
-				"#                   |>    areas:   area/s to hide												[int array]\n"
-				"#                   |>  N_leafs:   only hide area/s when NOT in leaf/s							[int array]\n"
-				"#\n"
-				"# hide_leafs :		force hide leaf/s															[int array]\n");
-
-			ImGui::TreePop();
-		}
 	}
 
 	bool check_light_for_modifications(const map_settings::remix_light_settings_s& edit_def, const map_settings::remix_light_settings_s& map_def, std::vector<map_settings::remix_light_settings_s::point_s>* mover_pts)
@@ -2596,7 +2555,7 @@ namespace components
 				} TT("Radius of light (defaults to 1.0)");
 
 				SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-				if (ImGui::DragFloat("Volumetric Radiance Scale", &active_point_selection->volumetric_scale, 0.005f, 0.0f, 20.0f, "%.2f")) {
+				if (ImGui::DragFloat("Volumetric Scale", &active_point_selection->volumetric_scale, 0.005f, 0.0f, 20.0f, "%.2f")) {
 					active_point_selection->volumetric_scale = active_point_selection->volumetric_scale < 0.0f ? 0.0f : active_point_selection->volumetric_scale;
 				} TT("Volumetric Radiance Scale of light (defaults to 1.0)");
 
@@ -2874,7 +2833,7 @@ namespace components
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
 			ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetColorU32(ImGuiCol_FrameBgActive));
-			if (ImGui::BeginListBox("##listbox1", ImVec2(ImGui::GetContentRegionAvail().x, 100.0f)))
+			if (ImGui::BeginListBox("##listbox1", ImVec2(ImGui::GetContentRegionAvail().x, 130.0f)))
 			{
 				for (const auto& str : configs)
 				{
@@ -2936,16 +2895,16 @@ namespace components
 			ImGui::EndDisabled();
 		}
 
-		ImGui::Spacing(0, 4);
+		ImGui::Spacing(0, 8);
 		ImGui::Separator();
-		ImGui::Spacing(0, 4);
+		ImGui::Spacing(0, 6);
 
 		{
 			ImGui::TableHeaderDropshadow();
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
 			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
 			ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetColorU32(ImGuiCol_FrameBgActive));
-			if (ImGui::BeginListBox("##listbox2", ImVec2(ImGui::GetContentRegionAvail().x, 100.0f)))
+			if (ImGui::BeginListBox("##listbox2", ImVec2(ImGui::GetContentRegionAvail().x, 130.0f)))
 			{
 				for (const auto& str : configs)
 				{
@@ -3308,8 +3267,10 @@ namespace components
 		ImGui::End();
 	}
 
-	void imgui::endscene_stub()
+	void imgui::on_present()
 	{
+		model_render::on_present();
+
 		if (auto* im = imgui::get(); im)
 		{
 			if (const auto dev = game::get_d3d_device(); dev)
@@ -3485,7 +3446,7 @@ namespace components
 		using present_fn = long(__stdcall*)(IDirect3DDevice9*, RECT*, RECT*, HWND, RGNDATA*); present_fn present_original = {};
 		long __stdcall present_hk(IDirect3DDevice9* device, RECT* source_rect, RECT* dest_rect, HWND dest_window_override, RGNDATA* dirty_region)
 		{
-			imgui::endscene_stub();
+			imgui::on_present();
 			return present_original(device, source_rect, dest_rect, dest_window_override, dirty_region);
 		}
 

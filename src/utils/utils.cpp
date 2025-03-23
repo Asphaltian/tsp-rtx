@@ -234,7 +234,30 @@ namespace utils
 		}
 	}
 
-	void row_major_to_column_major(const float* row_major, float* column_major)
+	void transpose_matrix3x4_to_d3dxmatrix(const matrix3x4_t& src, D3DXMATRIX& dest)
+	{
+		dest.m[0][0] = src.m_flMatVal[0][0];
+		dest.m[0][1] = src.m_flMatVal[1][0];
+		dest.m[0][2] = src.m_flMatVal[2][0];
+		dest.m[0][3] = 0.0f;
+
+		dest.m[1][0] = src.m_flMatVal[0][1];
+		dest.m[1][1] = src.m_flMatVal[1][1];
+		dest.m[1][2] = src.m_flMatVal[2][1];
+		dest.m[1][3] = 0.0f;
+
+		dest.m[2][0] = src.m_flMatVal[0][2];
+		dest.m[2][1] = src.m_flMatVal[1][2];
+		dest.m[2][2] = src.m_flMatVal[2][2];
+		dest.m[2][3] = 0.0f;
+
+		dest.m[3][0] = src.m_flMatVal[0][3];
+		dest.m[3][1] = src.m_flMatVal[1][3];
+		dest.m[3][2] = src.m_flMatVal[2][3];
+		dest.m[3][3] = 1.0f;
+	}
+
+	void transpose_float4x4(const float* row_major, float* column_major)
 	{
 		// transpose the matrix by swapping the rows and columns
 		for (int i = 0; i < 4; ++i)
