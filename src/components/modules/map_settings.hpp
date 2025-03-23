@@ -75,6 +75,12 @@ namespace components
 			std::string value;
 		};
 
+		struct api_texture_category_tweak
+		{
+			std::unordered_set<std::string> add_hashes;
+			std::unordered_set<std::string> remove_hashes;
+		};
+
 		struct remix_light_settings_s
 		{
 			struct point_s
@@ -191,6 +197,7 @@ namespace components
 			float fog_density = 0.0f;
 			DWORD fog_color = 0xFFFFFFFF;
 			float water_uv_scale = 1.0f;
+			float water_uv_top_scale = 0.0f;
 			float water_offset_top = 0.5f; // top layer
 			float water_offset_bottom = 0.0f; // bottom layer
 			std::unordered_map<std::uint32_t, area_overrides_s> area_settings;
@@ -200,6 +207,7 @@ namespace components
 			std::vector<remix_transition_s> remix_transitions;
 			std::vector<marker_settings_s> map_markers;
 			std::vector<std::string> api_var_configs;
+			std::unordered_map<std::string, api_texture_category_tweak> api_texture_category_tweaks;
 			std::vector<remix_light_settings_s> remix_lights;
 			bool using_any_light_sound_hash = false;
 			bool using_any_light_attached_to_prop = false;
@@ -213,6 +221,7 @@ namespace components
 		void set_settings_for_map(const std::string& map_name);
 		static void spawn_markers_once();
 		static void destroy_markers();
+		static void handle_texture_category_tweaks(bool invert = false);
 		static void on_map_load(const std::string& map_name);
 		static void on_map_unload();
 		static void clear_map_settings();

@@ -1218,8 +1218,15 @@ namespace components
 
 		current_transform *= scale_matrix;
 		ctx.modifiers.as_emancipation_grill = !side_emitters;
-		ctx.modifiers.emancipation_scale = { 1.2f - (std::cosf(g_flTime * 0.01f) * 1.0f), 1.2f - (std::cosf(g_flTime * 0.01f) * 1.0f) };
-		ctx.modifiers.emancipation_offset = { g_flTime * 0.01f, g_flTime * -0.0015f };
+
+		//auto& u1 = imgui::get()->m_debug_vector.x; // 1.2
+		//auto& u2 = imgui::get()->m_debug_vector.y; // 1.2
+		//auto& u3 = imgui::get()->m_debug_vector.z; // 1.0
+		//auto& u4 = imgui::get()->m_debug_vector2.x; // 0.01f
+		//auto& u5 = imgui::get()->m_debug_vector2.y; // -0.0015f
+
+		ctx.modifiers.emancipation_scale = { 0.24f - (std::cosf(g_flTime * 0.01f) * 2.03f), 0.1f - (std::cosf(g_flTime * 0.01f) * 2.03f) };
+		ctx.modifiers.emancipation_offset = { g_flTime * -0.001f, g_flTime * 0.001f };
 		ctx.modifiers.emancipation_color_scale = g_flPowerUp;
 
 		ctx.set_texture_transform(dev, &current_transform);
@@ -1445,15 +1452,15 @@ namespace components
 								}
 
 								// scale water uv
-								D3DXMATRIX scaleMatrix; // create a scaling matrix
-								D3DXMatrixScaling(&scaleMatrix, 1.5f * ms.water_uv_scale, 1.5f * ms.water_uv_scale, 1.0f);
+								D3DXMATRIX scale_matrix; // create a scaling matrix
+								D3DXMatrixScaling(&scale_matrix, 1.5f * ms.water_uv_scale, 1.5f * ms.water_uv_scale, 1.0f);
 
 								ctx.save_ss(dev, D3DSAMP_ADDRESSU);
 								ctx.save_ss(dev, D3DSAMP_ADDRESSV);
 								dev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 								dev->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
-								ctx.set_texture_transform(dev, &scaleMatrix);
+								ctx.set_texture_transform(dev, &scale_matrix);
 								ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
 								dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 							}
@@ -1462,6 +1469,26 @@ namespace components
 							else
 							{
 								ctx.modifiers.do_not_render = true;
+							}
+						}
+
+						// material has defined a $basetexture
+						else
+						{
+							//  sampler 10
+							IDirect3DBaseTexture9* tex = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[10]);
+							if (tex)
+							{
+								// save og texture
+								ctx.modifiers.as_water = true;
+								ctx.save_texture(dev, 0);
+								dev->SetTexture(0, tex);
+
+								const auto& ms = map_settings::get_map_settings();
+								ctx.modifiers.og_mesh_z_offset = ms.water_offset_bottom;
+								ctx.modifiers.dual_render_with_specified_texture = true;
+								ctx.modifiers.dual_render_texture_z_offset = ms.water_offset_top;
+								ctx.modifiers.dual_render_texture = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[2]);
 							}
 						}
 					}
@@ -1679,15 +1706,15 @@ namespace components
 					const auto& scale_setting = map_settings::get_map_settings().water_uv_scale;
 
 					// create a scaling matrix
-					D3DXMATRIX scaleMatrix;
-					D3DXMatrixScaling(&scaleMatrix, 1.5f * scale_setting, 1.5f * scale_setting, 1.0f);
+					D3DXMATRIX scale_matrix;
+					D3DXMatrixScaling(&scale_matrix, 1.5f * scale_setting, 1.5f * scale_setting, 1.0f);
 
 					ctx.save_ss(dev, D3DSAMP_ADDRESSU);
 					ctx.save_ss(dev, D3DSAMP_ADDRESSV);
 					dev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 					dev->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
-					ctx.set_texture_transform(dev, &scaleMatrix); 
+					ctx.set_texture_transform(dev, &scale_matrix); 
 					ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
 					dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 				}
@@ -2546,6 +2573,7 @@ namespace components
 						{
 							// modify light of add-light-to-texture light
 							add_light_to_texture_color_edit(0.4f, 0.85f, 0.55f, 0.001f);
+							set_remix_emissive_intensity(dev, ctx, 0.2f);
 						}
 					}
 				}
@@ -3342,6 +3370,8 @@ namespace components
 
 			//add_light_to_texture_color_edit(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs);
 
+			set_remix_texture_hash(dev, ctx, utils::string_hash32("emancidual")); 
+
 			// draw surface a second time
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
 
@@ -3359,7 +3389,7 @@ namespace components
 				ctx.info.buffer_state.m_Transform[0].m[3][1] += 0.01f;
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
-				set_remix_emissive_intensity(dev, ctx, cs);
+				//set_remix_emissive_intensity(dev, ctx, cs);
 
 				// draw surface a third time
 				dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
@@ -3407,8 +3437,23 @@ namespace components
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 			}
 
-			if (ctx.modifiers.as_water) {
+			if (ctx.modifiers.as_water) 
+			{
 				set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
+
+				const auto& scale_setting = map_settings::get_map_settings().water_uv_top_scale;
+				if (!utils::float_equal(scale_setting, 0.0f)) // use scale of parent (bottom) water surface if 0
+				{
+					// restore
+					ctx.restore_texture_stage_state(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
+
+					D3DXMATRIX scale_matrix;
+					D3DXMatrixScaling(&scale_matrix, 1.5f * scale_setting, 1.5f * scale_setting, 1.0f);
+
+					ctx.set_texture_transform(dev, &scale_matrix);
+					ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
+					dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+				}
 			}
 
 			// re-draw surface
@@ -3524,13 +3569,15 @@ namespace components
 
 		if (auto ent = (C_BaseEntity*)baseentity; ent)
 		{
+			const auto& name = std::string_view(ent->m_iName);
 			// emancipation grill on intro4 ---- if (origin->x == 367.500000) // y = 160.000000 z = 64.0000000
 			// render one of the two emancipaction grill surfaces dual sided so that the emissive proxy gets drawn when standing between grid surface 1 and 2
-			if (std::string_view(ent->m_iName) == "fizzler_brush")
+			if (name == "fizzler_brush" || name.contains("cleanser")) 
 			{
 				//for (auto num = model->___u10.brush.firstmodelsurface; num < model->___u10.brush.firstmodelsurface + 1 /*model->___u10.brush.nummodelsurfaces*/; num++)
+				for (auto num = model->___u10.brush.firstmodelsurface; num < model->___u10.brush.firstmodelsurface + model->___u10.brush.nummodelsurfaces; num++)
 				{
-					const auto surf = &model->___u10.brush.pShared->surfaces2[model->___u10.brush.firstmodelsurface]; // num
+					const auto surf = &model->___u10.brush.pShared->surfaces2[num]; // num
 					surf->flags |= 0x20; // & check in CBrushBatchRender::BuildTransLists_r
 					surf->flags |= 0x200; // & check in CBrushBatchRender::BuildTransLists_r
 					//0x2000 = nocull -- 0x40 = side check in CBrushBatchRender::BuildTransLists_r

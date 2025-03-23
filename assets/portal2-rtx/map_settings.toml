@@ -21,13 +21,15 @@
 # ~~ Parameters: 
 #
 # <map name> = {
-#   scale =                uv scale - small values reduce repetition while larger values will increase tiling               [float] << defaults to 1.0
-#   top_layer_offset =     can offset the dual rendered water mesh along the Z-Axis (usually the animated surface)          [float] << defaults to 0.5
-#   bottom_layer_offset =  can offset the original water mesh along the Z-Axis (usually the surface defining water color)   [float] << defaults to 0.0
+#   scale =                 uv scale - small values reduce repetition while larger values will increase tiling              [float] << defaults to 1.0
+#   scale_top =             uv scale to top layer - a value of 0 will use 'scale' for top and bottom                        [float] << defaults to 0.0
+#   top_layer_offset =      can offset the dual rendered water mesh along the Z-Axis (usually the animated surface)         [float] << defaults to 0.5
+#   bottom_layer_offset =   can offset the original water mesh along the Z-Axis (usually the surface defining water color)  [float] << defaults to 0.0
 # }
 
 [WATER]
     sp_a1_intro3 = { scale = 3.2, top_layer_offset = 1.6, bottom_layer_offset = -0.70 }
+    sp_a1_intro5 = { scale = 1.8, scale_top = 1.5, top_layer_offset = 16.0 }
     sp_a1_wakeup = { scale = 10.0, top_layer_offset = 0.5 }
     sp_a2_column_blocker = { scale = 2.0 }
 
@@ -86,6 +88,10 @@
         { in_area =   2, leafs = [
                 954, 966, 1081, 1083, 1111
             ], nocull_dist = 1500.00 },
+    ]
+
+    sp_a1_intro4 = [
+        { in_area =   6, areas = [3], nocull_dist = 1500.00 },
     ]
 
     #sp_a4_finale2 = [
@@ -164,7 +170,7 @@
 
 [UNBAKE]
 
-    ALL = ["metal_box", "portal_emitter", "hanging_stair", "lab_", "frame_", "window_"]
+    #ALL = ["metal_box", "portal_emitter", "hanging_stair", "lab_", "frame_", "window_"]
 
     #sp_a4_laser_platform = { name = [
     #    "arm_"
@@ -258,14 +264,26 @@
 
     sp_a1_intro4 = [
 
-        # # above entry elevator staircase
+        # above entry elevator staircase
         { nocull = 104, areas = [], N_leafs = [], position = [-1043.00, 362.50, 256.50], rotation = [0.00, 0.00, 0.00], scale = [1.00, 1.00, 1.00] },
 
-        # # light occl entry elevator
+        # light occl entry elevator
         { nocull = 0, areas = [], N_leafs = [], position = [-1014.72, 165.81, 202.53], rotation = [0.00, 0.00, 0.00], scale = [0.12, 0.12, 1.00] },
 
-        # # light occl exit elevator
+        # light occl exit elevator
         { nocull = 0, areas = [], N_leafs = [], position = [1588.98, -522.02, 331.03], rotation = [0.00, 0.00, 0.00], scale = [0.10, 0.10, 1.00] },
+    ]
+
+    sp_a1_intro5 = [
+
+        # above entry elevator staircase
+        { nocull = 105, areas = [], N_leafs = [], position = [-136.89, -985.12, 364.26], rotation = [0.00, 0.00, 0.00], scale = [1.00, 1.00, 1.00] },
+
+        # light occl enty ele
+        { nocull = 0, areas = [], N_leafs = [], position = [-0.90, -890.33, 346.03], rotation = [0.00, 0.00, 0.00], scale = [0.12, 0.12, 1.00] },
+
+        # light occl exit ele
+        { nocull = 0, areas = [], N_leafs = [], position = [-77.87, 771.95, 460.53], rotation = [0.00, 0.00, 0.00], scale = [0.12, 0.12, 1.00] },
     ]
 
     sp_a1_wakeup = [
@@ -340,6 +358,11 @@
     #    { conf = "chromatic_explosion.conf", leafs = [424], mode = 0, ease = 8, duration = 0.5, delay_in = 0.0, delay_out = 0.1 },
     #    #{ conf = "chromatic_explosion.conf", choreo = "prehub28.vcd", mode = 0, ease = 8, duration = 2.5, delay_in = 0.0, delay_out = 1.0 }
     #]}
+
+    sp_a1_intro4 = { texture_categories = [
+        # remove light from observ. windows
+        { category = "rtx.lightConverter", add = [], remove = ["0x5A0A67F78F95EFE5"] },
+    ]}
 
     sp_a4_laser_platform = { transitions = [
         # towards funnel

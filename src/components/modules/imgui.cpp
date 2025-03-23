@@ -387,6 +387,11 @@ namespace components
 			}
 
 			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+			if (ImGui::DragFloat("UV Top Scale##Water", &ms.water_uv_top_scale, 0.05f, 0.01f, FLT_MAX, "%.2f")) {
+				ms.water_uv_top_scale = std::clamp(ms.water_uv_top_scale, 0.0f, FLT_MAX);
+			}
+
+			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
 			ImGui::DragFloat("Top Layer Offset", &ms.water_offset_top, 0.05f, -100.0f, 100.0f, "%.2f");
 			TT("This can offset the dual rendered water mesh along the Z-Axis (usually the animated surface)");
 
