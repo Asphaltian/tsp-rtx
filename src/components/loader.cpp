@@ -10,17 +10,17 @@ namespace components
 		mem_allocator_.clear();
 		_register(new interfaces());
 		_register(new flags());
+		_register(new remix_api());
+		_register(new imgui());
 		_register(new game_settings());
 		_register(new choreo_events());
 		_register(new sound_events());
 		_register(new main_module());
 		_register(new model_render());
-		_register(new remix_api());
 		_register(new remix_vars());
 		_register(new remix_rayportal());
 		_register(new remix_lights());
 		_register(new map_settings());
-		_register(new imgui());
 
 		XASSERT(MH_EnableHook(MH_ALL_HOOKS) != MH_STATUS::MH_OK);
 	}
