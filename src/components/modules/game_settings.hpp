@@ -293,7 +293,7 @@ namespace components
 				"default_nocull_distance",
 				("The default distance (radius around player) where nothing will get culled.\n"
 				 "# Value is only used by certain anti-culling modes & if there isn't a manual area/leaf override via a MapSettings entry."),
-				600.0f
+				1500.00f
 			};
 
 			variable portal_visibility_culling =
