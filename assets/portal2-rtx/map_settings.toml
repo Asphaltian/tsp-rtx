@@ -337,8 +337,15 @@
 
 
     sp_a2_laser_over_goo = [
+
         # spawn over stairs
         { nocull = 204, areas = [], N_leafs = [], position = [3890.56, -2637.57, 315.62], rotation = [0.00, 0.00, 0.00], scale = [1.00, 1.00, 1.00] },
+
+        # light occl elevator entry light
+        { nocull = 0, areas = [], N_leafs = [], position = [4009.18, -2458.57, 339.03], rotation = [0.00, 0.00, 0.00], scale = [0.12, 0.12, 1.00] },
+        
+        # light occl elevator entry light
+        { nocull = 0, areas = [], N_leafs = [], position = [2556.33, -1051.82, 242.53], rotation = [0.00, 0.00, 0.00], scale = [0.12, 0.12, 1.00] },
     ]
 
 
