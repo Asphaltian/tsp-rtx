@@ -321,9 +321,9 @@ namespace components
 			{
 				"emancipationgrill_emissive_proxy",
 				"Spawns an additional surface on emancipation grills that can be turned into an invisible, but emissive surface using the toolkit",
-				true
+				false
 			};
-		}; //STATIC_ASSERT_SIZE(var_definitions, 2 * sizeof(variable));
+		};
 
 		static inline var_definitions vars = {};
 	};

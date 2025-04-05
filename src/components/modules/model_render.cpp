@@ -372,9 +372,15 @@ namespace components
 		dev->GetTexture(0, &og_tex);
 		dev->SetTexture(0, tex_addons::white);
 
-		DWORD og_rs;
+		DWORD og_rs, og_blend;
 		dev->GetRenderState((D3DRENDERSTATETYPE)150, &og_rs);
+		dev->GetRenderState(D3DRS_ALPHABLENDENABLE, &og_blend);
 
+		D3DXMATRIX og_tex_transform = {};
+		dev->GetTransform(D3DTS_TEXTURE0, &og_tex_transform);
+
+		dev->SetTransform(D3DTS_TEXTURE0, &game::IDENTITY);
+		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
 		dev->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
 		//D3DXMATRIX mtx = game::IDENTITY;
 
@@ -421,6 +427,7 @@ namespace components
 		dev->SetVertexShader(og_vs);
 		dev->SetTexture(0, og_tex);
 		dev->SetRenderState((D3DRENDERSTATETYPE)150, og_rs);
+		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, og_blend);
 		dev->SetFVF(NULL);
 		dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
 	}
@@ -1667,13 +1674,13 @@ namespace components
 						dev->SetTexture(0, basemap2);
 					}
 
-					// create a scaling matrix
-					D3DXMATRIX scaleMatrix;
-					D3DXMatrixScaling(&scaleMatrix, 1.0f, 29.0f, 1.0f);
+					//// create a scaling matrix
+					//D3DXMATRIX scaleMatrix;
+					//D3DXMatrixScaling(&scaleMatrix, 1.0f, 29.0f, 1.0f);
 
-					ctx.set_texture_transform(dev, &scaleMatrix);
-					ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
-					dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+					//ctx.set_texture_transform(dev, &scaleMatrix);
+					//ctx.save_tss(dev, D3DTSS_TEXTURETRANSFORMFLAGS);
+					//dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 				}
 			}
 
