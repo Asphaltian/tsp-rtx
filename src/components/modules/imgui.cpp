@@ -253,6 +253,10 @@ namespace components
 				ImGui::Checkbox("Enable Area Forcing", &im->m_enable_area_forcing);
 				ImGui::Checkbox("Disable MS Unbake", &im->m_disable_ms_unbake_check);
 
+				if (ImGui::SliderInt("Paint Sampler Index", &im->m_debug_paint_sampler_index, 0, 15)) {
+					im->m_debug_paint_sampler_index = std::clamp(im->m_debug_paint_sampler_index, 0, 15);
+				}
+
 				ImGui::Spacing(0, 6);
 
 				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x * 0.49f, 0))) {
@@ -3125,6 +3129,8 @@ namespace components
 		ImGui::Checkbox("Check Nodes (Visleafs) For Potential Lights", gs->check_nodes_for_potential_lights.get_as<bool*>()); TT(gs->check_nodes_for_potential_lights.get_tooltip_string().c_str());
 		ImGui::Checkbox("Spotlight Billboard Spawning", gs->spotlight_billboard_spawning.get_as<bool*>()); TT(gs->spotlight_billboard_spawning.get_tooltip_string().c_str());
 		ImGui::Checkbox("Emancipationgrill Emissive Proxy", gs->emancipationgrill_emissive_proxy_old.get_as<bool*>()); TT(gs->emancipationgrill_emissive_proxy_old.get_tooltip_string().c_str());
+		ImGui::Checkbox("Use Brush(model) Fast Path", gs->use_brushfastpath.get_as<bool*>()); TT(gs->use_brushfastpath.get_tooltip_string().c_str());
+
 
 		/*if (ImGui::Checkbox("Enable 3D Skybox (very unstable)", gs->enable_3d_sky.get_as<bool*>())) {
 			remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, gs->enable_3d_sky.get_as<bool>() ? "1" : "0"));

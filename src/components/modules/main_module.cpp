@@ -2020,15 +2020,24 @@ namespace components
 
 		game::cvar_uncheat_and_set_int("r_threaded_particles", 0);
 		game::cvar_uncheat_and_set_int("r_entityclips", 0);
-		game::cvar_uncheat_and_set_int("cl_brushfastpath", 0);
+
+		// This fixes a game breaking bug where a surface on a3_crazy_box is not visible and not gel-able
+		if (map_settings::is_level.sp_a3_crazy_box || game_settings::get()->use_brushfastpath.get_as<bool>()) {
+			game::cvar_uncheat_and_set_int("cl_brushfastpath", 1);
+		}
+		else {
+			game::cvar_uncheat_and_set_int("cl_brushfastpath", 0);
+		}
+
+		//game::cvar_uncheat_and_set_int("cl_brushfastpath", 0);
 		game::cvar_uncheat_and_set_int("cl_tlucfastpath", 0); // 
 		game::cvar_uncheat_and_set_int("cl_modelfastpath", 0); // gain 4-5 fps on some act 4 maps but FF rendering not implemented
 		game::cvar_uncheat_and_set_int("mat_queue_mode", 0); // does improve performance but breaks rendering
 		game::cvar_uncheat_and_set_int("mat_softwarelighting", 0);
-		game::cvar_uncheat_and_set_int("mat_parallaxmap", 0);
+		game::cvar_uncheat_and_set_int("mat_parallaxmap", 0); 
 		game::cvar_uncheat_and_set_int("mat_frame_sync_enable", 0);
 		game::cvar_uncheat_and_set_int("mat_dof_enabled", 0);
-		game::cvar_uncheat_and_set_int("mat_displacementmap", 0);
+		game::cvar_uncheat_and_set_int("mat_displacementmap", 0); 
 		game::cvar_uncheat_and_set_int("mat_drawflat", 0);
 		game::cvar_uncheat_and_set_int("mat_normalmaps", 0);
 		game::cvar_uncheat_and_set_int("r_3dsky", 0);
@@ -2221,6 +2230,10 @@ namespace components
 		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x7193A, 0x7153A), 2); // 0125
 		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x71940, 0x71540), 0xEB); // 0125
 
+		// CBrushBatchRender::ComputeLightmapPages :: ^ for fastpath
+		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x6EC00, 0x6E710), 2); // 0125
+
+
 
 		// Fix map visibility when looking through portals when r_portal_stencil_depth == 0
 		// - Map_VisSetup called by CViewRender::ViewDrawScene --> CViewRender::SetupVis :: uses player view and 1 visOrigin if no custom vis is provided
@@ -2298,6 +2311,9 @@ namespace components
 		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x1F02D0, 0x1ED3F0), 0xEB); // 0125
 		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x1F02FB, 0x1ED41B), 0xEB); // 0125
 		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x1F035F, 0x1ED47F), 2); // 0125
+
+		// fix invisible brushmodels when using cl_brushfastpath 0 (eg. crazy_box)
+		//utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1EEF0A, 0x1E944A), 6);
 	}
 
 	main_module::~main_module()

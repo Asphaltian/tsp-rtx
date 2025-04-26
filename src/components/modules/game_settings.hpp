@@ -323,6 +323,14 @@ namespace components
 				"Spawns an additional surface on emancipation grills that can be turned into an invisible, but emissive surface using the toolkit",
 				false
 			};
+
+			variable use_brushfastpath =
+			{
+				"use_brushfastpath",
+				"Enabling this sets cl_brushfastpath to true. The game will draw brushmodels in batches which might increase performance but reduce remix-ablitity?\n"
+				"It is forced on a3 crazy box to fix a game breaking issue with a invisible un-gel-able surface but is not tested elsewhere.",
+				false
+			};
 		};
 
 		static inline var_definitions vars = {};

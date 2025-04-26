@@ -180,6 +180,7 @@ namespace components
 				ASSIGN(check_nodes_for_potential_lights);
 				ASSIGN(spotlight_billboard_spawning);
 				ASSIGN(emancipationgrill_emissive_proxy_old);
+				ASSIGN(use_brushfastpath);
 
 			#undef ASSIGN
 			}

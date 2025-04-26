@@ -600,7 +600,7 @@ namespace components
 
 	// Helper function to draw portal gel's
 	// > will directly edit the vertex buffer when brushmodels are rendered
-	void render_painted_surface(prim_fvf_context& ctx, CPrimList* primlist)
+	void render_painted_surface(prim_fvf_context& ctx, std::uint32_t num_indices, std::uint32_t first_index_offset)
 	{
 		/*	// vs
 			float3 vPos : POSITION;
@@ -641,6 +641,7 @@ namespace components
 			// > Brushmodels are rendered in batches -> waaaay less locks
 			// - Brushmodels are considered static if mat_forcedynamic or mat_drawflat is not 1 (vb is NOT recreated every frame)
 			if (is_rendering_bmodel_paint)
+			//if (primlist)
 			{
 				IDirect3DIndexBuffer9* ib = nullptr;
 				if (SUCCEEDED(dev->GetIndices(&ib)))
@@ -649,10 +650,10 @@ namespace components
 					if (SUCCEEDED(ib->Lock(0, 0, &ib_data, D3DLOCK_READONLY)))
 					{
 						// add relevant indices without duplicates
-						std::unordered_set<std::uint16_t> indices; indices.reserve(primlist->m_NumIndices);
-						for (auto i = 0u; i < (std::uint32_t)primlist->m_NumIndices; i++)
+						std::unordered_set<std::uint16_t> indices; indices.reserve(num_indices);
+						for (auto i = 0u; i < (std::uint32_t)num_indices; i++)
 						{
-							indices.insert(static_cast<std::uint16_t*>(ib_data)[primlist->m_FirstIndex + i]);
+							indices.insert(static_cast<std::uint16_t*>(ib_data)[first_index_offset + i]);
 						}
 
 						ib->Unlock();
@@ -713,9 +714,11 @@ namespace components
 			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX7);
 
 			// assign paint map texture to texture slot 0
-			if (ctx.info.buffer_state.m_BoundTexture[9])
+			//if (ctx.info.buffer_state.m_BoundTexture[9])
+			const auto im = imgui::get();
+			if (ctx.info.buffer_state.m_BoundTexture[im->m_debug_paint_sampler_index])
 			{
-				if (const auto  paint_map = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[9]);
+				if (const auto  paint_map = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[im->m_debug_paint_sampler_index]);
 					paint_map)
 				{
 					ctx.save_texture(dev, 0);
@@ -1523,12 +1526,22 @@ namespace components
 		if (ff_bmodel::s_shader && mesh->m_VertexFormat == 0x2480033)
 		{
 			//ctx.modifiers.do_not_render = true;
-			dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+			//dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+
 			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX7);
 			dev->SetVertexShader(nullptr);
 
-			if (is_rendering_bmodel_paint) {
-				render_painted_surface(ctx, primlist);
+			if (info && info->m_pPoseToWorld)
+			{
+				utils::transpose_matrix3x4_to_d3dxmatrix(*info->m_pPoseToWorld, ctx.info.buffer_state.m_Transform[0]);
+				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
+
+				if (is_rendering_bmodel_paint) {
+					render_painted_surface(ctx, info->m_nIndexCount, info->m_nIndexOffset);
+				}
+			}
+			else if (is_rendering_bmodel_paint) {
+				render_painted_surface(ctx, primlist->m_NumIndices, primlist->m_FirstIndex);
 			}
 		}
 
@@ -1730,7 +1743,7 @@ namespace components
 				// -> so we need to edit the vertex buffer for each and every surface
 				// mat_fullbright 1 does not draw paint
 				if (is_rendering_paint) {
-					render_painted_surface(ctx, primlist);
+					render_painted_surface(ctx, primlist->m_NumIndices, primlist->m_FirstIndex);
 				}
 			} 
 
@@ -3505,7 +3518,7 @@ namespace components
 	}
 
 	// fastpath rendering tests (cl_modelfastpath/cl_tlucfastpath)
-#if 0
+#if 1
 	void cmeshdx8_renderpass_pass_for_instances_pre_draw(CMeshDX8* mesh, MeshInstanceData_t* info)
 	{
 		if (mesh && info)
@@ -3593,6 +3606,23 @@ namespace components
 		}
 
 		tbl_hk::bmodel_renderer::table.original<FN>(Index)(ecx, o1, baseentity, model, origin, angles, mode);
+
+		dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
+		dev->SetFVF(NULL);
+
+		if (ff_bmodel::s_shader)
+		{
+			dev->SetVertexShader(ff_bmodel::s_shader);
+			ff_bmodel::s_shader = nullptr;
+		}
+	}
+
+	void __fastcall tbl_hk::bmodel_renderer::DrawBrushModelArray::Detour(void* ecx, void* o1, void* matrendercontext, int count, const BrushArrayInstanceData_t* instance_data, int model_type_flags)
+	{
+		const auto dev = game::get_d3d_device();
+		dev->GetVertexShader(&ff_bmodel::s_shader);
+
+		tbl_hk::bmodel_renderer::table.original<FN>(Index)(ecx, o1, matrendercontext, count, instance_data, model_type_flags);
 
 		dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
 		dev->SetFVF(NULL);
@@ -3826,6 +3856,23 @@ namespace components
 			jmp		draw_painted_bmodel_surfaces_retn_addr;
 		}
 	}
+
+	HOOK_RETN_PLACE_DEF(draw_painted_bmodel_array_surfaces_retn_addr);
+	void __declspec(naked) draw_painted_bmodel_array_surfaces_stub()
+	{
+		__asm
+		{
+			mov		is_rendering_bmodel_paint, 1;
+
+			// og
+			mov		[ebp - 0x40], esi;
+			call    eax; // DrawInstances
+
+			mov		is_rendering_bmodel_paint, 0;
+			jmp		draw_painted_bmodel_array_surfaces_retn_addr;
+		}
+	}
+			// draw_painted_bmodel_array_surfaces_stub
 
 
 	// #
@@ -4096,14 +4143,15 @@ namespace components
 		HOOK_RETN_PLACE(cmeshdx8_renderpass_post_draw_retn_addr, RENDERER_BASE + USE_OFFSET(0xB28C, 0xADFC)); // 0125
 
 		// model and tluc fastpath test
-		//utils::hook(RENDERER_BASE + USE_OFFSET(0x0, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
-		//HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0x0, 0xA581));
+		utils::hook(RENDERER_BASE + USE_OFFSET(0xA9FA, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0xAA11, 0xA581));
 
 
 		// brushmodels - cubes - etc
 		tbl_hk::bmodel_renderer::_interface = utils::module_interface.get<tbl_hk::bmodel_renderer::IVRenderView*>("engine.dll", "VEngineRenderView013");
 		XASSERT(tbl_hk::bmodel_renderer::table.init(tbl_hk::bmodel_renderer::_interface) == false);
 		XASSERT(tbl_hk::bmodel_renderer::table.hook(&tbl_hk::bmodel_renderer::DrawBrushModelEx::Detour, tbl_hk::bmodel_renderer::DrawBrushModelEx::Index) == false);
+		XASSERT(tbl_hk::bmodel_renderer::table.hook(&tbl_hk::bmodel_renderer::DrawBrushModelArray::Detour, tbl_hk::bmodel_renderer::DrawBrushModelArray::Index) == false);
 
 		// enable mat_wireframe on portals
 		//utils::hook::nop(CLIENT_BASE + 0x2BD41C, 6);
@@ -4144,6 +4192,9 @@ namespace components
 		// CBrushBatchRender::DrawOpaqueBrushModel :: hook around mesh->Draw to detect paint rendering
 		utils::hook(ENGINE_BASE + USE_OFFSET(0x7271C, 0x7231C), draw_painted_bmodel_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(draw_painted_bmodel_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0x72721, 0x72321)); // 0125
+
+		utils::hook(ENGINE_BASE + USE_OFFSET(0x6FC2B, 0x6F73B), draw_painted_bmodel_array_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
+		HOOK_RETN_PLACE(draw_painted_bmodel_array_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0x6FC30, 0x6F740)); // 0125
 
 		// ----
 
