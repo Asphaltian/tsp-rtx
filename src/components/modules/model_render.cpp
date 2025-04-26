@@ -3383,7 +3383,7 @@ namespace components
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
 
 			// third time as emissive proxy
-			if (game_settings::get()->emancipationgrill_emissive_proxy.get_as<bool>())
+			if (game_settings::get()->emancipationgrill_emissive_proxy_old.get_as<bool>())
 			{
 				ctx.restore_texture_transform(dev);
 				ctx.restore_texture(dev, 0);

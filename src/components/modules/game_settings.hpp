@@ -317,9 +317,9 @@ namespace components
 				false
 			};
 
-			variable emancipationgrill_emissive_proxy =
+			variable emancipationgrill_emissive_proxy_old =
 			{
-				"emancipationgrill_emissive_proxy",
+				"emancipationgrill_emissive_proxy_old",
 				"Spawns an additional surface on emancipation grills that can be turned into an invisible, but emissive surface using the toolkit",
 				false
 			};
