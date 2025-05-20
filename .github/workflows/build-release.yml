@@ -44,8 +44,6 @@ jobs:
         run: |
           move build/bin/${{matrix.configuration}}/p2-rtx.dll ./assets/
           move build/bin/${{matrix.configuration}}/p2-rtx.pdb ./assets/
-          move build/bin/${{matrix.configuration}}/p2-rtx-launcher.exe ./assets/
-          move build/bin/${{matrix.configuration}}/p2-rtx-launcher.pdb ./assets/
 
       - name: Upload ${{matrix.configuration}}-binaries-p2-rtx
         uses: actions/upload-artifact@v4
