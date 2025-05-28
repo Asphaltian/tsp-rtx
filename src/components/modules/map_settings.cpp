@@ -1441,6 +1441,26 @@ namespace components
 					}
 				}
 			} // end 'LIGHTS'
+
+			// ####################
+			// parse 'CVARS' table
+			if (config.contains("CVARS"))
+			{
+				auto& cvar_table = config["CVARS"];
+
+				// try to find the loaded map
+				if (cvar_table.contains(m_map_settings.mapname))
+				{
+					if (const auto map = cvar_table[m_map_settings.mapname];
+						!map.is_empty() && map.is_array())
+					{
+						const auto& vars = map.as_array();
+						for (auto& str : vars) {
+							interfaces::get()->m_engine->execute_client_cmd_unrestricted(str.as_string().c_str());
+						}
+					}
+				}
+			} // end 'CVARS'
 		}
 
 		catch (const toml::syntax_error& err)

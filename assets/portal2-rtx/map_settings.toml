@@ -131,13 +131,13 @@
 #   radius = []           force hide models with this radius (checking for radii is generally faster and the preferred way to filter models)  [float array]
 # }
 
-
 [HIDEMODEL]
     #sp_a4_finale2 = { name = [
     #        "tube", "arm"
     #    ], radius = [
     #        896.805298, #models/a4_destruction/arm_ext_halfres_rows_4x1.mdl
     #    ]}
+
 
 
 
@@ -908,3 +908,25 @@
             { position = [-4578.30, -3638.91, 96.92], radiance = [10.00, 10.00, 10.00], scalar = 25.10, radius = 0.99, smoothness = 0.50, volumetric_scale = 0.00 },
         ], loop = true },
     ]
+
+
+
+
+# #####################################################################################
+#
+# Set cvars on map load
+# :: Some maps or workflows might require setting cvars on certain maps
+#
+# <map name> = [                                        [string array]
+#   "cvar1 val",
+#   "cvar2 val",
+# ]
+
+[CVARS]
+    #sp_a1_intro3 = [
+    #        "r_drawopaqueworld 0",
+    #        "r_drawstaticprops 0",
+    #        "r_DrawDisp 0",
+    #        "r_drawdecals 0",
+    #        "r_DrawDetailProps 0",
+    #    ]
