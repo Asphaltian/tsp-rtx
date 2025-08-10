@@ -985,6 +985,114 @@ namespace components
 	}
 #endif
 
+	void RopeManager_DrawRenderCache_mid_hk(CMeshBuilder* builder)
+	{
+		const auto dev = game::get_d3d_device();
+
+		auto CatmullRomSpline = [](const Vector4D& a, const Vector4D& b, const Vector4D& c, const Vector4D& d, const float t)
+			{
+				return b + 0.5f * t * (c - a + t * (2.0f * a - 5.0f * b + 4.0f * c - d + t * (-a + 3.0f * b - 3.0f * c + d)));
+			};
+
+		auto DCatmullRomSpline3 = [](const Vector& a, const Vector& b, const Vector& c, const Vector& d, const float t)
+			{
+				return 0.5f * (c - a + t * (2.0f * a - 5 * b + 4 * c - d + t * (3.0f * b - a - 3.0f * c + d))
+					+ t * (2.0f * a - 5.0f * b + 4 * c - d + 2.0f * (t * (3 * b - a - 3.0f * c + d))));
+			};
+
+		Vector eyePos;
+		{
+			float v[4] = {}; dev->GetVertexShaderConstantF(2, v, 1);
+			eyePos = Vector(v[0], v[1], v[2]);
+		}
+
+		for (auto v = 0; v < builder->m_VertexBuilder.m_nVertexCount; v++)
+		{
+			const auto v_pos_in_src_buffer = v * builder->m_VertexBuilder.m_VertexSize_Position;
+
+			const auto src_vParms = reinterpret_cast<Vector*>(((DWORD)builder->m_VertexBuilder.m_pCurrPosition + v_pos_in_src_buffer));
+			const auto dest_pos = reinterpret_cast<Vector*>(src_vParms);
+
+			const auto src_vTint = reinterpret_cast<D3DCOLOR*>(((DWORD)builder->m_VertexBuilder.m_pCurrColor + v_pos_in_src_buffer));
+
+			const auto src_vSplinePt0 = reinterpret_cast<Vector4D*>(((DWORD)builder->m_VertexBuilder.m_pCurrTexCoord[0] + v_pos_in_src_buffer));
+			const auto dest_tc = reinterpret_cast<Vector2D*>(src_vSplinePt0);
+
+			const auto src_vSplinePt1 = reinterpret_cast<Vector4D*>(((DWORD)builder->m_VertexBuilder.m_pCurrTexCoord[1] + v_pos_in_src_buffer));
+			const auto src_vSplinePt2 = reinterpret_cast<Vector4D*>(((DWORD)builder->m_VertexBuilder.m_pCurrTexCoord[2] + v_pos_in_src_buffer));
+			const auto src_vSplinePt3 = reinterpret_cast<Vector4D*>(((DWORD)builder->m_VertexBuilder.m_pCurrTexCoord[3] + v_pos_in_src_buffer));
+
+			// save vParms (because we will be overriding them when writing pos)
+			const float parmsX = src_vParms->x;
+			const float parmsY = src_vParms->y;
+			const float parmsZ = src_vParms->z;
+
+			const auto P0 = *src_vSplinePt0;
+			const auto P1 = *src_vSplinePt1;
+			const auto P2 = *src_vSplinePt2;
+			const auto P3 = *src_vSplinePt3;
+
+			auto posrad = CatmullRomSpline(P0, P1, P2, P3, parmsX);
+
+			Vector v2p = { 0.0f, 0.0f, 1.0f };
+			v2p.x = posrad.x - eyePos.x;	// screen aligned
+			v2p.y = posrad.y - eyePos.y;
+			v2p.z = posrad.z - eyePos.z;
+
+			Vector tangent = DCatmullRomSpline3(P0, P1, P2, P3, parmsX);
+
+			//float3 ofs = normalize(cross(v2p, normalize(tangent)));
+			tangent.NormalizeChecked();
+			Vector ofs = v2p.Cross(tangent); // maybe switch these - no difference
+			ofs.NormalizeChecked();
+
+			//posrad.xyz += ofs * (posrad.w * (v.vParms.z - .5));
+			const auto add = ofs.Scale(posrad.w * (parmsZ - 0.5f));
+			posrad.x += add.x;
+			posrad.y += add.y;
+			posrad.z += add.z;
+
+			// pos
+			dest_pos->x = posrad.x;
+			dest_pos->y = posrad.y;
+			dest_pos->z = posrad.z;
+
+			// o.texCoord.xy = float2( 1.0f - v.vParms.z, v.vParms.y );
+			dest_tc->x = 1.0f - parmsZ;
+			dest_tc->y = parmsY;
+
+			// unpack color
+			Vector4D color;
+			color.x = static_cast<float>((*src_vTint >> 16) & 0xFF) / 255.0f * 1.0f;
+			color.y = static_cast<float>((*src_vTint >> 8) & 0xFF) / 255.0f * 1.0f;
+			color.z = static_cast<float>((*src_vTint >> 0) & 0xFF) / 255.0f * 1.0f;
+			color.w = static_cast<float>((*src_vTint >> 24) & 0xFF) / 255.0f * 0.1f; // ! 0.1
+
+			// write color
+			*src_vTint = D3DCOLOR_COLORVALUE(color.x, color.y, color.z, color.w);
+		}
+	}
+
+	HOOK_RETN_PLACE_DEF(RopeManager_DrawRenderCache_retn_addr);
+	void __declspec(naked) RopeManager_DrawRenderCache_stub()
+	{
+		__asm
+		{
+			pushad;
+			lea     eax, [ebp - 0x2F4];
+			push	eax; // builder
+			call	RopeManager_DrawRenderCache_mid_hk;
+			add		esp, 4;
+			popad;
+
+			// og
+			mov     eax, [ebp - 0x200];
+			jmp		RopeManager_DrawRenderCache_retn_addr;
+		}
+	}
+
+
+
 
 	/**
 	 * Called right before unlocking the sprite mesh. m_nCurrentVertex should match m_nVertexCount
@@ -2725,12 +2833,18 @@ namespace components
 				dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 			}
 
-			// hanging cables - requires vertex shader - verts not modified on the cpu
+			// SplineRope
+			// > cable/cable
+			// hanging cables - verts modified in RopeManager_DrawRenderCache_mid_hk
 			else if (mesh->m_VertexFormat == 0x24900005)
 			{
-				//ctx.modifiers.do_not_render = true; // they can freak out sometimes so just ignore them for now
+				//ctx.modifiers.do_not_render = true;
 				ctx.save_texture(dev, 0);
 				dev->SetTexture(0, tex_addons::black_shader);
+
+				ctx.save_vs(dev);
+				dev->SetVertexShader(nullptr);
+				dev->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1);
 			}
 
 			// SpriteCard shader
@@ -4221,6 +4335,12 @@ namespace components
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), RenderSpritesTrail_Render_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(RenderSpritesTrail_Render_retn_addr, CLIENT_BASE + USE_OFFSET(0x622824, 0x61A0F4)); // 0125
 #endif
+
+		// Fix actual ropes
+		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), 6);
+		utils::hook(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), RopeManager_DrawRenderCache_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(RopeManager_DrawRenderCache_retn_addr, CLIENT_BASE + USE_OFFSET(0xBD049, 0xB9619));
+
 
 		// C_OP_RenderSprites::Render :: fix SpriteCard UV's
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), 6); // 0125
