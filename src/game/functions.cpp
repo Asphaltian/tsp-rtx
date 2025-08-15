@@ -3,6 +3,7 @@
 namespace glob
 {
 	bool spawned_external_console = false;
+	bool has_debug_arg = false;
 	HWND main_window = nullptr;
 	sdk::InputContext_t* input_context = nullptr;
 }

@@ -13,6 +13,7 @@ using namespace components;
 namespace glob
 {
 	extern bool spawned_external_console;
+	extern bool has_debug_arg;
 	extern HWND main_window;
 	extern sdk::InputContext_t* input_context;
 }
