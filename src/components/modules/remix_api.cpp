@@ -711,9 +711,9 @@ namespace components
 		if (const auto status = remixapi::bridge_initRemixApi(&m_bridge); 
 			status == REMIXAPI_ERROR_CODE_SUCCESS)
 		{
-			get()->m_initialized = true;
 			remixapi::bridge_setRemixApiCallbacks(begin_scene_callback, end_scene_callback, on_present_callback);
+			m_initialized = true;
 		}
-		else { game::console(); printf("[!][RemixApi] Failed to initialize the remixApi - Code: %d\n", status); }
+		else { game::console(); std::cout <<"[!][RemixApi] Failed to initialize the remixApi - Code: " << std::to_string(status) << "\n"; }
 	}
 }

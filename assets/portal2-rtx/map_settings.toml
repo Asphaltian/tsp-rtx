@@ -503,31 +503,33 @@
 # #####################################################################################
 #
 # Spawn lights using the remix api
-# :: Useful console command: 'xo_debug_scene_print' (choreo trigger/kill) && 'xo_debug_toggle_sound_print' (sound trigger/kill) && 'xo_debug_toggle_model_info' (attach)
+# :: Useful console command: 
+# --> 'xo_debug_scene_print' (choreo trigger/kill) && 'xo_debug_toggle_sound_print' (sound trigger/kill)
+# --> 'xo_debug_toggle_model_info' (attach) && 'xo_debug_show_mesh_bone_info' (attach)
 # ~~ Parameters:
 #
 # <map name> = [
 #   {                   [array of structure below]
 #       trigger = {     (optional) trigger light creation via choreography (.vcd) or sound :: not defining this will create the light on map load 
 #       
-#                       choreo  ]    THIS =   |> choreo =         name of choreography (.vcd) that will trigger the transition (can be a substring)   [string]
-#                               ]             |> actor =   (opt.) name of actor the event is played on                                                [string]
-#                               ]             |> event =   (opt.) name of the event within the .vcd (can be a substr)                                 [string]
-#                               ]             |> param1 =  (opt.) name of the event within the .vcd (can be a substr)                                 [string]
+#                       choreo  ]    THIS =   |> choreo =         name of choreography (.vcd) that will trigger the transition (can be a substring)     [string]
+#                               ]             |> actor =   (opt.) name of actor the event is played on                                                  [string]
+#                               ]             |> event =   (opt.) name of the event within the .vcd (can be a substr)                                   [string]
+#                               ]             |> param1 =  (opt.) name of the event within the .vcd (can be a substr)                                   [string]
 #                               ] 
-#                       sound   ] OR THAT =   hash made up of name, index and position (cmd: see desc.)                                               [integer] (hex format)
+#                       sound   ] OR THAT =   hash made up of name, index and position (cmd: see desc.)                                                 [integer] (hex format)
 #       
-#                               |> delay =    delay spawn after trigger (in seconds)                                                                  [float]
-#                               |> always =   re-triggering the event again will spawn a new light instance everytime (defaults to false)             [bool]
+#                               |> delay =    delay spawn after trigger (in seconds)                                                                    [float]
+#                               |> always =   re-triggering the event again will spawn a new light instance everytime (defaults to false)               [bool]
 #       }
 #
 #       -----------
 #       kill = {        (optional) kill light via choreography (.vcd) or sound :: not defining this OR empty string/hash -> light will loop until the map gets unloaded or once loop is complete when run_once is true
 
-#                       choreo  ]    THIS =   name of choreography (.vcd) (can be a substring)                                                        [string]
-#                       sound   ] OR THAT =   hash made up of name, index and position (cmd: see desc.)                                               [integer] (hex format)
+#                       choreo  ]    THIS =   name of choreography (.vcd) (can be a substring)                                                          [string]
+#                       sound   ] OR THAT =   hash made up of name, index and position (cmd: see desc.)                                                 [integer] (hex format)
 #       
-#                               |> delay =    delay kill after vcd was triggered (in seconds)                                                         [float]
+#                               |> delay =    delay kill after vcd was triggered (in seconds)                                                           [float]
 #       }
 #
 #       -----------
@@ -537,6 +539,8 @@
 #                       name    ] OR THAT =         model name that contains this substring (cmd: see desc.)                                            [string]
 #                         
 #                               |> bounds = []      (opt.) define bounds (min/max) where the light can spawn and attach to the prop                     [2x 3D Vector :: [minX, minY, minZ, maxX, maxY, maxZ]
+#                               |> bone_index =     (opt.) THIS     attach light to bone with this index (cmd: see desc.)                               [uint]
+#                               |> bone_name  =     (opt.) OR THAT  attach light to bone with this name (slower) (cmd: see desc.)                       [string]
 #       }
 #
 #       -----------
@@ -556,9 +560,11 @@
 #                                                [!] last point requires a timepoint and defines the total duration
 #       
 #                       direction = []          light direction (will be normalized in code) (defaults to 0 0 1)                                        [3D Vector 0-inf] (will be normalized in code)
+#                       angle_offset_attached = light direction offset when light is attached to a bone                                                 [3D Vector - Euler Angles]
 #                       degrees =               cone angle - anything besides 180 turns ON light shaping (defaults to 180)                              [float 0-180]
 #                       softness =              cone softness (defaults to 0)                                                                           [float 0-PI]
 #                       exponent =              focus expo (defaults to 0)                                                                              [float]
+#                       volumetric_scale =      volumetric scale of light (defaults to 1)                                                               [float]
 #       }, { ... }]
 #
 #       -----------
@@ -617,7 +623,7 @@
             { position = [0.00, 0.00, 316.00], radiance = [10.00, 13.10, 13.90], scalar = 4.90, radius = 20.00, smoothness = 0.50, direction = [0.00, 0.00, 1.00], degrees = 63.00, softness = 0.10, exponent = 0.00 },
         ], loop = true },
     ]
-    
+
     #sp_a1_intro2 = [
     #    # elevator 
     #    { attach = { radius = 280.056030, bounds = [-1117.25, -538.00, -400.00, -1020.20, -424.45, 3000.00] }, points = [
@@ -661,6 +667,14 @@
             #    { radiance = [25.0, 0.0, 25.0], radius = 10.0, smoothness = 0.5, degrees = 90.0, direction = [0.5, 0.5, 0], timepoint = 6 },
             #], run_once = 0, loop = 1, loop_smoothing = 1 },
     #    ]
+
+    sp_a1_intro5 = [
+        # attach to bone test
+        { attach = { name = "arm64x64", bounds = [-143.20, 320.45, 0.00, -53.60, 376.15, 500.00], bone_index = 15 }, points = [
+            { position = [5.75, 0.00, -12.00], radiance = [0.00, 0.00, 1.00], scalar = 100.00, radius = 5.00, smoothness = 0.50, direction = [0.00, 0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00 },
+            { position = [5.75, 0.00, -12.00], radiance = [1.00, 1.00, 0.00], scalar = 1000.00, radius = 7.47, smoothness = 0.50, direction = [-0.00, -0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00, timepoint = 0.74 },
+        ], loop = true, loop_smoothing = true },
+    ]
 
 
     sp_a1_wakeup = [
@@ -822,6 +836,17 @@
         ] },
     ]
 
+    sp_a2_bts3 = [
+        # wheatly spotlight - attached to bone
+        { trigger = { sound = 0x9792F008 }, attach = { radius = 19.328018, bounds = [4693.50, -550.00, 179.00, 4773.45, 1502.60, 427.15], bone_index = 5 }, points = [
+            { position = [12.50, -7.00, -6.50], radiance = [2.00, 1.90, 1.70], scalar = 1000.00, radius = 2.00, smoothness = 0.50, direction = [0.72, -0.58, 0.39], angle_offset_attached = [-38.80, -23.00, 0.00], degrees = 44.00, softness = 0.20, exponent = 0.00, volumetric_scale = 1.00 },
+        ], loop = true },
+
+        # wheatly sphere light - attached to bone
+        { trigger = { sound = 0x9792F008 }, attach = { radius = 19.328018, bounds = [4693.50, -550.00, 179.00, 4773.45, 1502.60, 427.15], bone_index = 5 }, points = [
+            { position = [12.50, -7.00, -6.50], radiance = [2.00, 1.90, 2.10], scalar = 50.00, radius = 2.00, smoothness = 0.50, volumetric_scale = 1.00 },
+        ], loop = true },
+    ]
     
     sp_a3_01 = [
             # turn on vault door light with lever

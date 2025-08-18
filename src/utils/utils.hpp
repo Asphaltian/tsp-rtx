@@ -98,6 +98,7 @@ namespace utils
 
 	void transpose_matrix3x4_to_d3dxmatrix(const components::matrix3x4_t& src, D3DXMATRIX& dest);
 	void transpose_float4x4(const float* row_major, float* column_major);
+	void matrix_angles(const components::matrix3x4_t& matrix, Vector* angles);
 	bool float_equal(float a, float b, float eps = 1.e-6f);
 	float finterp_to(const float current, const float target, const float delta_time, const float interpolation_speed);
 

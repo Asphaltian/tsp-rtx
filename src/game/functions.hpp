@@ -34,6 +34,8 @@ namespace game
 	extern const D3DXMATRIX TC_TRANSLATE_TO_CENTER;
 	extern const D3DXMATRIX TC_TRANSLATE_FROM_CENTER_TO_TOP_LEFT;
 
+	extern ConVar* find_cvar(const char* name);
+	extern const ConVar* find_cvar_const(const char* name);
 	extern void con_add_command(ConCommand* cmd, const char* name, void(__cdecl* callback)(), const char* desc);
 	extern void debug_add_text_overlay(const float* pos, float duration, const char* text);
 	extern void debug_add_text_overlay(const float* pos, const char* text, int line_offset = 0, float r = 1.0f, float g = 1.0f, float b = 1.0f, float a = 1.0f);
@@ -112,6 +114,46 @@ namespace game
 		// CClientState::IsPaused
 		return utils::hook::call<BOOL(__fastcall)(void* this_ptr, void* null)>(ENGINE_BASE + USE_OFFSET(0xAB850, 0xAB140))(cclientstate_ptr, nullptr); // 0125
 	}
+
+
+	// returns C_BaseAnimating class pointer for a given IClientRenderable
+	C_BaseAnimating* get_base_animating_for_client_renderable(IClientRenderable* pRenderable);
+
+	namespace namespaces
+	{
+		namespace C_BaseAnimating
+		{
+			// returns bone matrix for given bone index
+			/// @param this_ptr			C_BaseAnimating ptr
+			/// @param bone				bone index
+			/// @param boneToWorld		out bone matrix
+			inline void GetBoneTransform(void* this_ptr, const int bone, matrix3x4_t* boneToWorld)
+			{
+				utils::hook::call<void(__fastcall)(void* this_ptr, void* null, int bone, matrix3x4_t* boneToWorld)>(CLIENT_BASE + USE_OFFSET(0x5F4E0, 0x5C380))
+					(this_ptr, nullptr, bone, boneToWorld);
+			}
+
+			// returns bone index for given bone name
+			/// @param this_ptr			C_BaseAnimating ptr
+			/// @param bone_name		bone name
+			/// @return					bone index
+			inline int LookupBone(void* this_ptr, const char* bone_name)
+			{
+				return utils::hook::call<int(__fastcall)(void* this_ptr, void* null, const char* bone_name)>(CLIENT_BASE + USE_OFFSET(0x5CE30, 0x59D30))
+					(this_ptr, nullptr, bone_name);
+			}
+
+			// returns CStudioHdr pointer for given C_BaseAnimating pointer
+			/// @param this_ptr			C_BaseAnimating ptr
+			/// @return					CStudioHdr ptr
+			inline CStudioHdr* GetModelPtr(void* this_ptr)
+			{
+				return utils::hook::call<CStudioHdr * (__fastcall)(void* this_ptr, void* null)>(CLIENT_BASE + USE_OFFSET(0x3FEA0, 0x3D040))
+					(this_ptr, nullptr);
+			}
+		}
+	}
+	
 
 	/**
 	 * Creates an external console

@@ -9,6 +9,10 @@ namespace common::imgui
 	void get_and_add_integers_to_set(char* str, std::unordered_set<std::uint32_t>& set, const std::uint32_t& buf_len = 0u, bool clear_buf = false);
 	void get_and_remove_integers_from_set(char* str, std::unordered_set<std::uint32_t>& set, const std::uint32_t& buf_len = 0u, bool clear_buf = false);
 
+	bool cvar_toggle_button_bool(const char* cvar_str, const char* btn_text, ImVec2 btn_size = ImVec2(0, 0), const char* tt_text = nullptr, bool invert = false);
+	bool toggle_button_bool(bool* bool_ptr, const char* btn_text, ImVec2 btn_size = ImVec2(0, 0), const char* tt_text = nullptr, bool invert = false);
+	bool cvar_toggle_button_int(const char* cvar_str, const char* btn_text, ImVec2 btn_size = ImVec2(0, 0), const char* tt_text = nullptr, int off_override = 0, int on_override = 0);
+
 	// https://github.com/3r4y/imgui-blur-effect/blob/main/LICENSE
 	void draw_window_blur();
 	inline std::function draw_window_blur_callback = draw_window_blur;
@@ -65,6 +69,8 @@ namespace ImGui
 {
 	void Spacing(const float& x, const float& y);
 	void PushFont(common::imgui::font::FONTS font);
+	void SeparatorTextLarge(const char* text, bool pre_spacing = false);
+	float CalcButtonWidthSameRow(std::uint8_t btn_count);
 	void TextWrapped_IntegersFromUnorderedSet(const std::unordered_set<std::uint32_t>& set);
 
 	enum Widget_UnorderedSetModifierFlags : std::uint8_t

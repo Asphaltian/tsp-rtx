@@ -57,6 +57,125 @@ namespace common::imgui
 		}
 	}
 
+	bool cvar_toggle_button_bool(const char* cvar_str, const char* btn_text, ImVec2 btn_size, const char* tt_text, bool invert)
+	{
+		bool return_val = false;
+
+		if (const auto& var = game::find_cvar_const(cvar_str); var)
+		{
+			const bool color_active = invert ? !var->m_Value.m_nValue : var->m_Value.m_nValue;
+			if (color_active)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_TabHovered));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+			}
+
+			if (ImGui::Button(btn_text, btn_size))
+			{
+				interfaces::get()->m_engine->execute_client_cmd_unrestricted(utils::va("sv_cheats 1; %s %s", cvar_str, var->m_Value.m_nValue ? "0" : "1"));
+				return_val = true;
+			}
+
+			if (tt_text) {
+				ImGui::SetItemTooltipBlur(tt_text);
+			}
+
+			if (color_active) {
+				ImGui::PopStyleColor(3);
+			}
+		}
+		else
+		{
+			ImGui::PushFont(common::imgui::font::BOLD_LARGE);
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "BAD CVAR");
+			ImGui::PopFont();
+		}
+
+		return return_val;
+	}
+
+	bool toggle_button_bool(bool* bool_ptr, const char* btn_text, ImVec2 btn_size, const char* tt_text, bool invert)
+	{
+		bool return_val = false;
+
+		if (bool_ptr)
+		{
+			const bool color_active = invert ? !*bool_ptr : *bool_ptr;
+			if (color_active)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_TabHovered));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+			}
+
+			if (ImGui::Button(btn_text, btn_size))
+			{
+				*bool_ptr = !*bool_ptr;
+				return_val = true;
+			}
+
+			if (tt_text) {
+				ImGui::SetItemTooltipBlur(tt_text);
+			}
+
+			if (color_active) {
+				ImGui::PopStyleColor(3);
+			}
+		}
+		else
+		{
+			ImGui::PushFont(common::imgui::font::BOLD_LARGE);
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "BAD CVAR");
+			ImGui::PopFont();
+		}
+
+		return return_val;
+	}
+
+	bool cvar_toggle_button_int(const char* cvar_str, const char* btn_text, ImVec2 btn_size, const char* tt_text, int off_override, int on_override)
+	{
+		bool return_val = false;
+
+		if (const auto& var = game::find_cvar_const(cvar_str); var)
+		{
+			bool styled = false;
+			if (var->m_Value.m_nValue)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_TabHovered));
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_TabSelected));
+				styled = true;
+			}
+
+			if (ImGui::Button(btn_text, btn_size))
+			{
+				const int toggle_val = var->m_Value.m_nValue
+					? off_override ? off_override : 0
+					: on_override ? on_override : 1;
+
+				interfaces::get()->m_engine->execute_client_cmd_unrestricted(utils::va("sv_cheats 1; %s %d", cvar_str, toggle_val));
+				return_val = true;
+			}
+
+			if (tt_text) {
+				ImGui::SetItemTooltipBlur(tt_text);
+			}
+
+			if (styled) {
+				ImGui::PopStyleColor(3);
+			}
+		}
+		else
+		{
+			ImGui::PushFont(common::imgui::font::BOLD_LARGE);
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "BAD CVAR");
+			ImGui::PopFont();
+		}
+
+		return return_val;
+	}
+
 	namespace blur
 	{
 		namespace
@@ -204,6 +323,25 @@ namespace ImGui
 		else {
 			PushFont(GetDefaultFont());
 		}
+	}
+
+	void SeparatorTextLarge(const char* text, bool pre_spacing)
+	{
+		if (pre_spacing) {
+			Spacing(0, 12);
+		}
+
+		PushFont(common::imgui::font::BOLD_LARGE);
+		SeparatorText(text);
+		PopFont();
+		Spacing(0, 4);
+	}
+
+	// Calculates the width for each buttons to fit in a single row, accounting for ImGui's content region and inter-button spacing
+	float CalcButtonWidthSameRow(std::uint8_t btn_count)
+	{
+		const auto b = static_cast<float>(btn_count);
+		return (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * std::max(b, 0.0f)) / std::max(b, 1.0f);
 	}
 
 	// Draw wrapped text containing all unsigned integers from the provided unordered_set

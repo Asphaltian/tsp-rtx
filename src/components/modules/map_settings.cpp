@@ -1285,6 +1285,17 @@ namespace components
 									else { TOML_ERROR("[LIGHTS] #direction", p.at("direction"), "expected a 3D vector but got => %d ", p.at("direction").as_array().size()); }
 								}
 
+								Vector temp_angle_offset_attached = { 0.0f, 0.0f, 0.0f };
+								if (p.contains("angle_offset_attached"))
+								{
+									if (const auto& angle_offset_attached = p.at("angle_offset_attached").as_array(); angle_offset_attached.size() == 3)
+									{
+										temp_angle_offset_attached = Vector(to_float(angle_offset_attached[0], 0.0f), to_float(angle_offset_attached[1], 0.0f), to_float(angle_offset_attached[2], 0.0f));
+										utils::vector::angle_normalize(temp_angle_offset_attached);
+									}
+									else { TOML_ERROR("[LIGHTS] #angle_offset_attached", p.at("angle_offset_attached"), "expected a 3D vector but got => %d ", p.at("angle_offset_attached").as_array().size()); }
+								}
+
 								bool temp_shaping_enabled = false;
 								float temp_degrees = 180.0f;
 								if (p.contains("degrees"))
@@ -1307,7 +1318,7 @@ namespace components
 								}
 
 								// volumetrics
-								float temp_volumetric = 0.0f;
+								float temp_volumetric = 1.0f;
 								if (p.contains("volumetric_scale")) { // volumetricRadianceScale
 									temp_volumetric = to_float(p.at("volumetric_scale"), 1.0f);
 								}
@@ -1326,20 +1337,21 @@ namespace components
 								}
 
 								temp_points.emplace_back(
-									remix_light_settings_s::point_s(
-										pt,
-										temp_radiance,
-										temp_radiance_scalar,
-										temp_radius,
-										temp_timepoint,
-										temp_smoothness,
-										temp_shaping_enabled,
-										temp_direction,
-										temp_degrees,
-										temp_softness,
-										temp_exponent,
-										temp_volumetric)
-								);
+									remix_light_settings_s::point_s {
+										.position = pt,
+										.radiance = temp_radiance,
+										.radiance_scalar = temp_radiance_scalar,
+										.radius = temp_radius,
+										.timepoint = temp_timepoint,
+										.smoothness = temp_smoothness,
+										.use_shaping = temp_shaping_enabled,
+										.direction = temp_direction,
+										.angle_offset_attached = temp_angle_offset_attached,
+										.degrees = temp_degrees,
+										.softness = temp_softness,
+										.exponent = temp_exponent,
+										.volumetric_scale = temp_volumetric }
+									);
 							}
 
 							// attach settings
@@ -1348,6 +1360,9 @@ namespace components
 							std::string temp_attach_prop_str;
 							Vector temp_attach_prop_bounds_min;
 							Vector temp_attach_prop_bounds_max;
+
+							int temp_attach_bone_index = -1;
+							std::string temp_attach_bone_str;
 
 							if (entry.contains("attach"))
 							{
@@ -1380,6 +1395,16 @@ namespace components
 											temp_attach_prop_bounds_max = Vector(to_float(bounds[3]), to_float(bounds[4]), to_float(bounds[5]));
 										}
 									}
+
+									if (attach.contains("bone_index")) {
+										temp_attach_bone_index = to_int(attach.at("bone_index"), -1);
+									}
+
+									if (attach.contains("bone_name"))
+									{
+										try { temp_attach_bone_str = attach.at("bone_name").as_string(); }
+										CATCH_ERR;
+									}
 								}
 							}
 
@@ -1403,27 +1428,33 @@ namespace components
 								}
 
 								m_map_settings.remix_lights.push_back(
-									remix_light_settings_s(
-										std::move(temp_points),
-										temp_run_once,
-										temp_loop,
-										temp_loop_smoothing,
-										temp_trigger_always,
-										std::move(temp_trigger_choreo_name),
-										std::move(temp_trigger_choreo_actor),
-										std::move(temp_trigger_choreo_event),
-										std::move(temp_trigger_choreo_param1),
-										temp_trigger_sound,
-										temp_trigger_delay,
-										std::move(temp_kill_choreo_name),
-										temp_kill_sound,
-										temp_kill_delay,
-										temp_attach_prop_radius,
-										std::move(temp_attach_prop_str),
-										temp_attach_prop_bounds_min,
-										temp_attach_prop_bounds_max,
-										std::move(temp_comment))
-								);
+									remix_light_settings_s{
+										.points = std::move(temp_points),
+										.run_once = temp_run_once,
+										.loop = temp_loop,
+										.loop_smoothing = temp_loop_smoothing,
+										.trigger_always = temp_trigger_always,
+
+										.trigger_choreo_name = std::move(temp_trigger_choreo_name),
+										.trigger_choreo_actor = std::move(temp_trigger_choreo_actor),
+										.trigger_choreo_event = std::move(temp_trigger_choreo_event),
+										.trigger_choreo_param1 = std::move(temp_trigger_choreo_param1),
+										.trigger_sound_hash = temp_trigger_sound,
+										.trigger_delay = temp_trigger_delay,
+
+										.kill_choreo_name = std::move(temp_kill_choreo_name),
+										.kill_sound_hash = temp_kill_sound,
+										.kill_delay = temp_kill_delay,
+
+										.attach_prop_radius = temp_attach_prop_radius,
+										.attach_prop_name = std::move(temp_attach_prop_str),
+										.attach_prop_mins = temp_attach_prop_bounds_min,
+										.attach_prop_maxs = temp_attach_prop_bounds_max,
+										.attach_bone_index = temp_attach_bone_index,
+										.attach_bone_name = temp_attach_bone_str,
+
+										.comment = std::move(temp_comment)
+									});
 							}
 						}
 						else { TOML_ERROR("[LIGHTS] #points", entry, "needs at least one point to define a light"); }
@@ -1570,9 +1601,9 @@ namespace components
 
 			if (const auto edit_light = lights->get_first_active_light(); edit_light)
 			{
-				auto temp_def = edit_light->def;
-				if (edit_light->mover.is_initialized()) {
-					temp_def.points = edit_light->mover.get_points_vec();
+				auto temp_def = edit_light->m_def;
+				if (edit_light->m_mover.is_initialized()) {
+					temp_def.points = edit_light->m_mover.get_points_vec();
 				}
 
 				file << "    " << common::toml::build_light_string_for_single_light(temp_def) << "\n\n";
@@ -1618,6 +1649,7 @@ namespace components
 		handle_texture_category_tweaks(true);
 		clear_map_settings();
 		map_settings::get()->set_settings_for_map("");
+		imgui::get()->m_light_edit_mode = false;
 	}
 
 	map_settings::map_settings()

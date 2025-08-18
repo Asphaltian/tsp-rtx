@@ -39,6 +39,7 @@
 #include <iostream>
 #include <xmmintrin.h>
 #include <intrin.h>
+#include <numbers>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)
@@ -77,6 +78,7 @@
 #include "sdk/engine/c_engine_client.hpp"
 #include "sdk/vgui/surface/c_surface_mgr.hpp"
 #include "sdk/inputsystem/c_input_stackstystem.hpp"
+#include "sdk/entity/c_entity_list.hpp"
 
 #include "utils/hooking.hpp"
 #include "utils/memory.hpp"

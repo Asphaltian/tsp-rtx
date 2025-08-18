@@ -12,7 +12,7 @@ namespace components
 
 		//sdk::base_client* m_client = nullptr;
 		sdk::engine_client* m_engine = nullptr;
-		//sdk::entity_list* m_entity_list = nullptr;
+		sdk::entity_list* m_entity_list = nullptr;
 		sdk::surface* m_surface = nullptr;
 		sdk::c_input_stacksystem* m_input_system = nullptr;
 		//sdk::player_info_manager* m_player_manager = nullptr;

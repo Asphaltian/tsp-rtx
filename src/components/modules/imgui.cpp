@@ -185,6 +185,7 @@ namespace components
 			if (ImGui::Button("Reload", button_size))
 			{
 				result = true;
+				imgui::get()->m_light_edit_mode = false;
 				map_settings::reload();
 				ImGui::CloseCurrentPopup();
 			}
@@ -216,31 +217,253 @@ namespace components
 	// #
 	// #
 
+	void cont_general_maps()
+	{
+		const auto four_row_button_size = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3) / 4.0f;
+
+		ImGui::SeparatorTextLarge("The Courtesy Call");
+
+		if (ImGui::Button("sp_a1_intro1", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro1"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_intro2", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro2"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_intro3", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro3"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_intro4", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro4"); }
+
+		if (ImGui::Button("sp_a1_intro5", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro5"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_intro6", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro6"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_intro7", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_intro7"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a1_wakeup", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a1_wakeup"); }
+
+		if (ImGui::Button("sp_a2_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_intro"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Cold Boot");
+
+		if (ImGui::Button("sp_a2_laser_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_laser_stairs", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_stairs"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_dual_lasers", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_dual_lasers"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_laser_over_goo", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_over_goo"); }
+
+		if (ImGui::Button("sp_a2_catapult_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_catapult_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_trust_fling", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_trust_fling"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_pit_flings", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_pit_flings"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_fizzler_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_fizzler_intro"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Return");
+
+		if (ImGui::Button("sp_a2_sphere_peek", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_sphere_peek"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_ricochet", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_ricochet"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bridge_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bridge_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bridge_the_gap", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bridge_the_gap"); }
+
+		if (ImGui::Button("sp_a2_turret_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_turret_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_laser_relays", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_relays"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_turret_blocker", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_turret_blocker"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_laser_vs_turret", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_vs_turret"); }
+
+		if (ImGui::Button("sp_a2_pull_the_rug", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_pull_the_rug"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Surprise");
+
+		if (ImGui::Button("sp_a2_column_blocker", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_column_blocker"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_laser_chaining", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_laser_chaining"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_triple_laser", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_triple_laser"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bts1", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts1"); }
+
+		if (ImGui::Button("sp_a2_bts2", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts2"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Escape");
+
+		if (ImGui::Button("sp_a2_bts3", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts3"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bts4", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts4"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bts5", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts5"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_bts6", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts6"); }
+
+		if (ImGui::Button("sp_a2_bts7", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_bts7"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a2_core", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a2_core"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Fall");
+
+		if (ImGui::Button("sp_a3_00", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_00"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_01", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_01"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_03", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_03"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_jump_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_jump_intro"); }
+
+		if (ImGui::Button("sp_a3_bomb_flings", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_bomb_flings"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_crazy_box", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_crazy_box"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_transition01", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_transition01"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Reunion");
+
+		if (ImGui::Button("sp_a3_speed_ramp", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_speed_ramp"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_speed_flings", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_speed_flings"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_portal_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_portal_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a3_end", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a3_end"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Itch");
+
+		if (ImGui::Button("sp_a4_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_tb_intro", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_tb_intro"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_tb_trust_drop", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_tb_trust_drop"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_tb_wall_button", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_tb_wall_button"); }
+
+		if (ImGui::Button("sp_a4_tb_polarity", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_tb_polarity"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_tb_catch", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_tb_catch"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_stop_the_box", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_stop_the_box"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_laser_catapult", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_laser_catapult"); }
+
+		if (ImGui::Button("sp_a4_laser_platform", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_laser_platform"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_speed_catch", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_speed_catch"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_jump_polarity", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_jump_polarity"); }
+
+		ImGui::Spacing();
+		ImGui::SeparatorTextLarge("The Part Where He Kills You");
+
+		if (ImGui::Button("sp_a4_finale1", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_finale1"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_finale2", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_finale2"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_finale3", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_finale3"); }
+		ImGui::SameLine();
+		if (ImGui::Button("sp_a4_finale4", ImVec2(four_row_button_size, 0))) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("map sp_a4_finale4"); }
+	}
+
+	void cont_general_spawns()
+	{
+		const auto four_row_button_size = ImVec2((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3) / 4.0f, 0);
+
+		if (ImGui::Button("weighted_cube", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_portal_weighted_cube"); }
+		ImGui::SameLine();
+		if (ImGui::Button("weighted_cube active", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create prop_weighted_cube; ent_fire !picker skin 2"); }
+		ImGui::SameLine();
+		if (ImGui::Button("weighted_cube rusted", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create prop_weighted_cube; ent_fire !picker skin 3"); }
+		ImGui::SameLine();
+		if (ImGui::Button("floor_button", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("give prop_floor_button"); }
+
+		ImGui::Spacing(0, 2);
+
+		if (ImGui::Button("weighted_antique", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_portal_weighted_antique"); }
+		ImGui::SameLine();
+		if (ImGui::Button("companion_cube", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_portal_companion_cube"); }
+		ImGui::SameLine();
+		if (ImGui::Button("reflector_cube", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_portal_reflector_cube"); }
+		ImGui::SameLine();
+		if (ImGui::Button("weighted_sphere", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_portal_weighted_sphere"); }
+
+		ImGui::Spacing(0, 2);
+
+		if (ImGui::Button("paint_bomb_jump ", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_paint_bomb_jump"); }
+		ImGui::SameLine();
+		if (ImGui::Button("paint_bomb_speed", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_paint_bomb_speed"); }
+		ImGui::SameLine();
+		if (ImGui::Button("paint_bomb_portal", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_paint_bomb_portal"); }
+		ImGui::SameLine();
+		if (ImGui::Button("ent_create_paint_bomb_erase", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create_paint_bomb_erase"); }
+
+		ImGui::Spacing(0, 2);
+
+		if (ImGui::Button("personality_core damage", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create npc_personality_core"); }
+		ImGui::SameLine();
+		if (ImGui::Button("personality_core", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("ent_create npc_personality_core; ent_fire !picker skin 1"); }
+		ImGui::SameLine();
+		if (ImGui::Button("corrupted cores", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("prop_dynamic_create npcs/personality_sphere/personality_sphere_skins"); }
+		ImGui::SameLine();
+		if (ImGui::Button("glados head", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("prop_dynamic_create npcs/glados/glados_head_anim"); }
+
+		ImGui::Spacing(0, 2);
+
+		if (ImGui::Button("turret", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("npc_create npc_portal_turret_floor"); }
+		ImGui::SameLine();
+		if (ImGui::Button("atlas", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("prop_dynamic_create player/ballbot/ballbot"); }
+		ImGui::SameLine();
+		if (ImGui::Button("p-body", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("prop_dynamic_create player/eggbot/eggbot"); }
+		ImGui::SameLine();
+		if (ImGui::Button("chell", four_row_button_size)) { interfaces::get()->m_engine->execute_client_cmd_unrestricted("prop_dynamic_create player/chell/player"); }
+	}
+
 	void cont_general_quickcommands()
 	{
-		if (ImGui::Button("Fizzle Portals")) {
+		const auto four_row_button_size = ImVec2((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 3) / 4.0f, 0);
+		const auto three_row_button_size = ImVec2(ImGui::CalcButtonWidthSameRow(3), 0);
+
+		if (ImGui::Button("Fizzle Portals", four_row_button_size)) {
 			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; ent_fire prop_portal fizzle");
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("Give Portal Gun")) {
+		if (ImGui::Button("No Target (Turret)", four_row_button_size)) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; notarget");
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("God", four_row_button_size)) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; god");
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Buddha", four_row_button_size)) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; buddha");
+		}
+
+
+		if (ImGui::Button("Give Portal Gun", three_row_button_size)) {
 			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; give_portalgun; upgrade_portalgun");
 		}
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
+		ImGui::SameLine();
+		if (ImGui::Button("Give Potato Gun", three_row_button_size)) {
+			interfaces::get()->m_engine->execute_client_cmd_unrestricted("sv_cheats 1; give_portalgun; upgrade_potatogun");
+		}
 
-		ImGui::Checkbox("Show Area Debug Info", &cmd::debug_node_vis);
-		TT("Toggle bsp node/leaf debug visualization using the remix api\n~~ cmd: xo_debug_toggle_node_vis");
+		ImGui::SameLine();
+		common::imgui::cvar_toggle_button_bool("sv_portal_placement_never_fail", "Portal Placement Never Fails", three_row_button_size, "sv_portal_placement_never_fail :: Allows you to shoot portals anywhere");
 
-		ImGui::Checkbox("Draw Static Prop Debug Info", &cmd::model_info_vis);
-		TT("Toggle model name and radius visualizations\nUseful for HIDEMODEL (MapSettings)\n~~ cmd: xo_debug_toggle_model_info");
-
-		ImGui::Checkbox("Print Choreography (.vcd) Info", &cmd::scene_print);
-		TT("Toggle console prints about playing Choreographies (.vcd)\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_scene_print");
-
-		ImGui::Checkbox("Print Playing Sound Info", &cmd::sound_debug_printing);
-		TT("Toggle console prints about playing Sounds\nUseful for LIGHT or CONFIGVARS (TRIGGER/KILL) (MapSettings)\n~~ cmd: xo_debug_sound_print");
 
 #if DEBUG
 		{
@@ -259,12 +482,14 @@ namespace components
 
 				ImGui::Spacing(0, 6);
 
+				const auto bridge_api = &remix_api::get()->m_bridge;
+
 				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x * 0.49f, 0))) {
-					remix_api::get()->m_bridge.AddTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
+					bridge_api->AddTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("Remove Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
-					remix_api::get()->m_bridge.RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
+					bridge_api->RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
 				}
 
 				ImGui::Spacing(0, 6);
@@ -302,6 +527,18 @@ namespace components
 			static float cont_quickcmd_height = 0.0f;
 			cont_quickcmd_height = ImGui::Widget_ContainerWithCollapsingTitle("Quick Commands", cont_quickcmd_height, cont_general_quickcommands,
 				true, ICON_FA_TERMINAL, &ImGuiCol_ContainerBackground, &ImGuiCol_ContainerBorder);
+		}
+
+		{
+			static float cont_spawns_height = 0.0f;
+			cont_spawns_height = ImGui::Widget_ContainerWithCollapsingTitle("Spawns", cont_spawns_height, cont_general_spawns,
+				false, ICON_FA_CHILD, &ImGuiCol_ContainerBackground, &ImGuiCol_ContainerBorder);
+		}
+
+		{
+			static float cont_maps_height = 0.0f;
+			cont_maps_height = ImGui::Widget_ContainerWithCollapsingTitle("Maps", cont_maps_height, cont_general_maps,
+				false, ICON_FA_BUILDING, &ImGuiCol_ContainerBackground, &ImGuiCol_ContainerBorder);
 		}
 	}
 
@@ -360,23 +597,38 @@ namespace components
 		ImGui::SameLine();
 		reload_mapsettings_button_with_popup("General");
 
-		ImGui::Spacing(0, 6);
 
+
+		const auto two_row_button_size = ImVec2((ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 1) / 2.0f, 0);
+
+		ImGui::SeparatorTextLarge(" Debug Views / Info ", true);
+
+		common::imgui::toggle_button_bool(&cmd::debug_node_vis, "Area / Leaf Info", two_row_button_size, "Toggle bsp node/leaf debug visualization using the remix api\n~~ cmd: xo_debug_toggle_node_vis");
+		ImGui::SameLine();
+		common::imgui::toggle_button_bool(&cmd::model_info_vis, "Static Prop Info", two_row_button_size, "Toggle model name and radius visualizations\nUseful for HIDEMODEL (MapSettings)\n~~ cmd: xo_debug_toggle_model_info");
+
+
+		common::imgui::toggle_button_bool(&cmd::scene_print, "Choreo: Print Info to Console", two_row_button_size, "This will print info about all choreographies to the console\nUseful for MARKER/LIGHTS (MapSettings)\n~~ cmd: xo_debug_scene_print");
+		ImGui::SameLine();
+		common::imgui::toggle_button_bool(&cmd::sound_debug_printing, "Sound: Print Info to Console", two_row_button_size, "This will print info about running sounds to the console\nUseful for MARKER/LIGHTS (MapSettings)\n~~ cmd: xo_debug_sound_print");
+
+		common::imgui::toggle_button_bool(&cmd::show_mesh_bone_info, "Lights: Prop Bone Info Visualization", two_row_button_size, "Toggle bone name and index visualizations for all props\nUseful for LIGHTS (MapSettings)\n~~ cmd: xo_debug_show_mesh_bone_info_cmd");
+
+		//common::imgui::toggle_button_bool(&cmd::unbake_model_info_vis, "Unbake: Prop Info Visualization", two_row_button_size, "Toggle model unbake info showing checksums, names and bone number visualizations\nUseful for UNBAKE (MapSettings)\n~~ cmd: xo_debug_toggle_unbake_model_info");
+		ImGui::SameLine();
 		{
-			auto default_nocull_dist = ms.default_nocull_dist;
-			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-			if (ImGui::DragFloat("Def. NoCull Dist", &default_nocull_dist, 0.5f, 0.0f)) {
-				default_nocull_dist = default_nocull_dist < 0.0f ? 0.0f : default_nocull_dist;
+			bool temp_unbake = false;
+			if (common::imgui::toggle_button_bool(&temp_unbake, "Unbake: Log Info to File", two_row_button_size, "Log unbake info for all loaded meshes to \"portal2-rtx\\logs\\mapsettings_unbake_info.log\"\nUseful for UNBAKE (MapSettings)\n~~ cmd: xo_mapsettings_get_unbake_info")) {
+				cmd::ms_unbake_info = temp_unbake;
 			}
-			TT("Default distance value for the default anti-cull mode (distance) if there is no override for the current area");
 		}
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		if (ImGui::Button("Log MapSettings [UNBAKE] Info", ImVec2(ImGui::CalcItemWidth(), 0))) {
-			model_render::xo_mapsettings_get_unbake_info_fn();
-		} TT("This log names of drawn models in the current frame to a logfile in portal2-rtx/logs/. Useful for MapSettings : [UNBAKE]");
+		ImGui::Spacing(0, 4);
 
-		ImGui::Spacing(0, 6);
+		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		ImGui::SliderInt2("HUD: Area Debug Pos", &main_module::get()->m_hud_debug_node_vis_pos[0], 0, 512);
+
+		ImGui::Spacing(0, 4);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
 		ImGui::TableHeaderDropshadow();
@@ -1420,6 +1672,15 @@ namespace components
 			ImGui::Style_ColorButtonPop();
 		}
 
+		{
+			auto default_nocull_dist = map_settings::get_map_settings().default_nocull_dist;
+			SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+			if (ImGui::DragFloat("Def. NoCull Dist", &default_nocull_dist, 0.5f, 0.0f)) {
+				default_nocull_dist = default_nocull_dist < 0.0f ? 0.0f : default_nocull_dist;
+			}
+			TT("Default distance value for the default anti-cull mode (distance) if there is no override for the current area");
+		}
+
 		// resets
 		if (area_selection_old != area_selection || was_area_removed)
 		{
@@ -1490,33 +1751,33 @@ namespace components
 		return false;
 	}
 
-	void mapsettings_ls_general_light_settings(remix_lights::remix_light_s* edit_active_light)
+	void mapsettings_ls_general_light_settings(remix_lights::light* edit_active_light)
 	{
 		const auto im = imgui::get();
 		const auto cont_bg_color = im->ImGuiCol_ContainerBackground + ImVec4(0.05f, 0.05f, 0.05f, 0.0f);
 
-		ImGui::Spacing(0, 12);
+		/*ImGui::Spacing(0, 12);
 		ImGui::PushFont(common::imgui::font::BOLD_LARGE);
 		ImGui::SeparatorText(" General Light Settings ");
-		ImGui::PopFont();
+		ImGui::PopFont();*/
 		ImGui::Spacing(0, 4);
 
 		static float cont_height = 0.0f;
 		cont_height = ImGui::Widget_ContainerWithDropdownShadow(cont_height, [edit_active_light]
 			{
-				ImGui::BeginDisabled(!edit_active_light->mover.is_initialized());
-				ImGui::Checkbox("Run Once", &edit_active_light->def.run_once);
+				ImGui::BeginDisabled(!edit_active_light->m_mover.is_initialized());
+				ImGui::Checkbox("Run Once", &edit_active_light->m_def.run_once);
 				TT("Enabled: Destroy light after reaching the last point");
 
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.33f, 0);
-				ImGui::Checkbox("Loop", &edit_active_light->def.loop);
+				ImGui::Checkbox("Loop", &edit_active_light->m_def.loop);
 				TT("Enabled: Looping light that restarts at the first point after reaching the last point.\n"
 					"Disabled: Light will stop and stay active when reaching the last point.\n"
 					"This does not make a difference when in edit mode.");
 
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.66f, 0);
-				if (ImGui::Checkbox("Loop Smoothing", &edit_active_light->def.loop_smoothing)) {
-					edit_active_light->mover.init(edit_active_light->mover.get_points_vec(), true, edit_active_light->def.loop_smoothing);
+				if (ImGui::Checkbox("Loop Smoothing", &edit_active_light->m_def.loop_smoothing)) {
+					edit_active_light->m_mover.init(edit_active_light, edit_active_light->m_mover.get_points_vec(), true, edit_active_light->m_def.loop_smoothing);
 				}
 				TT("Enabled: Automatically connect and smooth the start and end point.\n"
 					"[!] requires 'loop' to be true\n"
@@ -1529,7 +1790,7 @@ namespace components
 				//ImGui::TextUnformatted(" Comment ");
 				//ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 				SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-				ImGui::InputText("Comment", &edit_active_light->def.comment);
+				ImGui::InputText("Comment", &edit_active_light->m_def.comment);
 
 
 				ImGui::Spacing(0, 12);
@@ -1561,30 +1822,30 @@ namespace components
 				if (triggersettings_state)
 				{
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					ImGui::InputText("Choreo Name##Trigger", &edit_active_light->def.trigger_choreo_name);
+					ImGui::InputText("Choreo Name##Trigger", &edit_active_light->m_def.trigger_choreo_name);
 					TT("Trigger light creation when a specified choreography (vcd) starts playing.\n"
 						"The choreo trigger has HIGHER precedence over sound triggering.\n"
 						"This can be a substring. Use cmd 'xo_debug_scene_print' to get info about playing choreo's.");
 
 					// clear sound trigger if choreo is not empty
-					if (!edit_active_light->def.trigger_choreo_name.empty()) {
-						edit_active_light->def.trigger_sound_hash = 0u;
+					if (!edit_active_light->m_def.trigger_choreo_name.empty()) {
+						edit_active_light->m_def.trigger_sound_hash = 0u;
 					}
 
-					if (!edit_active_light->def.trigger_choreo_name.empty())
+					if (!edit_active_light->m_def.trigger_choreo_name.empty())
 					{
 						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-						ImGui::InputText("Choreo Actor##Trigger", &edit_active_light->def.trigger_choreo_actor);
+						ImGui::InputText("Choreo Actor##Trigger", &edit_active_light->m_def.trigger_choreo_actor);
 						TT("Use this if the choreo name isn't enough to uniquely identify the choreo that should trigger light creation.\n"
 							"This can be a substring. Use cmd 'xo_debug_scene_print' to get info about playing choreo's.");
 
 						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-						ImGui::InputText("Choreo Event##Trigger", &edit_active_light->def.trigger_choreo_event);
+						ImGui::InputText("Choreo Event##Trigger", &edit_active_light->m_def.trigger_choreo_event);
 						TT("Use this if the choreo name isn't enough to uniquely identify the choreo that should trigger light creation.\n"
 							"This can be a substring. Use cmd 'xo_debug_scene_print' to get info about playing choreo's.");
 
 						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-						ImGui::InputText("Choreo Param1##Trigger", &edit_active_light->def.trigger_choreo_param1);
+						ImGui::InputText("Choreo Param1##Trigger", &edit_active_light->m_def.trigger_choreo_param1);
 						TT("Use this if the choreo name isn't enough to uniquely identify the choreo that should trigger light creation.\n"
 							"This can be a substring. Use cmd 'xo_debug_scene_print' to get info about playing choreo's.");
 					}
@@ -1592,7 +1853,7 @@ namespace components
 					// --- sound
 
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					std::string temp_sound_hash_str = edit_active_light->def.trigger_sound_hash ? std::format("0x{:X}", edit_active_light->def.trigger_sound_hash) : "";
+					std::string temp_sound_hash_str = edit_active_light->m_def.trigger_sound_hash ? std::format("0x{:X}", edit_active_light->m_def.trigger_sound_hash) : "";
 
 					if (ImGui::InputText("Sound Hash##Trigger", &temp_sound_hash_str, ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue,
 						[](ImGuiInputTextCallbackData* data)
@@ -1604,8 +1865,8 @@ namespace components
 							return 1; // block input
 						}))
 					{
-						edit_active_light->def.trigger_sound_hash = static_cast<uint32_t>(std::strtoul(temp_sound_hash_str.c_str(), nullptr, 16));
-						temp_sound_hash_str = std::format("0x{:X}", edit_active_light->def.trigger_sound_hash);
+						edit_active_light->m_def.trigger_sound_hash = static_cast<uint32_t>(std::strtoul(temp_sound_hash_str.c_str(), nullptr, 16));
+						temp_sound_hash_str = std::format("0x{:X}", edit_active_light->m_def.trigger_sound_hash);
 					}
 					TT("Trigger light creation when a specified sound starts playing.\n"
 						"The sound trigger has LOWER precedence over choreo triggering.\n"
@@ -1614,22 +1875,22 @@ namespace components
 					ImGui::BeginDisabled(!edit_active_light->has_spawn_trigger());
 					{
 						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-						if (ImGui::DragFloat("Delay##Trigger", &edit_active_light->def.trigger_delay, 0.05f, 0.0f)) {
-							edit_active_light->def.trigger_delay = edit_active_light->def.trigger_delay < 0.0f ? 0.0f : edit_active_light->def.trigger_delay;
+						if (ImGui::DragFloat("Delay##Trigger", &edit_active_light->m_def.trigger_delay, 0.05f, 0.0f)) {
+							edit_active_light->m_def.trigger_delay = edit_active_light->m_def.trigger_delay < 0.0f ? 0.0f : edit_active_light->m_def.trigger_delay;
 						} TT("Delay spawn after trigger in seconds.");
 
-						ImGui::Checkbox("Always", &edit_active_light->def.trigger_always);
+						ImGui::Checkbox("Always", &edit_active_light->m_def.trigger_always);
 						TT("Retriggering the event again will spawn a new light instance everytime.");
 					}
 					ImGui::EndDisabled();
 
 					// clear choreo trigger if sound hash is not empty
-					if (edit_active_light->def.trigger_sound_hash)
+					if (edit_active_light->m_def.trigger_sound_hash)
 					{
-						edit_active_light->def.trigger_choreo_name.clear();
-						edit_active_light->def.trigger_choreo_actor.clear();
-						edit_active_light->def.trigger_choreo_event.clear();
-						edit_active_light->def.trigger_choreo_param1.clear();
+						edit_active_light->m_def.trigger_choreo_name.clear();
+						edit_active_light->m_def.trigger_choreo_actor.clear();
+						edit_active_light->m_def.trigger_choreo_event.clear();
+						edit_active_light->m_def.trigger_choreo_param1.clear();
 					}
 
 					// --
@@ -1640,20 +1901,20 @@ namespace components
 					ImGui::TextUnformatted(" Kill Settings ");
 
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					ImGui::InputText("Choreo Name##Kill", &edit_active_light->def.kill_choreo_name);
+					ImGui::InputText("Choreo Name##Kill", &edit_active_light->m_def.kill_choreo_name);
 					TT("Trigger light deletion when a specified choreography (vcd) starts playing.\n"
 						"The choreo trigger has HIGHER precedence over sound triggering.\n"
 						"This can be a substring. Use cmd 'xo_debug_scene_print' to get info about playing choreo's.");
 
 					// clear sound trigger if choreo is not empty
-					if (!edit_active_light->def.kill_choreo_name.empty()) {
-						edit_active_light->def.kill_sound_hash = 0u;
+					if (!edit_active_light->m_def.kill_choreo_name.empty()) {
+						edit_active_light->m_def.kill_sound_hash = 0u;
 					}
 
 					// kill sound
 
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					std::string temp_kill_sound_hash_str = edit_active_light->def.kill_sound_hash ? std::format("0x{:X}", edit_active_light->def.kill_sound_hash) : "";
+					std::string temp_kill_sound_hash_str = edit_active_light->m_def.kill_sound_hash ? std::format("0x{:X}", edit_active_light->m_def.kill_sound_hash) : "";
 
 					if (ImGui::InputText("Sound Hash##Kill", &temp_kill_sound_hash_str, ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_EnterReturnsTrue,
 						[](ImGuiInputTextCallbackData* data)
@@ -1665,8 +1926,8 @@ namespace components
 							return 1; // block input
 						}))
 					{
-						edit_active_light->def.kill_sound_hash = static_cast<uint32_t>(std::strtoul(temp_kill_sound_hash_str.c_str(), nullptr, 16));
-						temp_kill_sound_hash_str = std::format("0x{:X}", edit_active_light->def.kill_sound_hash);
+						edit_active_light->m_def.kill_sound_hash = static_cast<uint32_t>(std::strtoul(temp_kill_sound_hash_str.c_str(), nullptr, 16));
+						temp_kill_sound_hash_str = std::format("0x{:X}", edit_active_light->m_def.kill_sound_hash);
 					}
 					TT( "Trigger light creation when a specified sound starts playing.\n"
 						"The sound trigger has LOWER precedence over choreo triggering.\n"
@@ -1675,15 +1936,15 @@ namespace components
 					ImGui::BeginDisabled(!edit_active_light->has_kill_trigger());
 					{
 						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-						if (ImGui::DragFloat("Delay##Kill", &edit_active_light->def.kill_delay, 0.05f, 0.0f)) {
-							edit_active_light->def.kill_delay = edit_active_light->def.kill_delay < 0.0f ? 0.0f : edit_active_light->def.kill_delay;
+						if (ImGui::DragFloat("Delay##Kill", &edit_active_light->m_def.kill_delay, 0.05f, 0.0f)) {
+							edit_active_light->m_def.kill_delay = edit_active_light->m_def.kill_delay < 0.0f ? 0.0f : edit_active_light->m_def.kill_delay;
 						} TT("Delay kill after kill trigger in seconds.");
 					}
 					ImGui::EndDisabled();
 					
 					// clear choreo kill trigger if sound hash is not empty
-					if (edit_active_light->def.kill_sound_hash) {
-						edit_active_light->def.kill_choreo_name.clear();
+					if (edit_active_light->m_def.kill_sound_hash) {
+						edit_active_light->m_def.kill_choreo_name.clear();
 					}
 				}
 
@@ -1695,7 +1956,7 @@ namespace components
 				const auto spos_pre_attach_header = ImGui::GetCursorScreenPos();
 				const auto attachprop_settings_state = ImGui::CollapsingHeader("Attach to Prop");
 
-				if (edit_active_light->has_attach_parms())
+				if (edit_active_light->is_attached())
 				{
 					const auto spos_post_header = ImGui::GetCursorScreenPos();
 					const auto header_dims = ImGui::GetItemRectSize();
@@ -1711,42 +1972,101 @@ namespace components
 				if (attachprop_settings_state)
 				{
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					if (ImGui::DragFloat("Prop Radius##Attach", &edit_active_light->def.attach_prop_radius, 0.001f, 0.0f, 0.0f, "%.6f")) 
+					if (ImGui::DragFloat("Prop Radius##Attach", &edit_active_light->m_def.attach_prop_radius, 0.001f, 0.0f, 0.0f, "%.6f")) 
 					{
-						edit_active_light->def.attach_prop_radius = edit_active_light->def.attach_prop_radius < 0.0f ? 0.0f : edit_active_light->def.attach_prop_radius;
-						if (edit_active_light->def.attach_prop_radius > 0.0f) {
-							edit_active_light->def.attach_prop_name.clear();
+						edit_active_light->m_def.attach_prop_radius = edit_active_light->m_def.attach_prop_radius < 0.0f ? 0.0f : edit_active_light->m_def.attach_prop_radius;
+						if (edit_active_light->m_def.attach_prop_radius > 0.0f) {
+							edit_active_light->m_def.attach_prop_name.clear();
 						}
 					}
 					TT( "Attach light to a prop with this radius. This + bounds is the recommended way!\n"
 						"Use cmd 'xo_debug_toggle_model_info' to get info about nearby props.");
 
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-					if (ImGui::InputText("Prop Name##Attach", &edit_active_light->def.attach_prop_name))
+					if (ImGui::InputText("Prop Name##Attach", &edit_active_light->m_def.attach_prop_name))
 					{
-						if (!edit_active_light->def.attach_prop_name.empty()) {
-							edit_active_light->def.attach_prop_radius = 0.0f;
+						if (!edit_active_light->m_def.attach_prop_name.empty()) {
+							edit_active_light->m_def.attach_prop_radius = 0.0f;
 						}
 					}
 					TT( "Attach light to a prop that contains this string within its name.\n"
-						"This is slower then using radius + bounds so be aware of that.\n"
+						"This is slower than using radius + bounds so be aware of that.\n"
 						"Use cmd 'xo_debug_toggle_model_info' to get info about nearby props.");
 
 					ImGui::BeginDisabled(!edit_active_light->has_attach_parms());
-					ImGui::Widget_PrettyDragVec3("Bounds Min", &edit_active_light->def.attach_prop_mins.x, true, 120.0f, 0.05f);
-					ImGui::Widget_PrettyDragVec3("Bounds Max", &edit_active_light->def.attach_prop_maxs.x, true, 120.0f, 0.05f);
-
-					// check if any val of max is smaller than any val of mins and warn the user 
-					if (edit_active_light->def.attach_prop_maxs < edit_active_light->def.attach_prop_mins)
 					{
-						ImGui::PushFont(common::imgui::font::BOLD);
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.15f, 0.15f, 1.0f));
-						ImGui::TextUnformatted("Invalid Bounds! MAX smaller than MIN (any of X Y Z)");
-						ImGui::PopStyleColor();
-						ImGui::PopFont();
+						if (ImGui::Widget_PrettyDragVec3("Bounds Min", &edit_active_light->m_def.attach_prop_mins.x, true, 120.0f, 0.05f))
+						{
+							auto& mins = edit_active_light->m_def.attach_prop_mins;
+							const auto& maxs = edit_active_light->m_def.attach_prop_maxs;
+							mins.x = mins.x > maxs.x ? maxs.x - 1.0f : mins.x;
+							mins.y = mins.y > maxs.y ? maxs.y - 1.0f : mins.y;
+							mins.z = mins.z > maxs.z ? maxs.z - 1.0f : mins.z;
+						} TT("Bounding Box Mins where a light can get attached to a mesh fitting the above parameters.");
+
+						if (ImGui::Widget_PrettyDragVec3("Bounds Max", &edit_active_light->m_def.attach_prop_maxs.x, true, 120.0f, 0.05f))
+						{
+							const auto& mins = edit_active_light->m_def.attach_prop_mins;
+							auto& maxs = edit_active_light->m_def.attach_prop_maxs;
+							maxs.x = maxs.x < mins.x ? mins.x + 1.0f : maxs.x;
+							maxs.y = maxs.y < mins.y ? mins.y + 1.0f : maxs.y;
+							maxs.z = maxs.z < mins.z ? mins.z + 1.0f : maxs.z;
+						} TT("Bounding Box Maxs where a light can get attached to a mesh fitting the above parameters.");
+
+						// check if any val of max is smaller than any val of mins and warn the user 
+						if (edit_active_light->m_def.attach_prop_maxs < edit_active_light->m_def.attach_prop_mins)
+						{
+							ImGui::PushFont(common::imgui::font::BOLD);
+							ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.15f, 0.15f, 1.0f));
+							ImGui::TextUnformatted("Invalid Bounds! MAX smaller than MIN (any of X Y Z)");
+							ImGui::PopStyleColor();
+							ImGui::PopFont();
+						}
+
+						ImGui::EndDisabled();
 					}
 
-					ImGui::EndDisabled();
+					ImGui::Spacing(0, 4);
+					ImGui::SeparatorText(" Attach to Bone Section ");
+					
+					ImGui::BeginDisabled(!edit_active_light->is_attached());
+					{
+						{
+							SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+
+							const float half_button_width = (ImGui::CalcItemWidth() - ImGui::GetStyle().ItemSpacing.x) / 2.0f; //(window->WorkRect.Max.x - window->DC.CursorPos.x) * 0.5f;
+							if (ImGui::Button("Toggle Bone Information", ImVec2(half_button_width, 0))) {
+								cmd::show_mesh_bone_info_attached = !cmd::show_mesh_bone_info_attached;
+							} TT("Show bone information for the current 'active' mesh that has a light attached.");
+
+							ImGui::SameLine();
+							if (ImGui::Button("Reset Tracked Entity", ImVec2(half_button_width, 0))) {
+								edit_active_light->m_entity_index = -1;
+							} TT("Lights will track the index of the entity that they were first spawned on. You might need to reset it when the original entity was removed or similar.");
+						}
+
+						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+						if (ImGui::DragInt("Prop Bone Index##Attach", &edit_active_light->m_def.attach_bone_index, 0.02f, -1, 256, "%d", ImGuiSliderFlags_AlwaysClamp)) {
+							edit_active_light->m_def.attach_bone_name.clear();
+						}
+						TT( "Attach light to a specific bone on the prop.\n"
+							"A value of -1 will disable this functionality."
+							"Use cmd 'xo_debug_show_mesh_bone_info' to show bone info of the currently 'active' prop.");
+
+
+						SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+						if (ImGui::InputText("Prop Bone Name##Attach", &edit_active_light->m_def.attach_bone_name))
+						{
+							if (!edit_active_light->m_def.attach_bone_name.empty()) {
+								edit_active_light->m_def.attach_bone_index = -1;
+							}
+						}
+						TT( "Attach light to a specific bone on the prop.\n"
+							"You need to provide the full bone name. This is slower then using the bone index.\n"
+							"Use cmd 'xo_debug_show_mesh_bone_info' to show bone info of the currently 'active' prop.");
+
+						ImGui::EndDisabled();
+					}
 
 					ImGui::Spacing(0, 4);
 
@@ -1769,12 +2089,12 @@ namespace components
 		if (im->m_debugvis_attach_bounds && edit_active_light->has_attach_parms())
 		{
 			const auto remixapi = remix_api::get();
-			remixapi->debug_draw_box(edit_active_light->def.attach_prop_mins, edit_active_light->def.attach_prop_maxs, 1.0f, 
+			remixapi->debug_draw_box(edit_active_light->m_def.attach_prop_mins, edit_active_light->m_def.attach_prop_maxs, 1.0f, 
 				edit_active_light->is_attached() ? remix_api::DEBUG_REMIX_LINE_COLOR::WHITE : remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 		}
 	}
 
-	void mapsettings_ls_playback_visualization_settings(remix_lights::remix_light_s* edit_active_light, const bool is_static_light_with_single_point)
+	void mapsettings_ls_playback_visualization_settings(remix_lights::light* edit_active_light, const bool is_static_light_with_single_point)
 	{
 		const auto im = imgui::get();
 		const auto cont_bg_color = im->ImGuiCol_ContainerBackground + ImVec4(0.05f, 0.05f, 0.05f, 0.0f);
@@ -1808,23 +2128,23 @@ namespace components
 
 				ImGui::Spacing(0, 6);
 
-				ImGui::BeginDisabled(!edit_active_light->mover.is_initialized());
+				ImGui::BeginDisabled(!edit_active_light->m_mover.is_initialized());
 				ImGui::BeginDisabled(is_static_light_with_single_point);
 				if (ImGui::Button("Restart Light Loop", ImVec2(ImGui::GetContentRegionAvail().x * 0.49f - ImGui::GetStyle().ItemSpacing.x, 0))) {
-					edit_active_light->mover.restart();
+					edit_active_light->m_mover.restart();
 				} TT("This resets the current loop to timepoint = 0");
 				ImGui::EndDisabled();
 
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.49f);
 				if (ImGui::Button("Evenly distribute all timepoints", ImVec2(ImGui::GetContentRegionAvail().x * 0.98f, 0)))
 				{
-					auto& pts = edit_active_light->mover.get_points_vec();
+					auto& pts = edit_active_light->m_mover.get_points_vec();
 					// clear timepoints for all but the very first & very last points:
 					for (size_t i = 1u; i < pts.size() - 1u; i++) {
 						pts[i].timepoint = 0.0f;
 					}
 
-					edit_active_light->mover.init(pts, true, edit_active_light->def.loop_smoothing);
+					edit_active_light->m_mover.init(edit_active_light, pts, true, edit_active_light->m_def.loop_smoothing);
 				} TT("This will clear and recalculate the timepoints of all but the last point to evenly distribute time across all point 2 point segments.");
 				ImGui::EndDisabled();
 
@@ -1880,6 +2200,7 @@ namespace components
 				{
 					im->m_light_edit_mode = true;
 					map_settings::reload();
+					im->m_light_edit_mode = true; // hack
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -1899,9 +2220,9 @@ namespace components
 		{
 			if (const auto edit_light = lights->get_first_active_light(); edit_light)
 			{
-				auto temp_def = edit_light->def;
-				if (edit_light->mover.is_initialized()) {
-					temp_def.points = edit_light->mover.get_points_vec();
+				auto temp_def = edit_light->m_def;
+				if (edit_light->m_mover.is_initialized()) {
+					temp_def.points = edit_light->m_mover.get_points_vec();
 				}
 
 				ImGui::LogToClipboard();
@@ -1978,7 +2299,7 @@ namespace components
 					{
 						if (const auto edit_light = lights->get_first_active_light(); edit_light)
 						{
-							if (check_light_for_modifications(edit_light->def, *ms_light_selection, &edit_light->mover.get_points_vec()))
+							if (check_light_for_modifications(edit_light->m_def, *ms_light_selection, &edit_light->m_mover.get_points_vec()))
 							{
 								if (!ImGui::IsPopupOpen("Ignore Changes?", ImGuiPopupFlags_AnyPopup)) {
 									ImGui::OpenPopup("Ignore Changes?", ImGuiPopupFlags_AnyPopup);
@@ -2109,7 +2430,7 @@ namespace components
 				edit_light)
 			{
 				// debug text
-				Vector lpos = &edit_light->ext.position.x;
+				Vector lpos = &edit_light->m_ext.position.x;
 				Vector screen_pos; common::imgui::world2screen(lpos, screen_pos);
 				ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(screen_pos.x, screen_pos.y), 4.0f, ImGui::GetColorU32(ImGuiCol_Text));
 				game::debug_add_text_overlay(&lpos.x, "  Selected Light", -1, 0.8f, 0.8f, 0.8f, 0.8f);
@@ -2124,9 +2445,9 @@ namespace components
 			// write modified params into the current mapsetting light so changes dont get lost
 			if (auto edit_light = lights->get_first_active_light(); edit_light)
 			{
-				auto temp_def = edit_light->def;
-				if (edit_light->mover.is_initialized()) {
-					temp_def.points = edit_light->mover.get_points_vec();
+				auto temp_def = edit_light->m_def;
+				if (edit_light->m_mover.is_initialized()) {
+					temp_def.points = edit_light->m_mover.get_points_vec();
 				}
 				*ms_light_selection = temp_def;
 			}
@@ -2209,9 +2530,9 @@ namespace components
 				// write modified params into the current mapsetting light so changes dont get lost
 				if (auto edit_light = lights->get_first_active_light(); edit_light)
 				{
-					auto temp_def = edit_light->def;
-					if (edit_light->mover.is_initialized()) {
-						temp_def.points = edit_light->mover.get_points_vec();
+					auto temp_def = edit_light->m_def;
+					if (edit_light->m_mover.is_initialized()) {
+						temp_def.points = edit_light->m_mover.get_points_vec();
 					}
 					*ms_light_selection = temp_def;
 				}
@@ -2236,11 +2557,15 @@ namespace components
 			ImGui::EndDisabled();
 		}
 
-
 		if (auto edit_active_light = lights->get_first_active_light(); 
 			edit_active_light && ms_light_selection)
 		{
-			const auto is_static_light_with_single_point = !edit_active_light->mover.is_initialized();
+			//ImGui::Spacing(0, 8);
+			mapsettings_ls_general_light_settings(edit_active_light);
+
+			ImGui::Spacing(0, 8);
+
+			const auto is_static_light_with_single_point = !edit_active_light->m_mover.is_initialized();
 			// ---
 			// holds mover points OR def point if light is static
 			static map_settings::remix_light_settings_s::point_s* active_point_selection = nullptr;
@@ -2249,16 +2574,16 @@ namespace components
 			size_t active_points_count = 0u;
 
 			// if light only has a single point, mover wont be initialized
-			if (is_static_light_with_single_point && !edit_active_light->def.points.empty())
+			if (is_static_light_with_single_point && !edit_active_light->m_def.points.empty())
 			{
-				active_points = edit_active_light->def.points.data();
+				active_points = edit_active_light->m_def.points.data();
 				active_points_count = 1u;
 				active_point_selection = active_points;
 			}
-			else if (edit_active_light->mover.is_initialized())
+			else if (edit_active_light->m_mover.is_initialized())
 			{
-				active_points = edit_active_light->mover.get_points();
-				active_points_count = edit_active_light->mover.get_points_count();
+				active_points = edit_active_light->m_mover.get_points();
+				active_points_count = edit_active_light->m_mover.get_points_count();
 			}
 
 			if (reset_point_selection || !active_point_selection && active_points_count > 0u) {
@@ -2391,11 +2716,11 @@ namespace components
 				//if (active_points_count <= 1)
 				{
 					// copy light def because we dont want to directly edit the mapsettings def
-					auto new_def = edit_active_light->def;
+					auto new_def = edit_active_light->m_def;
 
 					// use mover points if light has more then 1 pt
-					new_def.points = edit_active_light->mover.is_initialized()
-						? edit_active_light->mover.get_points_vec()
+					new_def.points = edit_active_light->m_mover.is_initialized()
+						? edit_active_light->m_mover.get_points_vec()
 						: new_def.points;
 
 					lights->destroy_and_clear_all_active_lights(); 
@@ -2410,10 +2735,10 @@ namespace components
 
 					// --
 
-					if (edit_active_light->mover.is_initialized())
+					if (edit_active_light->m_mover.is_initialized())
 					{
-						active_points = edit_active_light->mover.get_points();
-						active_points_count = edit_active_light->mover.get_points_count();
+						active_points = edit_active_light->m_mover.get_points();
+						active_points_count = edit_active_light->m_mover.get_points_count();
 						active_point_selection = &active_points[active_points_count - 1u];
 					}
 				}
@@ -2429,11 +2754,11 @@ namespace components
 				if (ImGui::Button("Delete Selected Point", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 				{
 					// copy light def because we dont want to directly edit the mapsettings def
-					auto new_def = edit_active_light->def;
+					auto new_def = edit_active_light->m_def;
 					 
 					// use mover points if light has more then 1 pt
-					new_def.points = edit_active_light->mover.is_initialized()
-						? edit_active_light->mover.get_points_vec()
+					new_def.points = edit_active_light->m_mover.is_initialized()
+						? edit_active_light->m_mover.get_points_vec()
 						: new_def.points;
 
 					// disabled handles single points ..
@@ -2449,10 +2774,10 @@ namespace components
 						lights->add_single_map_setting_light_for_editing(&new_def);
 					}
 
-					if (edit_active_light->mover.is_initialized())
+					if (edit_active_light->m_mover.is_initialized())
 					{
-						active_points = edit_active_light->mover.get_points();
-						active_points_count = edit_active_light->mover.get_points_count();
+						active_points = edit_active_light->m_mover.get_points();
+						active_points_count = edit_active_light->m_mover.get_points_count();
 						active_point_selection = &active_points[active_points_count - 1u];
 					}
 				}
@@ -2480,7 +2805,7 @@ namespace components
 							}
 							else
 							{
-								auto& pts = edit_active_light->mover.get_points_vec();
+								auto& pts = edit_active_light->m_mover.get_points_vec();
 								Vector current_center = {};
 
 								for (const auto& point : pts) {
@@ -2505,7 +2830,7 @@ namespace components
 							}
 							else
 							{
-								for (auto& point : edit_active_light->mover.get_points_vec()) {
+								for (auto& point : edit_active_light->m_mover.get_points_vec()) {
 									point.position += offs;
 								}
 							}
@@ -2538,14 +2863,15 @@ namespace components
 
 				ImGui::Widget_PrettyDragVec3("Position", &active_point_selection->position.x, true, 120.0f, 0.25f);
 
-				Vector normalized_radiance = im->m_debugvis_live ? &edit_active_light->info.radiance.x : active_point_selection->radiance; 
+				Vector normalized_radiance = im->m_debugvis_live ? &edit_active_light->m_info.radiance.x : active_point_selection->radiance; 
 				normalized_radiance.Normalize();
 
 				//const auto debug_color_bg = ImGui::ColorConvertFloat4ToU32(ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
 				const auto debug_color = ImGui::ColorConvertFloat4ToU32(ImVec4(normalized_radiance.x, normalized_radiance.y, normalized_radiance.z, 1.0f));
 
 				// draw position as circle
-				Vector screen_pos; common::imgui::world2screen((im->m_debugvis_live ? &edit_active_light->ext.position.x : active_point_selection->position) + edit_active_light->attached_offset, screen_pos);
+				Vector screen_pos;
+				common::imgui::world2screen((im->m_debugvis_live ? &edit_active_light->m_ext.position.x : edit_active_light->calculate_position_for_point(active_point_selection)), screen_pos);
 				ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(screen_pos.x, screen_pos.y), 8.0f, debug_color);
 
 
@@ -2574,8 +2900,8 @@ namespace components
 
 				if (im->m_debugvis_radius)
 				{
-					const Vector circle_pos = (im->m_debugvis_live ? &edit_active_light->ext.position.x : active_point_selection->position) + edit_active_light->attached_offset;
-					const float radius = im->m_debugvis_live ? edit_active_light->ext.radius : active_point_selection->radius;
+					const Vector circle_pos = (im->m_debugvis_live ? &edit_active_light->m_ext.position.x : edit_active_light->calculate_position_for_point(active_point_selection));
+					const float radius = im->m_debugvis_live ? edit_active_light->m_ext.radius : active_point_selection->radius;
 
 					const auto remixapi = remix_api::get();
 					remixapi->add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, normalized_radiance);
@@ -2600,7 +2926,7 @@ namespace components
 					if (ImGui::DragFloat("Timepoint", &active_point_selection->timepoint, 0.005f, min_timepoint, max_timepoint, "%.3f")) 
 					{
 						active_point_selection->timepoint = std::clamp(active_point_selection->timepoint, min_timepoint, max_timepoint);
-						edit_active_light->mover.calculate_segment_durations();
+						edit_active_light->m_mover.calculate_segment_durations();
 					}
 					TT("Time in seconds at which the light arrives at the point\n"
 					   "Last point defines the total duration.");
@@ -2634,8 +2960,20 @@ namespace components
 
 				if (active_point_selection->use_shaping)
 				{
-					if (ImGui::Widget_PrettyDragVec3("Direction", &active_point_selection->direction.x, true, 120.0f, 0.1f, -1.0f, 1.0f)) {
-						active_point_selection->direction.Normalize();
+					const bool is_attached = edit_active_light->is_attached();
+					if (!is_attached)
+					{
+						if (ImGui::Widget_PrettyDragVec3("Direction", &active_point_selection->direction.x, true, 120.0f, 0.1f, -1.0f, 1.0f)) {
+							active_point_selection->direction.Normalize();
+						} TT("Direction of the light");
+					}
+					else
+					{
+						if (ImGui::Widget_PrettyDragVec3("Direction (Offset)", &active_point_selection->angle_offset_attached.x, true, 120.0f, 0.1f, -180.0f, 180.0f)) 
+						{
+							utils::vector::angle_normalize(active_point_selection->angle_offset_attached);
+							utils::vector::AngleVectors(active_point_selection->angle_offset_attached, &active_point_selection->direction);
+						} TT("Offset the light direction with reference to the attached bone / entity angles. Offset in Euler Angles.");
 					}
 
 					SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
@@ -2656,7 +2994,7 @@ namespace components
 					if (im->m_debugvis_shaping)
 					{
 						const auto remixapi = remix_api::get();
-						const float cone_deg = im->m_debugvis_live ? edit_active_light->ext.shaping_value.coneAngleDegrees : active_point_selection->degrees;
+						const float cone_deg = im->m_debugvis_live ? edit_active_light->m_ext.shaping_value.coneAngleDegrees : active_point_selection->degrees;
 
 						if (cone_deg <= 90.0f)
 						{
@@ -2664,35 +3002,34 @@ namespace components
 							const float scaled_height = im->m_debugvis_cone_height / (1.0f + cone_rad_tan);
 
 							// draw cone
-							for (auto i = 1; i <= im->m_debugvis_cone_steps; ++i)
+							for (auto i = 1; i <= im->m_debugvis_cone_steps; ++i) 
 							{
 								const float step_fraction = (float)i / (float)im->m_debugvis_cone_steps;
 
 								float radius = (step_fraction * scaled_height) * cone_rad_tan;
 
 								Vector circle_pos =
-									(im->m_debugvis_live ? Vector(&edit_active_light->ext.position.x) + Vector(&edit_active_light->ext.shaping_value.direction.x) * (step_fraction * scaled_height)
-									: active_point_selection->position + active_point_selection->direction * (step_fraction * scaled_height)) + edit_active_light->attached_offset;
+									(im->m_debugvis_live ? Vector(&edit_active_light->m_ext.position.x) + Vector(&edit_active_light->m_ext.shaping_value.direction.x) * (step_fraction * scaled_height)
+														 : edit_active_light->calculate_position_for_point(active_point_selection) + edit_active_light->calculate_direction_for_point(active_point_selection) * (step_fraction * scaled_height)) /*+ edit_active_light->attached_position*/;
 
-								remixapi->add_debug_circle(
+								remixapi->add_debug_circle( 
 									circle_pos,
-									im->m_debugvis_live ? &edit_active_light->ext.shaping_value.direction.x : active_point_selection->direction,
+									im->m_debugvis_live ? &edit_active_light->m_ext.shaping_value.direction.x 
+														: edit_active_light->calculate_direction_for_point(active_point_selection),
 									radius, radius * 0.025f, normalized_radiance, false);
 							}
 						}
 
 						// draw dir line
 						remixapi->add_debug_line(
-							im->m_debugvis_live ?	&edit_active_light->ext.position.x
-														: active_point_selection->position,
-							im->m_debugvis_live	? Vector(&edit_active_light->ext.position.x) + Vector(&edit_active_light->ext.shaping_value.direction.x).Scale(im->m_debugvis_cone_height)
-													: active_point_selection->position + active_point_selection->direction.Scale(im->m_debugvis_cone_height),
+							im->m_debugvis_live	? &edit_active_light->m_ext.position.x
+												: edit_active_light->calculate_position_for_point(active_point_selection),
+
+							im->m_debugvis_live	? Vector(&edit_active_light->m_ext.position.x) + Vector(&edit_active_light->m_ext.shaping_value.direction.x).Scale(im->m_debugvis_cone_height)
+												: edit_active_light->calculate_position_for_point(active_point_selection) + edit_active_light->calculate_direction_for_point(active_point_selection).Scale(im->m_debugvis_cone_height), //active_point_selection->direction.Scale(im->m_debugvis_cone_height),
 							1.0f, remix_api::WHITE);
 					}
 				} // end use shaping
-
-				ImGui::Spacing(0, 8);
-				mapsettings_ls_general_light_settings(edit_active_light);
 
 				ImGui::Spacing(0, 8);
 				mapsettings_ls_playback_visualization_settings(edit_active_light, is_static_light_with_single_point);
@@ -2730,9 +3067,9 @@ namespace components
 				{
 					if (const auto edit_light = lights->get_first_active_light(); edit_light)
 					{
-						auto temp_def = edit_light->def;
-						if (edit_light->mover.is_initialized()) {
-							temp_def.points = edit_light->mover.get_points_vec();
+						auto temp_def = edit_light->m_def;
+						if (edit_light->m_mover.is_initialized()) {
+							temp_def.points = edit_light->m_mover.get_points_vec();
 						}
 
 						ImGui::LogToClipboard();

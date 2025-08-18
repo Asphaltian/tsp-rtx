@@ -95,6 +95,7 @@ namespace components
 				// shaping
 				bool use_shaping = false;
 				Vector direction = { 0.0f, 0.0f, 1.0f };
+				Vector angle_offset_attached = { 0.0f, 0.0f, 0.0f }; // offset light direction when attached to an entity or bone (Euler)
 				float degrees = 180.0; // cone angle
 				float softness = 0.0f; // cone
 				float exponent = 0.0f; // focus
@@ -124,6 +125,8 @@ namespace components
 			std::string attach_prop_name;
 			Vector attach_prop_mins; // min bounds
 			Vector attach_prop_maxs; // max bounds
+			int attach_bone_index = -1;
+			std::string attach_bone_name;
 
 			std::string comment;
 		};

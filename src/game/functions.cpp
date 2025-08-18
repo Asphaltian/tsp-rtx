@@ -48,6 +48,22 @@ namespace game
 
 	// ----------
 
+	ConVar* find_cvar(const char* name)
+	{
+		if (const auto icvar = game::get_icvar(); icvar) {
+			return icvar->vftable->FindVar(icvar, name);
+		}
+		return nullptr;
+	}
+
+	const ConVar* find_cvar_const(const char* name)
+	{
+		if (const auto icvar = game::get_icvar(); icvar) {
+			return icvar->vftable->FindVar(icvar, name);
+		}
+		return nullptr;
+	}
+
 	// adds a simple console command
 	void con_add_command(ConCommand* cmd, const char* name, void(__cdecl* callback)(), const char* desc)
 	{
@@ -210,5 +226,26 @@ namespace game
 		ImGui::GetIO().MouseDrawCursor = false;
 
 		//input->get_raw_mouse_accumulators(&width, &height);
+	}
+
+	C_BaseAnimating* get_base_animating_for_client_renderable(IClientRenderable* pRenderable)
+	{
+		if (pRenderable)
+		{
+			if (const auto unkown = pRenderable->vftable_iclientrenderable->GetIClientUnknown(pRenderable);
+				unkown)
+			{
+				if (const auto base_handle = unkown->vftable_ihandleent->GetRefEHandle(unkown);
+					base_handle)
+				{
+					if (const auto base_entity = interfaces::get()->m_entity_list->get_client_entity_from_handle(*base_handle);
+						base_entity) {
+						return base_entity->vtbl->GetBaseAnimating(base_entity);
+					}
+				}
+			}
+		}
+
+		return nullptr;
 	}
 }

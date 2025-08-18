@@ -33,5 +33,8 @@ namespace components
 
 		GET_INTERFACE(m_surface, sdk::surface, "vguimatsurface.dll", VGUI_MAT_SURFACE_INTERFACE_VERSION);
 		GET_INTERFACE(m_input_system, sdk::c_input_stacksystem, "inputsystem.dll", INPUT_SYSTEM_INTERFACE_VERSION);
+
+		GET_INTERFACE(m_entity_list, sdk::entity_list, "client.dll", CLIENT_ENTITY_INTERFACE_VERSION);
+		// CLIENT_ENTITY_INTERFACE_VERSION
 	}
 }

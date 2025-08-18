@@ -96,6 +96,13 @@ namespace common::toml
 					+ format_float(def.attach_prop_maxs.x) + ", " + format_float(def.attach_prop_maxs.y) + ", " + format_float(def.attach_prop_maxs.z) + "]";
 			}
 
+			if (!def.attach_bone_name.empty()) {
+				toml_str += ", bone_name = \"" + def.attach_bone_name + "\"";
+			}
+			else if (def.attach_bone_index >= 0) {
+				toml_str += ", bone_index = " + std::to_string(def.attach_bone_index);
+			}
+
 			toml_str += " },"; // end table
 		}
 
@@ -116,6 +123,7 @@ namespace common::toml
 			if (!utils::float_equal(p.degrees, 180.0f))
 			{
 				toml_str += ", direction = [" + format_float(p.direction.x) + ", " + format_float(p.direction.y) + ", " + format_float(p.direction.z) + "]";
+				toml_str += ", angle_offset_attached = [" + format_float(p.angle_offset_attached.x) + ", " + format_float(p.angle_offset_attached.y) + ", " + format_float(p.angle_offset_attached.z) + "]";
 				toml_str += ", degrees = " + format_float(p.degrees);
 				toml_str += ", softness = " + format_float(p.softness);
 				toml_str += ", exponent = " + format_float(p.exponent);
