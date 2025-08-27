@@ -338,6 +338,13 @@ namespace components
 				"Spawns two hardcoded remixApi lights on wheatly on a2_bts3 when he turns on his flashlight. Deprecated, map_settings system now handles that.",
 				false
 			};
+
+			variable debug_info_distance =
+			{
+				"debug_info_distance",
+				"The distance cutoff (in units) were debug info such as static prop info, unbake info, bone info etc. no longer gets drawn at.",
+				400.0f
+			};
 		};
 
 		static inline var_definitions vars = {};

@@ -856,7 +856,8 @@ namespace components
 	{
 		if (cmd::show_mesh_bone_info)
 		{
-			if (g_player_view_org.DistToSqr(info.origin) < 1000.0f * 1000.0f)
+			const auto cutoff_dist = game_settings::get()->debug_info_distance.get_as<float>();
+			if (g_player_view_org.DistToSqr(info.origin) < cutoff_dist * cutoff_dist)
 			{
 				if (const auto base_animating = game::get_base_animating_for_client_renderable(info.pRenderable);
 					base_animating)

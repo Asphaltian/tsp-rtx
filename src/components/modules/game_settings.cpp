@@ -182,6 +182,7 @@ namespace components
 				ASSIGN(emancipationgrill_emissive_proxy_old);
 				ASSIGN(use_brushfastpath);
 				ASSIGN(use_hardcoded_wheatly_flashlight_bts3);
+				ASSIGN(debug_info_distance);
 
 			#undef ASSIGN
 			}

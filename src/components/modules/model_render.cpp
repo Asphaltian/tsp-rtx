@@ -515,7 +515,8 @@ namespace components
 
 			if (cmd::model_info_vis)
 			{
-				if (g_player_view_org.DistToSqr(pInfo.origin) < 1000.0f * 1000.0f)
+				const auto cutoff_dist = game_settings::get()->debug_info_distance.get_as<float>();
+				if (g_player_view_org.DistToSqr(pInfo.origin) < cutoff_dist * cutoff_dist)
 				{
 					game::debug_add_text_overlay(&pInfo.origin.x, pInfo.pModel->szPathName, 0);
 					game::debug_add_text_overlay(&pInfo.origin.x, utils::va("Radius: %.7f", pInfo.pModel->radius), 1);
@@ -527,7 +528,8 @@ namespace components
 		{
 			if (cmd::model_info_vis)
 			{
-				if (game::get_current_view_origin()->DistToSqr(pInfo.origin) < 1000.0f * 1000.0f)
+				const auto cutoff_dist = game_settings::get()->debug_info_distance.get_as<float>();
+				if (game::get_current_view_origin()->DistToSqr(pInfo.origin) < cutoff_dist * cutoff_dist)
 				{
 					game::debug_add_text_overlay(&pInfo.origin.x, "#IGNORED#", 0, 1.0f, 0.6f, 0.6f, 0.6f);
 					game::debug_add_text_overlay(&pInfo.origin.x, pInfo.pModel->szPathName, 1, 1.0f, 0.6f, 0.6f, 0.6f);
