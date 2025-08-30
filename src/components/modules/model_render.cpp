@@ -1660,8 +1660,9 @@ namespace components
 		{
 			//ctx.modifiers.do_not_render = true;
 
+			const auto is_viewmodel = ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f;
 			// viewmodel
-			if (ctx.info.buffer_state.m_Transform[2].m[3][2] == -1.00003529f)
+			if (is_viewmodel)
 			{
 				ctx.save_view_transform(dev);
 				ctx.save_projection_transform(dev);
@@ -1706,6 +1707,41 @@ namespace components
 				}
 			}
 
+			bool using_custom_transform = false;
+
+			if (!is_viewmodel && 
+				(g_is_rendering_our_3rd_person_body_mesh || g_is_rendering_our_3rd_person_weapon_mesh == 1337))
+			{
+				// backwards offset similar to whats found in remix but without the body mesh getting smeary
+				const auto backward_offset = game_settings::get()->player_backwards_offset.get_as<float>();
+				if (!utils::float_equal(backward_offset, 0.0f))
+				{
+					const Vector forward = *game::get_current_view_forward();
+					Vector backward_offset_vector = forward;
+					backward_offset_vector.z = 0.0f;
+
+					backward_offset_vector.Normalize();
+					backward_offset_vector *= -backward_offset;
+
+					const D3DXMATRIX backward_offset_matrix
+					{
+						1.f, 0.f, 0.f, 0.f,
+						0.f, 1.f, 0.f, 0.f,
+						0.f, 0.f, 1.f, 0.f,
+						backward_offset_vector.x, backward_offset_vector.y, backward_offset_vector.z, 1.f
+					};
+
+					D3DXMATRIX final_world_matrix; 
+					D3DXMatrixMultiply(&final_world_matrix, &backward_offset_matrix, &ctx.info.buffer_state.m_Transform[0]);
+
+					dev->SetTransform(D3DTS_WORLD, &final_world_matrix);
+					using_custom_transform = true;
+				}
+
+				set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_THIRD_PERSON_PLAYER_BODY | REMIXAPI_INSTANCE_CATEGORY_BIT_THIRD_PERSON_PLAYER_MODEL);
+			}
+
+
 #if 0		// models that can cause problems with vertex transform unbaking (debug)
 			if (ctx.info.material_name.contains("incinerator_door")) {
 				int break_me = 1; 
@@ -1723,7 +1759,10 @@ namespace components
 
 			// holds identity or transposed poseToMesh on unbaked meshes (MapSettings [UNBAKE]) - see R_StudioSoftwareProcessMesh_hk
 			auto wrld = &model_render::get()->m_unbake_transforms_p2w_transform;
-			dev->SetTransform(D3DTS_WORLD, wrld);
+
+			if (!using_custom_transform) {
+				dev->SetTransform(D3DTS_WORLD, wrld);
+			}
 			//dev->SetTransform(D3DTS_WORLD, &ctx.info.buffer_state.m_Transform[0]);
 
 			dev->SetFVF(D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX6); 

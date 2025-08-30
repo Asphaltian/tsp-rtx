@@ -6,6 +6,8 @@ namespace components
 	extern int g_current_area;
 	extern int g_current_area_all_views;
 	extern Vector g_player_view_org;
+	extern int g_is_rendering_our_3rd_person_body_mesh;
+	extern int g_is_rendering_our_3rd_person_weapon_mesh;
 	extern map_settings::area_overrides_s* g_player_current_area_override;
 
 	namespace cmd

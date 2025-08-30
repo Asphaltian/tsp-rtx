@@ -183,6 +183,7 @@ namespace components
 				ASSIGN(use_brushfastpath);
 				ASSIGN(use_hardcoded_wheatly_flashlight_bts3);
 				ASSIGN(debug_info_distance);
+				ASSIGN(player_backwards_offset);
 
 			#undef ASSIGN
 			}

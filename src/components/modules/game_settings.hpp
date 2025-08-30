@@ -345,6 +345,13 @@ namespace components
 				"The distance cutoff (in units) were debug info such as static prop info, unbake info, bone info etc. no longer gets drawn at.",
 				400.0f
 			};
+
+			variable player_backwards_offset =
+			{
+				"player_backwards_offset",
+				"Can be used to offset the shadow casting first person player body backwards. Same logic as found within remix but without the body mesh getting smeary.",
+				18.0f
+			};
 		};
 
 		static inline var_definitions vars = {};
