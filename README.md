@@ -53,7 +53,7 @@ Please keep that in mind.
 If you want to support my work:
 
 <a href="https://patreon.com/xoxor4d"><img src=".github/img/patreon.png" width="12%"></a>  
-<a href="https://ko-fi.com/xoxor4d"><img src=".github/img/kofi.gif" width="10%"></a>
+<a href="https://ko-fi.com/xoxor4d"><img src=".github/img/kofi.png" width="10%"></a>
 
 </div>
 
