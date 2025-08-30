@@ -5,45 +5,24 @@
 This client modification is specifically made for nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
 How does a shader based game work with remix? By manually reimplementing fixed function rendering :) 
 
-<br>
+
+<div align="center" markdown="1">
+
+<img src=".github/img/logo.png" alt="Description" width="60%">
+</div>
+
+
 
 __WIP__ & __Please Note:__  
 RTX Remix was never intented to support Portal 2.  
-If you encounter crashes, broken things or similar, it's either due to incompatibility, the limits of fixed function rendering (not being able to get the same result that shaders can achieve)  
-or due to bugs in the compatibility mod itself.  
+If you encounter crashes, broken things or similar, it's either due to incompatibility,  
+the limits of fixed function rendering or due to bugs in the compatibility mod itself.  
 
-<br>
 
 ### This is not trying to be a remaster.
-It simply makes the game compatible with RTX Remix.
-
+It simply makes the game compatible with RTX Remix.  
 Please keep that in mind.
 
-</div>
-
-<div align="center" markdown="1">
-
-<img src=".github/img/logo.png" alt="Description" width="80%">
-</div>
-
-<div align="center" markdown="1">
-
-### __[ Remix Compatibility Features ]__   
-🔹Most things are rendered using the fixed-function pipeline🔹  
-🔹Remix friendly culling and the ability to manually override culling🔹  
-🔹Ability to spawn and animate lights on events using a keyframe system🔹  
-🔹Per map loading of remix config files to set remix variables🔹  
-🔹Ability to animate remix variables on events🔹  
-🔹Spawning of unique anchor meshes🔹  
-🔹Per map fog settings🔹  
-
-<br>
-<br>
-
-If you want to support my work,  
-consider buying me some coffee:  
-
-[![ko-fi](https://xoxor4d.github.io/assets/img/social/kofi.png)](https://ko-fi.com/xoxor4d)
 </div>
 
 <br>
@@ -56,6 +35,27 @@ consider buying me some coffee:
 </div>
 
 <br>
+
+<div align="center" markdown="1">
+
+### __[ Remix Compatibility Features ]__   
+🔹Most things are rendered using the fixed-function pipeline🔹  
+🔹Remix friendly culling and the ability to manually override culling🔹  
+🔹Ability to spawn and animate lights on events using a keyframe system🔹  
+🔹Per map loading of remix config files to set remix variables🔹  
+🔹Ability to animate remix variables on events🔹  
+🔹Spawning of unique anchor meshes🔹  
+🔹... and much, much more ...🔹  
+
+<br>
+<br>
+
+If you want to support my work:
+
+<a href="https://patreon.com/xoxor4d"><img src=".github/img/patreon.png" width="12%" ></a>  
+<a href="https://ko-fi.com/xoxor4d"><img src=".github/img/kofi.gif" width="10%" ></a>
+
+</div>
 
 
 ## Installation / Usage
@@ -76,7 +76,7 @@ for Portal 2 (`bin/.trex/NvRemixBridge.exe` & `bin/d3d9.dll`)
 
 <br>
 
-#### ⚠️ Troubleshooting (click to expand):
+## ⚠️ Troubleshooting (click to expand):
 
 <details><summary>Do I need to start the game from the batch file every time?</summary>
 <br>
@@ -94,22 +94,41 @@ for Portal 2 (`bin/.trex/NvRemixBridge.exe` & `bin/d3d9.dll`)
 <br>
 
 - Run `toggle-p2-rtx.bat` and follow the instructions to disable or enable the mod
+- There are a few game cvars you might need to reset after you've disabled the compatibility mod.  
+```
+r_portal_stencil_depth 2
+r_dopixelvisibility 1
+mat_fullbright 0
+mat_softwareskin 0
+mat_fastnobump 0
+mat_normalmaps 1
+cl_tlucfastpath 1
+cl_modelfastpath 1
+cl_brushfastpath 1  
+```
 
 <br></details>
 
 
-<details><summary>Crashing or similar issues</summary>
+<details><summary>Crashing or startup issues</summary>
 <br>
 
 - Make sure that you have no clipping software such as "medal" running in the background
-- Run the launcher with admin rights (only required if your game is installed within `Program Files`)
-- Make sure that the title of the portal 2 window changes to `Portal 2 - RTX ...`
+
+- If your game is installed within `Program Files`:
+  - right click `portal2.exe` and click settings - compatibility tab and enable run as admin
+  - or install the game somewhere outside `Program Files`
+
+- Other startup issues? 
+  - Add `-debug` as a launch arg to `run-p2-rtx.bat` (`START portal2.exe -debug -insecure ...`)
+  - An external console window should show up when launching the game, copy and paste it's contents when you create an issue on GitHub
+
 - Download and install [DirectX End-User Runtimes (June 2010)](https://www.microsoft.com/en-ie/download/details.aspx?id=8109)
 
 <br></details>
 
 
-<details><summary>Portals not showing up or looking incorrect</summary>
+<details><summary>Portals not showing up - Darkness</summary>
 <br>
 
 - Make sure that you installed the [base-remix-mod](https://github.com/xoxor4d/p2-rtx-base-mod) as stated in the release notes
@@ -157,4 +176,5 @@ for Portal 2 (`bin/.trex/NvRemixBridge.exe` & `bin/d3d9.dll`)
 ![img](.github/img/02.png)
 ![img](.github/img/03.png)
 ![img](.github/img/05.png)
+![img](.github/img/06.png)
 </div>

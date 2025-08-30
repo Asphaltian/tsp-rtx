@@ -669,11 +669,11 @@
     #    ]
 
     sp_a1_intro5 = [
-        # attach to bone test
-        { attach = { name = "arm64x64", bounds = [-143.20, 320.45, 0.00, -53.60, 376.15, 500.00], bone_index = 15 }, points = [
-            { position = [5.75, 0.00, -12.00], radiance = [0.00, 0.00, 1.00], scalar = 100.00, radius = 5.00, smoothness = 0.50, direction = [0.00, 0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00 },
-            { position = [5.75, 0.00, -12.00], radiance = [1.00, 1.00, 0.00], scalar = 1000.00, radius = 7.47, smoothness = 0.50, direction = [-0.00, -0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00, timepoint = 0.74 },
-        ], loop = true, loop_smoothing = true },
+        # # attach to bone test
+        # { attach = { name = "arm64x64", bounds = [-143.20, 320.45, 0.00, -53.60, 376.15, 500.00], bone_index = 15 }, points = [
+        #     { position = [5.75, 0.00, -12.00], radiance = [0.00, 0.00, 1.00], scalar = 100.00, radius = 5.00, smoothness = 0.50, direction = [0.00, 0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00 },
+        #     { position = [5.75, 0.00, -12.00], radiance = [1.00, 1.00, 0.00], scalar = 1000.00, radius = 7.47, smoothness = 0.50, direction = [-0.00, -0.00, 1.00], angle_offset_attached = [0.00, 0.00, 0.00], degrees = 45.00, softness = 0.00, exponent = 0.00, volumetric_scale = 1.00, timepoint = 0.74 },
+        # ], loop = true, loop_smoothing = true },
     ]
 
 
