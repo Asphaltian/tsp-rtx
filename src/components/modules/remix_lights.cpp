@@ -17,7 +17,7 @@ namespace components
 	 * @param loop_smoothing	Add additional segment between last and first point
 	 * @return
 	 */
-	bool remix_lights::light::interpolator::init(light* l, const std::vector<map_settings::remix_light_settings_s::point_s>& points, const bool looping, const bool loop_smoothing)
+	bool remix_lights::light::interpolator::init(const std::vector<map_settings::remix_light_settings_s::point_s>& points, const bool looping, const bool loop_smoothing)
 	{
 		if (points.size() == 1) {
 			return false;
@@ -507,7 +507,7 @@ namespace components
 				auto* light = &m_active_lights.back();
 
 				if (light->m_def.points.size() > 1) {
-					light->m_mover.init(light, light->m_def.points, light->m_def.loop, light->m_def.loop_smoothing);
+					light->m_mover.init(light->m_def.points, light->m_def.loop, light->m_def.loop_smoothing);
 				}
 
 				// spawn it
@@ -529,7 +529,7 @@ namespace components
 		auto* light = &m_active_lights.back();
 
 		if (light->m_def.points.size() > 1) {
-			light->m_mover.init(light, light->m_def.points, true /* always loop*/, light->m_def.loop_smoothing);
+			light->m_mover.init(light->m_def.points, true /* always loop*/, light->m_def.loop_smoothing);
 		}
 
 		// spawn it
@@ -553,7 +553,7 @@ namespace components
 			light && light->m_def.trigger_choreo_name.empty() && !light->m_def.trigger_sound_hash)
 		{
 			if (light->m_def.points.size() > 1) {
-				light->m_mover.init(light, light->m_def.points, light->m_def.loop, light->m_def.loop_smoothing);
+				light->m_mover.init(light->m_def.points, light->m_def.loop, light->m_def.loop_smoothing);
 			}
 
 			// spawn it
@@ -663,7 +663,7 @@ namespace components
 				else
 				{
 					if (l.m_def.points.size() > 1) {
-						l.m_mover.init(&l, l.m_def.points, l.m_def.loop, l.m_def.loop_smoothing);
+						l.m_mover.init(l.m_def.points, l.m_def.loop, l.m_def.loop_smoothing);
 					}
 
 					// spawn it

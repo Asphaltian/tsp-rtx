@@ -39,7 +39,7 @@ namespace components
 			public:
 				interpolator() = default;
 
-				bool init(light* l, const std::vector<map_settings::remix_light_settings_s::point_s>& points,
+				bool init(const std::vector<map_settings::remix_light_settings_s::point_s>& points,
 					bool looping = false, bool loop_smoothing = false);
 
 				bool is_initialized() const { return m_initialized; }

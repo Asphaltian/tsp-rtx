@@ -1777,7 +1777,7 @@ namespace components
 
 				ImGui::SameLine(ImGui::GetContentRegionAvail().x * 0.66f, 0);
 				if (ImGui::Checkbox("Loop Smoothing", &edit_active_light->m_def.loop_smoothing)) {
-					edit_active_light->m_mover.init(edit_active_light, edit_active_light->m_mover.get_points_vec(), true, edit_active_light->m_def.loop_smoothing);
+					edit_active_light->m_mover.init(edit_active_light->m_mover.get_points_vec(), true, edit_active_light->m_def.loop_smoothing);
 				}
 				TT("Enabled: Automatically connect and smooth the start and end point.\n"
 					"[!] requires 'loop' to be true\n"
@@ -2144,7 +2144,7 @@ namespace components
 						pts[i].timepoint = 0.0f;
 					}
 
-					edit_active_light->m_mover.init(edit_active_light, pts, true, edit_active_light->m_def.loop_smoothing);
+					edit_active_light->m_mover.init(pts, true, edit_active_light->m_def.loop_smoothing);
 				} TT("This will clear and recalculate the timepoints of all but the last point to evenly distribute time across all point 2 point segments.");
 				ImGui::EndDisabled();
 
