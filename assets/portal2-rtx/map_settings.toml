@@ -1,6 +1,7 @@
-# Fog Settings -> https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-fog
-# ~~ Parameters: 
+# ##########################################################################################################################################
+# >> Fog Settings (DEPRECATED - use remix config vars -> volumetric system) (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-fog)
 #
+# ~~ Parameters: 
 # <map name> = {
 #   distance  ]     THIS =    use linear fog; larger -> less fog       [float]      (priority)
 #   density   ]  OR THAT =    use exponential fog; larger -> more fog  [float 0-1]
@@ -16,12 +17,15 @@
     sp_a2_laser_over_goo = { density = 0.000070, color = [40, 80, 111] }
     sp_a2_catapult_intro = { density = 0.000030, color = [40, 80, 111] }
 
-# #####################################################################################
+
+
+# ##########################################################################################################################################
+# >> Water Settings
 #
-# Water Settings
 # :: Adjust various water related settings per map
-# ~~ Parameters: 
+#    The compatibility mod always spawns a secondary surface with the same size as the original water surface.
 #
+# ~~ Parameters: 
 # <map name> = {
 #   scale =                 uv scale - small values reduce repetition while larger values will increase tiling              [float] << defaults to 1.0
 #   scale_top =             uv scale to top layer - a value of 0 will use 'scale' for top and bottom                        [float] << defaults to 0.0
@@ -40,45 +44,52 @@
 
 
 
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Override culling per game area (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#tweakable-culling)
 #
-# Override culling per game area
-# :: Useful console command: 'xo_debug_toggle_node_vis'
+# :: Useful console commands:
+# :: 'xo_debug_toggle_node_vis' to visualize current node/leaf and area
+#
 # ~~ Parameters:
-#
 # <map name> = [
 #   {
-#       in_area =           the area the player has to be in                [int]
-#       areas = []          area/s with forced visibility                   [int array]
-#       leafs = []          leaf/s with forced visibility                   [int array]
+#       in_area =       the area the player has to be in                            [int]
+#       areas = []      area/s with forced visibility                               [int array]
+#       leafs = []      leaf/s with forced visibility                               [int array]
 #       
-#       cull =              [0] disable frustum culling                     [int 0-5]
-#                           [1] disable frustum culling in current area
-#                           [2] stock
-#                           [3] frustum culling (outside current area) + force all nodes/leafs in current area
-#                           [4] ^ + outside of current area within certain dist to player (param: nocull_dist)
-#                           [5] force all leafs/nodes within certain dist to player (param: nocull_dist)          << default
+#       cull =          [0] disable frustum culling                                 [int 0-5]
+#                       [1] disable frustum culling in current area
+#                       [2] stock
+#                       [3] frustum culling (outside current area) + force all nodes/leafs in current area
+#                       [4] ^ + outside of current area within certain dist to player (param: nocull_dist)
+#                       [5] force all leafs/nodes within certain dist to player (param: nocull_dist)          << default
 #       
-#       nocull_dist =       |> Distance around the player where objects wont get culled - only used on certain cull modes   [float] << defaults to 600.0
+#       nocull_dist =   distance around the player where objects wont get culled - only used on certain cull modes   [float] << defaults to 600.0
 #       
-#       -----------       :: This can be used to disable frustum culling for specified areas when the player is in specified leafs 
-#                         :: Useful at area crossings when used in conjunction with nocull - area-specific markers that block visibility
+#       ----- :: This can be used to disable frustum culling for specified areas when the player is in specified leafs 
+#             :: Useful at area crossings when used in conjunction with nocull - area-specific markers that block visibility
+#                   
+#       leaf_tweak = [        [array of structure below]
+#         {                                                                                   
+#             in_leafs = []   the leaf/s the player has to be in                      [int array]
+#                areas = []   area/s with forced visibility                           [int array]
+#                leafs = []   leaf/s with forced visibility                           [int array]
+#             nocull_dist =   uses per leaf value instead of area value if defined    [float]     << defaults to 0.0 (off)
+#         }, 
+#         { ... },
+#       ]
 #
-#       leaf_tweak = [      [array of structure below]
-#       {                   |>    in_leafs:     the leaf/s the player has to be in                      [int array]
-#                           |>       areas:     area/s with forced visibility                           [int array]
-#                           |>       leafs:     leaf/s with forced visibility                           [int array]
-#                           |> nocull_dist:     uses per leaf value instead of area value if defined    [float]     << defaults to 0.0 (off)
-#       }, { ... } ]
+#       ------ :: This can be used to forcefully cull parts of the map
 #
-#       -----------       :: This can be used to forcefully cull parts of the map
+#       hide_areas = [        [array of structure below]
+#         {                
+#               areas = []    area/s to hide                                          [int array]
+#             N_leafs = []    only hide area/s when NOT in leaf/s                     [int array]
+#         },
+#         { ... },
+#       ]
 #
-#       hide_areas = [      [array of structure below]
-#       {                   |>    areas:   area/s to hide                                               [int array]
-#                           |>  N_leafs:   only hide area/s when NOT in leaf/s                          [int array]
-#       }, { ... } ]
-#
-#       hide_leafs =        force hide leaf/s                                                           [int array]
+#       hide_leafs =        force hide leaf/s                                         [int array]
 #   },  
 #   { ... },
 # ]
@@ -115,17 +126,16 @@
 
 
 
-
-
-# #####################################################################################
-#
-# Hide Models
+# ##########################################################################################################################################
+# >> Hide Models (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#hide-models)
+# 
 # :: Can be used to hide models. When a certain model is used a lot, it can make sense to hide them and 
 #    manually re-add the models by adding them as references to map markers (toolkit) - will help with cpu bottlenecks)
 #
-# :: Useful console command: 'xo_debug_toggle_model_info'
-# ~~ Parameters:
+# :: Useful console commands:
+#    > 'xo_debug_toggle_model_info' to show required prop info (name, radius)
 #
+# ~~ Parameters:
 # <map name> = {
 #   name = []             force hide models containing the specified substring                                                                [string array]
 #   radius = []           force hide models with this radius (checking for radii is generally faster and the preferred way to filter models)  [float array]
@@ -140,10 +150,9 @@
 
 
 
-
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Unbake Model Transforms
 #
-# Unbake Model Transforms
 # :: If a "static prop" has many unique hashes (remix) then it's likely that it's vertices contain world position data. This will prevent proper mesh-replacements in remix.
 # :: Specifying a substring of the model you want to replace here will prevent position/rotation/normal information
 #    from being backed into the model vertices and then use the fixed function world transform to transform it into the game world. 
@@ -152,8 +161,8 @@
 # :: Do not specify models if you do not intend to replace them. There is no benefit.
 # 
 # :: Useful console command: 'xo_mapsettings_get_unbake_info' to log all currently visible model names to 'portal2-rtx/logs/mapsettings_unbake_info.log'
-# ~~ Parameters:
 #
+# ~~ Parameters:
 # <map name> = {    per map
 #   name = []       unbake transform data from model vertices which contain the specified substring     [string array]
 # }
@@ -173,12 +182,12 @@
 
 
 
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Spawn unique markers meshes (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#map-marker-spawning)
 #
-# Spawn unique markers meshes
 # :: Can be used as anchor mesh (same one can be spawned multiple times)
-# ~~ Parameters:
 #
+# ~~ Parameters:
 # <map name> = [                  [array of structure below]
 #   {
 #       marker    ]     THIS =    number of marker mesh - can get culled BUT that can be controlled via leaf/area forcing (initial spawning can't be forced)  [int 0-100]
@@ -355,12 +364,18 @@
 
 
 
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Remix variable configs (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#remix-config-loading--transitions)
 #
-# Remix variable configs
-# :: Useful console command: 'xo_scene_print' && 'xo_debug_toggle_node_vis' && 'xo_debug_toggle_sound_print'
+# :: Can be used to adjust remix config options per map or set certain settings on certain game events such as playing sounds or choreographies.
+#    The system supports various options and can smoothly transition between remix option values.
+#
+# :: Useful console commands:  
+#    > 'xo_debug_scene_print' to print info about all choreographies to the console
+#    > 'xo_debug_sound_print' to print info about running sounds to the console
+#    > 'xo_debug_toggle_node_vis' to visualize current node/leaf and area
+#
 # ~~ Parameters:
-#
 # <map name> = {
 #
 #   startup = []            configs that will be loaded on map-load, conf matching the map name will be auto. loaded and does not need to be specified  [array of strings]
@@ -448,12 +463,16 @@
 
 
 
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Spawn portals using the remix api
 #
-# Spawn portals using the remix api
 # :: Useful for area-connecting portals (between doors / rooms)
-# ~~ Parameters:
+#    Only two pairs per map are supported. Does not support events currently.
 #
+# :: Useful console commands:  
+#    > 'xo_debug_toggle_rayportal_info' to show rayportal info
+#
+# ~~ Parameters:
 # <map name> = [
 #   {
 #       pair =                  number of pair - only two pairs are currently supported     [int 0-1] 
@@ -500,14 +519,17 @@
 
 
 
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Spawn lights using the remix api (https://github.com/xoxor4d/p2-rtx/wiki/Map-Settings#spawning--animating-of-lights-via-the-remixapi)
 #
-# Spawn lights using the remix api
-# :: Useful console command: 
-# --> 'xo_debug_scene_print' (choreo trigger/kill) && 'xo_debug_toggle_sound_print' (sound trigger/kill)
-# --> 'xo_debug_toggle_model_info' (attach) && 'xo_debug_show_mesh_bone_info' (attach)
-# ~~ Parameters:
+# :: Useful console commands:  
+#    > 'xo_debug_scene_print' to print info about all choreographies to the console (choreo trigger/kill)
+#    > 'xo_debug_sound_print' to print info about running sounds to the console (sound trigger/kill)
+#    > 'xo_debug_toggle_model_info' to show required prop info (name, radius) for the 'attach' functionality
+#    > 'xo_debug_show_mesh_bone_info_attached' to show bone info for the prop the light is attached to
+#    > 'xo_debug_show_mesh_bone_info' to show bone info for all props within 'gamesettings::debug_info_distance'
 #
+# ~~ Parameters: 
 # <map name> = [
 #   {                   [array of structure below]
 #       trigger = {     (optional) trigger light creation via choreography (.vcd) or sound :: not defining this will create the light on map load 
@@ -930,13 +952,13 @@
 
 
 
-
-# #####################################################################################
+# ##########################################################################################################################################
+# >> Set cvars on map load
 #
-# Set cvars on map load
 # :: Some maps or workflows might require setting cvars on certain maps
 #
-# <map name> = [                                        [string array]
+# ~~ Parameters: 
+# <map name> = [              [string array]
 #   "cvar1 val",
 #   "cvar2 val",
 # ]
