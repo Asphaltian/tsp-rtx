@@ -3484,6 +3484,10 @@ namespace components
 		TT(gs->default_nocull_distance.get_tooltip_string().c_str());
 
 		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		ImGui::DragFloat("Debug Info Distance", gs->debug_info_distance.get_as<float*>(), 0.1f);
+		TT(gs->debug_info_distance.get_tooltip_string().c_str());
+
+		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
 		ImGui::DragFloat("Player Backwards Offset", gs->player_backwards_offset.get_as<float*>(), 0.01f);
 		TT(gs->player_backwards_offset.get_tooltip_string().c_str());
 	}
