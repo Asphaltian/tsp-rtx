@@ -510,14 +510,21 @@ namespace components
 		extern LPDIRECT3DTEXTURE9 white;
 	}
 
-	class model_render : public component
+	class model_render final : public common::loader::component_module
 	{
 	public:
 		model_render();
-		~model_render() = default;
 
 		static inline model_render* p_this = nullptr;
 		static model_render* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		static void draw_nocull_markers();
 		static void init_texture_addons(bool release = false);
@@ -580,5 +587,8 @@ namespace components
 		static inline const C_Prop_Portal* portal4_ptr = nullptr;*/
 
 		static inline std::vector<CPortalRenderable_FlatBasic*> linked_area_portals;
+
+	private:
+		bool m_initialized = false;
 	};
 }

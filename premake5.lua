@@ -145,6 +145,10 @@ newaction {
 			versionHeader:write(" * Do not touch!\n")
 			versionHeader:write(" */\n")
 			versionHeader:write("\n")
+
+			versionHeader:write("#ifdef GIT_DESCRIBE\n#undef GIT_DESCRIBE\n#endif\n")
+			versionHeader:write("#ifdef GIT_TAG\n#undef GIT_TAG\n#endif\n")
+
 			versionHeader:write("#define GIT_DESCRIBE " .. gitDescribeOutputQuoted .. "\n")
 			versionHeader:write("#define GIT_DIRTY " .. revDirty .. "\n")
 			versionHeader:write("#define GIT_HASH " .. cstrquote(gitCommitHash) .. "\n")
@@ -311,7 +315,6 @@ workspace "p2-rtx"
 		}
 	filter {}
 
-
 	-- Project
 
 	project "p2-rtx"
@@ -349,7 +352,7 @@ workspace "p2-rtx"
 		filter "configurations:Debug or configurations:Release"
 			if(os.getenv("PORTAL2_ROOT")) then
 				print ("Setup paths using environment variable 'PORTAL2_ROOT' :: '" .. os.getenv("PORTAL2_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_ROOT"))
+				targetdir(os.getenv("PORTAL2_ROOT") .. "/" .. "bin/plugins")
 				debugdir (os.getenv("PORTAL2_ROOT"))
 				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "run-p2-rtx.bat")
 			end
@@ -358,7 +361,7 @@ workspace "p2-rtx"
 		filter "configurations:Dev"
 			if(os.getenv("PORTAL2_SEC_ROOT")) then
 				print ("Setup paths using environment variable 'PORTAL2_SEC_ROOT' :: '" .. os.getenv("PORTAL2_SEC_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_SEC_ROOT"))
+				targetdir(os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "bin/plugins")
 				debugdir (os.getenv("PORTAL2_SEC_ROOT"))
 				debugcommand (os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "run-p2-rtx.bat")
 			end
@@ -376,6 +379,11 @@ workspace "p2-rtx"
 			"pushd %{_MAIN_SCRIPT_DIR}",
 			"tools\\premake5 generate-buildinfo",
 			"popd",
+		}
+
+		-- Post-build
+		postbuildcommands {
+			"MOVE /Y \"$(TargetDir)p2-rtx.dll\" \"$(TargetDir)p2-rtx.asi\"",
 		}
 
 		dependencies.imports()

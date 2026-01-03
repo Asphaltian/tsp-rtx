@@ -7,7 +7,7 @@ namespace components
 		extern bool scene_print;
 	}
 
-	class choreo_events : public component
+	class choreo_events final : public common::loader::component_module
 	{
 	public:
 		choreo_events();
@@ -15,8 +15,20 @@ namespace components
 		static inline choreo_events* p_this = nullptr;
 		static choreo_events* get() { return p_this; }
 
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
+
 		static void on_client_frame();
 
+	private:
+			bool m_initialized = false;
+
+	public:
 
 		// ---
 		// ---

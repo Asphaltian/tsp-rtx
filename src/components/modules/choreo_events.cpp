@@ -1,4 +1,8 @@
 #include "std_include.hpp"
+#include "choreo_events.hpp"
+#include "map_settings.hpp"
+#include "remix_lights.hpp"
+#include "remix_rayportal.hpp"
 
 namespace components
 {
@@ -237,5 +241,10 @@ namespace components
 
 		// ----
 		game::con_add_command(&xo_debug_scene_print_cmd, "xo_debug_scene_print", xo_debug_scene_print_fn, "Print choreography (vcd) infos (similar to scene_info cvar but only showing relevant data)");
+	
+	
+		// -----
+		m_initialized = true;
+		common::log("ChoreoEvents", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

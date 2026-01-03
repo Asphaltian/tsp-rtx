@@ -1,6 +1,9 @@
 #include "std_include.hpp"
 #include "remix_vars.hpp"
 
+#include "map_settings.hpp"
+#include "components/common/remix_api.hpp"
+
 namespace components
 {
 	// checks if str is made up of numbers only
@@ -140,7 +143,7 @@ namespace components
 	 */
 	bool remix_vars::set_option(option_handle o, const option_value& v, const bool is_level_setting)
 	{
-		if (o && remix_api::is_initialized())
+		if (o && common::remix_api::is_initialized())
 		{
 			o->second.current = v;
 
@@ -177,7 +180,7 @@ namespace components
 
 			if (!var_str.empty())
 			{
-				remix_api::get()->m_bridge.SetConfigVariable(o->first.c_str(), var_str.c_str());
+				common::remix_api::get().m_bridge.SetConfigVariable(o->first.c_str(), var_str.c_str());
 				return true;
 			}
 
@@ -197,7 +200,7 @@ namespace components
 	 */
 	bool remix_vars::reset_option(option_handle o, const bool reset_to_level_state)
 	{
-		if (o && remix_api::is_initialized())
+		if (o && common::remix_api::is_initialized())
 		{
 			o->second.current = reset_to_level_state ? o->second.reset_level : o->second.reset;
 
@@ -222,7 +225,7 @@ namespace components
 	 */
 	void remix_vars::reset_all_modified(const bool reset_to_level_state)
 	{
-		if (remix_api::is_initialized())
+		if (common::remix_api::is_initialized())
 		{
 			auto count = 0u;
 			for (auto& o : options)
@@ -398,10 +401,8 @@ namespace components
 
 			file.close();
 		}
-		else
-		{
-			game::console();
-			printf("[RemixVars] Failed to find config: \"%s\" in \"" COMPMOD_ASSET_DIR "map_configs\"\n", conf_name.c_str());
+		else {
+			common::log("RemixVars", std::format("Failed to find config: '{}' in '{}'", conf_name, COMPMOD_ASSET_DIR "map_configs"), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 		}
 	}
 
@@ -828,7 +829,7 @@ namespace components
 		remix_vars::parse_rtx_options();
 
 		// reset all settings to rtx.conf level (incl. runtime settings)
-		if (remix_api::is_initialized())
+		if (common::remix_api::is_initialized())
 		{
 			for (auto& o : remix_vars::options)
 			{
@@ -860,5 +861,9 @@ namespace components
 		game::con_add_command(&xo_vars_parse_options_cmd, "xo_vars_parse_options", xo_vars_parse_options_fn, "Re-parse the rtx.conf and resets everything (incl. runtime settings - ignoring tex hashes)");
 		game::con_add_command(&xo_vars_reset_all_options_cmd, "xo_vars_reset_all_options", xo_vars_reset_all_options_fn, "Reset all options (modified by .conf files) to the rtx.conf level");
 		game::con_add_command(&xo_vars_clear_transitions_cmd, "xo_vars_clear_transitions", xo_vars_clear_transitions_fn, "Clear all ongoing transitions");
+	
+		// -----
+		m_initialized = true;
+		common::log("RemixVars", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

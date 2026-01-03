@@ -1,11 +1,21 @@
 #include "std_include.hpp"
+#include "imgui.hpp"
+
+#include "game_settings.hpp"
+#include "choreo_events.hpp"
 #include "components/common/imgui/imgui_helper.hpp"
 #include "components/common/toml.hpp"
 #include "components/common/imgui/font_awesome_solid_900.hpp"
 #include "components/common/imgui/font_defines.hpp"
 #include "components/common/imgui/font_opensans.hpp"
+#include "components/common/remix_api.hpp"
 
 #include "imgui_internal.h"
+#include "interfaces.hpp"
+#include "main_module.hpp"
+#include "model_render.hpp"
+#include "remix_lights.hpp"
+#include "sound_events.hpp"
 
 // Allow us to directly call the ImGui WndProc function.
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
@@ -482,7 +492,8 @@ namespace components
 
 				ImGui::Spacing(0, 6);
 
-				const auto bridge_api = &remix_api::get()->m_bridge;
+				// TODO
+				/*const auto bridge_api = &common::remix_api::get().m_bridge;
 
 				if (ImGui::Button("Add Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x * 0.49f, 0))) {
 					bridge_api->AddTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
@@ -490,7 +501,7 @@ namespace components
 				ImGui::SameLine();
 				if (ImGui::Button("Remove Texture Hash (ignore Textures)(PortalGun)", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
 					bridge_api->RemoveTextureHash("rtx.ignoreTextures", "0x990C1CCB42F806E0");
-				}
+				}*/
 
 				ImGui::Spacing(0, 6);
 
@@ -2088,9 +2099,9 @@ namespace components
 
 		if (im->m_debugvis_attach_bounds && edit_active_light->has_attach_parms())
 		{
-			const auto remixapi = remix_api::get();
-			remixapi->debug_draw_box(edit_active_light->m_def.attach_prop_mins, edit_active_light->m_def.attach_prop_maxs, 1.0f, 
-				edit_active_light->is_attached() ? remix_api::DEBUG_REMIX_LINE_COLOR::WHITE : remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+			auto& remixapi = common::remix_api::get();
+			remixapi.debug_draw_box(edit_active_light->m_def.attach_prop_mins, edit_active_light->m_def.attach_prop_maxs, 1.0f, 
+				edit_active_light->is_attached() ? common::remix_api::DEBUG_REMIX_LINE_COLOR::WHITE : common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 		}
 	}
 
@@ -2902,11 +2913,11 @@ namespace components
 				{
 					const Vector circle_pos = (im->m_debugvis_live ? &edit_active_light->m_ext.position.x : edit_active_light->calculate_position_for_point(active_point_selection));
 					const float radius = im->m_debugvis_live ? edit_active_light->m_ext.radius : active_point_selection->radius;
-
-					const auto remixapi = remix_api::get();
-					remixapi->add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, normalized_radiance);
-					remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(0, 90, 0), Vector(1.0f, 1.0f, 1.0f));
-					remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(90, 0, 90), Vector(1.0f, 1.0f, 1.0f));
+					
+					auto& remixapi = common::remix_api::get();
+					remixapi.add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, normalized_radiance);
+					remixapi.add_debug_circle_based_on_previous(circle_pos, Vector(0, 90, 0), Vector(1.0f, 1.0f, 1.0f));
+					remixapi.add_debug_circle_based_on_previous(circle_pos, Vector(90, 0, 90), Vector(1.0f, 1.0f, 1.0f));
 				}
 
 				// cant edit time of first point
@@ -2993,7 +3004,7 @@ namespace components
 
 					if (im->m_debugvis_shaping)
 					{
-						const auto remixapi = remix_api::get();
+						auto& remixapi = common::remix_api::get();
 						const float cone_deg = im->m_debugvis_live ? edit_active_light->m_ext.shaping_value.coneAngleDegrees : active_point_selection->degrees;
 
 						if (cone_deg <= 90.0f)
@@ -3012,7 +3023,7 @@ namespace components
 									(im->m_debugvis_live ? Vector(&edit_active_light->m_ext.position.x) + Vector(&edit_active_light->m_ext.shaping_value.direction.x) * (step_fraction * scaled_height)
 														 : edit_active_light->calculate_position_for_point(active_point_selection) + edit_active_light->calculate_direction_for_point(active_point_selection) * (step_fraction * scaled_height)) /*+ edit_active_light->attached_position*/;
 
-								remixapi->add_debug_circle( 
+								remixapi.add_debug_circle( 
 									circle_pos,
 									im->m_debugvis_live ? &edit_active_light->m_ext.shaping_value.direction.x 
 														: edit_active_light->calculate_direction_for_point(active_point_selection),
@@ -3021,13 +3032,13 @@ namespace components
 						}
 
 						// draw dir line
-						remixapi->add_debug_line(
+						remixapi.add_debug_line(
 							im->m_debugvis_live	? &edit_active_light->m_ext.position.x
 												: edit_active_light->calculate_position_for_point(active_point_selection),
 
 							im->m_debugvis_live	? Vector(&edit_active_light->m_ext.position.x) + Vector(&edit_active_light->m_ext.shaping_value.direction.x).Scale(im->m_debugvis_cone_height)
 												: edit_active_light->calculate_position_for_point(active_point_selection) + edit_active_light->calculate_direction_for_point(active_point_selection).Scale(im->m_debugvis_cone_height), //active_point_selection->direction.Scale(im->m_debugvis_cone_height),
-							1.0f, remix_api::WHITE);
+							1.0f, common::remix_api::WHITE);
 					}
 				} // end use shaping
 
@@ -3153,9 +3164,9 @@ namespace components
 		if (ImGui::Button("Refresh Configs   " ICON_FA_REDO, ImVec2(ImGui::GetContentRegionAvail().x, 0)) || !loaded_configs)
 		{
 			configs.clear();
-			if (!game::root_path.empty())
+			if (!globals::root_path.empty())
 			{
-				std::string conf_path = game::root_path + COMPMOD_ASSET_DIR "map_configs\\";
+				std::string conf_path = globals::root_path + COMPMOD_ASSET_DIR "map_configs\\";
 				if (std::filesystem::exists(conf_path))
 				{
 					for (const auto& d : std::filesystem::directory_iterator(conf_path))
@@ -3841,8 +3852,9 @@ namespace components
 		const auto dev = game::get_d3d_device();
 		MH_CreateHook(reinterpret_cast<void*>(get_virtual(dev, 17)), present_hk, reinterpret_cast<void**>(&present_original));
 		MH_CreateHook(reinterpret_cast<void*>(get_virtual(dev, 16)), reset_hk, reinterpret_cast<void**>(&reset_original));
-	}
 
-	imgui::~imgui()
-	{ }
+		// -----
+		m_initialized = true;
+		common::log("ImGui", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
+	}
 }

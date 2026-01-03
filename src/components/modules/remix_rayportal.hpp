@@ -2,13 +2,21 @@
 
 namespace components
 {
-	class remix_rayportal : public component
+	class remix_rayportal final : public common::loader::component_module
 	{
 	public:
 		remix_rayportal();
 
 		static inline remix_rayportal* p_this = nullptr;
 		static remix_rayportal* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		enum PORTAL_PAIR : std::uint8_t
 		{
@@ -30,6 +38,7 @@ namespace components
 		}
 
 	private:
+		bool m_initialized = false;
 		uint32_t m_portal_material_creation_counter = 0u;
 
 

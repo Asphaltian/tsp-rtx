@@ -1,4 +1,8 @@
 #include "std_include.hpp"
+#include "sound_events.hpp"
+
+#include "remix_lights.hpp"
+#include "remix_vars.hpp"
 
 namespace components
 {
@@ -102,5 +106,9 @@ namespace components
 
 		// ----
 		game::con_add_command(&xo_debug_sound_print_cmd, "xo_debug_sound_print", xo_debug_sound_print_fn, "Toggle sound debug prints (HASH for map_settings)");
+
+		// -----
+		m_initialized = true;
+		common::log("SoundEvents", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

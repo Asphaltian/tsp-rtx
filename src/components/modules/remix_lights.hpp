@@ -10,13 +10,21 @@ namespace components
 		extern bool show_mesh_bone_info;
 	}
 
-	class remix_lights : public component
+	class remix_lights final : public common::loader::component_module
 	{
 	public:
 		remix_lights();
 
 		static inline remix_lights* p_this = nullptr;
 		static remix_lights* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		static void on_draw_model_exec(const ModelRenderInfo_t& info);
 		static void on_event_start(const std::string_view& name, const std::string_view& actor, const std::string_view& event, const std::string_view& param1);
@@ -229,6 +237,8 @@ namespace components
 		std::uint32_t attachframe_count() const { return m_attachframe_counter; }
 
 	private:
+		bool m_initialized = false;
+
 		void a2_bts3_flashlight();
 		void a2_bts3_flashlight_destroy();
 		static inline remixapi_LightHandle m_bts3_flashlight_handle = nullptr;

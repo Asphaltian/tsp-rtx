@@ -1,4 +1,15 @@
 #include "std_include.hpp"
+#include "main_module.hpp"
+
+#include "choreo_events.hpp"
+#include "game_settings.hpp"
+#include "imgui.hpp"
+#include "map_settings.hpp"
+#include "model_render.hpp"
+#include "remix_lights.hpp"
+#include "remix_rayportal.hpp"
+#include "components/common/flags.hpp"
+#include "components/common/remix_api.hpp"
 
 // + dxlevel 100 required
 
@@ -114,10 +125,8 @@ namespace components
 		// CM_LeafArea :: get current area the camera is in
 		g_current_area = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + USE_OFFSET(0x15ACE0, 0x159470))(current_leaf); // 0125
 
-		remix_api::get()->on_renderview();
-
 		// fog
-		if (static bool allow_fog = !flags::has_flag("no_fog"); allow_fog)
+		if (static bool allow_fog = !common::flags::has_flag("no_fog"); allow_fog)
 		{
 			const auto& s = map_settings::get_map_settings();
 			const bool has_dist = s.fog_dist > 0.0f;
@@ -715,7 +724,7 @@ namespace components
 			if (cmd::debug_node_vis)
 			{
 				const auto curr_leaf = &world->leafs[g_current_leaf];
-				remix_api::get()->debug_draw_box(curr_leaf->m_vecCenter, curr_leaf->m_vecHalfDiagonal, 2.0f, remix_api::DEBUG_REMIX_LINE_COLOR::GREEN); // current leaf
+				common::remix_api::get().debug_draw_box(curr_leaf->m_vecCenter, curr_leaf->m_vecHalfDiagonal, 2.0f, common::remix_api::DEBUG_REMIX_LINE_COLOR::GREEN); // current leaf
 
 				// does the area the player is currently in have any overrides?
 				if (g_player_current_area_override)
@@ -723,7 +732,7 @@ namespace components
 					// visualize forced leafs
 					for (const auto& l : g_player_current_area_override->leafs)
 					{
-						if (!remix_api::can_add_debug_lines()) {
+						if (!common::remix_api::can_add_debug_lines()) {
 							break;
 						}
 
@@ -733,7 +742,7 @@ namespace components
 							// visualize near-by leaf overrides (TEAL)
 							if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 2000.0f * 2000.0f)
 							{
-								remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::TEAL);
+								common::remix_api::get().debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, common::remix_api::DEBUG_REMIX_LINE_COLOR::TEAL);
 								main_module::get()->m_hud_debug_node_vis_has_forced_leafs = true;
 							}
 						}
@@ -744,7 +753,7 @@ namespace components
 					{
 						for (auto i = 0u; i < (std::uint32_t)world->numleafs; i++)
 						{
-							if (!remix_api::can_add_debug_lines()) {
+							if (!common::remix_api::can_add_debug_lines()) {
 								break;
 							}
 
@@ -754,7 +763,7 @@ namespace components
 							{
 								if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 350.0f * 350.0f)
 								{
-									remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+									common::remix_api::get().debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 									main_module::get()->m_hud_debug_node_vis_has_forced_arealeafs = true;
 								}
 							}
@@ -768,7 +777,7 @@ namespace components
 						{
 							for (auto i = 0u; i < (std::uint32_t)world->numleafs; i++)
 							{
-								if (!remix_api::can_add_debug_lines()) {
+								if (!common::remix_api::can_add_debug_lines()) {
 									break;
 								}
 
@@ -778,7 +787,7 @@ namespace components
 								{
 									if (game::get_current_view_origin()->DistToSqr(forced_leaf->m_vecCenter) < 350.0f * 350.0f)
 									{
-										remix_api::get()->debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+										common::remix_api::get().debug_draw_box(forced_leaf->m_vecCenter, forced_leaf->m_vecHalfDiagonal, 3.5f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 										main_module::get()->m_hud_debug_node_vis_has_forced_arealeafs = true;
 									}
 								}
@@ -2145,7 +2154,7 @@ namespace components
 	// logic after loading either map or game settings
 	void main_module::cross_handle_map_and_game_settings()
 	{
-		if (remix_api::is_initialized())
+		if (common::remix_api::is_initialized())
 		{
 			// rtx.skyAutoDetect
 			//const auto is_3d_sky_enabled = game_settings::get()->enable_3d_sky.get_as<bool>();
@@ -2159,11 +2168,6 @@ namespace components
 	main_module::main_module()
 	{
 		p_this = this;
-
-		{ // init filepath var
-			char path[MAX_PATH]; GetModuleFileNameA(nullptr, path, MAX_PATH);
-			game::root_path = path; utils::erase_substring(game::root_path, "portal2.exe");
-		}
 
 		{ // init d3d font
 			D3DXFONT_DESC desc =
@@ -2383,18 +2387,9 @@ namespace components
 
 		// fix invisible brushmodels when using cl_brushfastpath 0 (eg. crazy_box)
 		//utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1EEF0A, 0x1E944A), 6);
-	}
 
-	main_module::~main_module()
-	{
-#if 0
-		// release textures
-		components::model_render::init_texture_addons(true);
-
-		// release d3d font
-		if (d3d_font) {
-			d3d_font->Release();
-		}
-#endif
+		// -----
+		m_initialized = true;
+		common::log("MainModule", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

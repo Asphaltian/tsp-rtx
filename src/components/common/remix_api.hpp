@@ -1,17 +1,22 @@
 #pragma once
+#include "bridge_remix_api.h"
+#include "remix/remix_c.h"
 
-namespace components
+namespace common
 {
-	class remix_api : public component
+	class remix_api
 	{
 	public:
-		remix_api();
+		// enforce singleton pattern
+		remix_api(const remix_api&) = delete;
+		remix_api& operator=(const remix_api&) = delete;
 
-		static inline remix_api* p_this = nullptr;
-		static remix_api* get() { return p_this; }
+		static remix_api& get();
 
-		void on_renderview();
-		static bool is_initialized() { return get()->m_initialized; }
+		static void begin_scene_callback_internal();
+		static void end_scene_callback_internal();
+		static void present_callback_internal();
+
 
 		static constexpr std::uint32_t M_MAX_DEBUG_LINES = 512u;
 		enum DEBUG_REMIX_LINE_COLOR
@@ -30,22 +35,37 @@ namespace components
 		void add_debug_circle_based_on_previous(const Vector& center, const Vector& rot, const Vector& scale);
 		void add_debug_circle(const Vector& center, const Vector& normal, float radius, float thickness, const Vector& color, bool drawcall_alpha = true);
 
-		static bool can_add_debug_lines() { return get()->m_debug_line_amount + 1u < M_MAX_DEBUG_LINES; }
+		static bool can_add_debug_lines() { return get().m_debug_line_amount + 1u < M_MAX_DEBUG_LINES; }
 
 		void debug_draw_box(const Vector& mins, const Vector& maxs, float line_width, const DEBUG_REMIX_LINE_COLOR& color);
 		void debug_draw_box(const VectorAligned& center, const VectorAligned& half_diagonal, float line_width, const DEBUG_REMIX_LINE_COLOR& color);
 
-		//void flashlight_create_or_update(const char* player_name, const Vector& pos, const Vector& fwd, const Vector& rt, const Vector& up, bool is_enabled, bool is_player = false);
-		//static void flashlight_frame();
+		static void initialize(
+			PFN_remixapi_BridgeCallback begin_scene_callback,
+			PFN_remixapi_BridgeCallback end_scene_callback,
+			PFN_remixapi_BridgeCallback present_callback,
+			bool is_asi = false);
+
+		static bool is_initialized() { return get().m_initialized; }
+
+		PFN_remixapi_BridgeCallback begin_scene_callback_external = nullptr;
+		PFN_remixapi_BridgeCallback end_scene_callback_external = nullptr;
+		PFN_remixapi_BridgeCallback present_callback_external = nullptr;
 
 		remixapi_Interface m_bridge;
 
 		struct flashlight_def_s
 		{
-			Vector pos;
+			Vector pos = {};
 			Vector fwd = { 0.0f, 1.0f, 0.0f };
-			Vector rt;
-			Vector up;
+			Vector rt = {};
+			Vector up = {};
+			Vector offset = {};
+			float radius = 4.0f;
+			float angle = 30.0f;
+			float softness = 0.1f;
+			float expo = 0.0f;
+			float intensity = 4.0f;
 		};
 
 		struct flashlight_s
@@ -59,12 +79,13 @@ namespace components
 		};
 		std::unordered_map<std::string, flashlight_s> m_flashlights;
 
-	private:
-		static void begin_scene_callback();
-		static void end_scene_callback();
-		static void on_present_callback();
+		void flashlight_create_or_update(const char* player_name, flashlight_def_s& def, bool is_enabled, bool is_player = false);
+		void flashlight_frame();
 
-		bool m_initialized = false;
+	private:
+		remix_api() : m_initialized(false) {}
+		bool m_initialized;
+
 
 		bool m_debug_lines_initialized = false;
 		remixapi_MaterialHandle m_debug_line_materials[4];

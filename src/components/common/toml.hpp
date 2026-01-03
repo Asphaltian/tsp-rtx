@@ -1,7 +1,13 @@
 #pragma once
+#include "components/modules/map_settings.hpp"
 
 #define TOML_ERROR(TITLE, ENTRY, MSG, ...) \
-	game::console(); std::cout << toml::format_error(toml::make_error_info(#TITLE, (ENTRY), utils::va(#MSG, __VA_ARGS__))) << std::endl; \
+	common::log("Toml", std::format("{}", toml::format_error(toml::make_error_info(#TITLE, (ENTRY), utils::va(#MSG, __VA_ARGS__)))), common::LOG_TYPE::LOG_TYPE_ERROR, true);
+
+#define TOML_CATCH_ERROR_WHAT	{ common::log("Toml", std::format("{}", err.what()), common::LOG_TYPE::LOG_TYPE_ERROR, true); }
+
+#define TOML_CATCH_SYNTAX_ERROR	catch (toml::syntax_error& err) TOML_CATCH_ERROR_WHAT
+#define TOML_CATCH_TYPE_ERROR	catch (toml::type_error& err) TOML_CATCH_ERROR_WHAT
 
 namespace common::toml
 {

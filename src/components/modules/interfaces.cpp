@@ -1,4 +1,5 @@
 #include "std_include.hpp"
+#include "interfaces.hpp"
 
 namespace components
 {
@@ -15,10 +16,10 @@ namespace components
 		return static_cast<m_interface*>(fn(interface_name.c_str(), {}));
 	}
 
-#define GET_INTERFACE(DEST, T, MODULE_NAME, VERSION_STR)																									\
-		if((DEST) = get_interface<T>((MODULE_NAME), (VERSION_STR)); !(DEST)) {																			\
-			Beep(300, 100); Sleep(100); Beep(200, 100);															\
-			game::console(); std::cout << "[!][Interfaces] Failed to get interface: '" << (VERSION_STR) << "' in: '" << (MODULE_NAME) << "'" << std::endl;	\
+#define GET_INTERFACE(DEST, T, MODULE_NAME, VERSION_STR)							\
+		if((DEST) = get_interface<T>((MODULE_NAME), (VERSION_STR)); !(DEST)) {		\
+			Beep(300, 100); Sleep(100); Beep(200, 100);								\
+			common::log("Interfaces", std::format("Failed to get interface: '{}' in: '{}' ", VERSION_STR, MODULE_NAME), common::LOG_TYPE::LOG_TYPE_DEFAULT, false); \
 		}
 
 	interfaces::interfaces()
@@ -36,5 +37,9 @@ namespace components
 
 		GET_INTERFACE(m_entity_list, sdk::entity_list, "client.dll", CLIENT_ENTITY_INTERFACE_VERSION);
 		// CLIENT_ENTITY_INTERFACE_VERSION
+
+		// -----
+		m_initialized = true;
+		common::log("Interfaces", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

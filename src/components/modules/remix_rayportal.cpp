@@ -1,5 +1,8 @@
 #include "std_include.hpp"
+#include "remix_rayportal.hpp"
+
 #include "remix_vars.hpp"
+#include "components/common/remix_api.hpp"
 
 namespace components
 {
@@ -30,7 +33,7 @@ namespace components
 
 		remixapi_HardcodedVertex verts[4] = {};
 		uint32_t indices[6] = {};
-		remix_api::get()->create_quad(verts, indices, 0.5f);
+		common::remix_api::get().create_quad(verts, indices, 0.5f);
 
 		remixapi_MeshInfoSurfaceTriangles triangles =
 		{
@@ -52,12 +55,12 @@ namespace components
 			.surfaces_count = 1,
 		};
 
-		return remix_api::get()->m_bridge.CreateMesh(&i, &m_hmesh);
+		return common::remix_api::get().m_bridge.CreateMesh(&i, &m_hmesh);
 	}
 
 	remixapi_ErrorCode remix_rayportal::portal_single::destroy_mesh()
 	{
-		const auto res = remix_api::get()->m_bridge.DestroyMesh(m_hmesh);
+		const auto res = common::remix_api::get().m_bridge.DestroyMesh(m_hmesh);
 		m_hmesh = nullptr;
 		return res;
 	}
@@ -71,7 +74,7 @@ namespace components
 		std::wstring mask_path;
 		if (m_square_mask)
 		{
-			mask_path = std::wstring(game::root_path.begin(), game::root_path.end());
+			mask_path = std::wstring(globals::root_path.begin(), globals::root_path.end());
 			mask_path += L"portal2-rtx\\textures\\white.dds";
 		}
 
@@ -98,12 +101,12 @@ namespace components
 		ext.rotationSpeed = 1.0f;
 
 		info.pNext = &ext;
-		return remix_api::get()->m_bridge.CreateMaterial(&info, &m_hmaterial);
+		return common::remix_api::get().m_bridge.CreateMaterial(&info, &m_hmaterial);
 	}
 
 	remixapi_ErrorCode remix_rayportal::portal_single::destroy_material()
 	{
-		const auto res = remix_api::get()->m_bridge.DestroyMaterial(m_hmaterial);
+		const auto res = common::remix_api::get().m_bridge.DestroyMaterial(m_hmaterial);
 		m_hmaterial = nullptr;
 		return res;
 	}
@@ -174,7 +177,7 @@ namespace components
 	 */
 	bool remix_rayportal::portal_pair::draw_pair()
 	{
-		const auto api = remix_api::get();
+		auto& api = common::remix_api::get();
 
 		bool res = true;
 		for (uint8_t i = 0u; i < 2; i++)
@@ -245,10 +248,10 @@ namespace components
 					game::debug_add_text_overlay(&debug_pos.x, 0.0f, utils::va("Normal: %.2f %.2f %.2f", normal.x, normal.y, normal.z));
 
 					const auto corner_points = p.get_corner_points();
-					api->add_debug_line(corner_points[0], corner_points[1], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
-					api->add_debug_line(corner_points[1], corner_points[2], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
-					api->add_debug_line(corner_points[2], corner_points[3], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
-					api->add_debug_line(corner_points[3], corner_points[0], 1.0f, remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api.add_debug_line(corner_points[0], corner_points[1], 1.0f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api.add_debug_line(corner_points[1], corner_points[2], 1.0f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api.add_debug_line(corner_points[2], corner_points[3], 1.0f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
+					api.add_debug_line(corner_points[3], corner_points[0], 1.0f, common::remix_api::DEBUG_REMIX_LINE_COLOR::RED);
 				}
 
 				const remixapi_InstanceInfo info =
@@ -260,7 +263,7 @@ namespace components
 					.transform = p.get_remix_transform(),
 					.doubleSided = false
 				};
-				res = api->m_bridge.DrawInstance(&info) == REMIXAPI_ERROR_CODE_SUCCESS ? res : false;
+				res = api.m_bridge.DrawInstance(&info) == REMIXAPI_ERROR_CODE_SUCCESS ? res : false;
 			}
 		}
 
@@ -394,5 +397,9 @@ namespace components
 		// commands
 
 		game::con_add_command(&xo_debug_toggle_rayportal_info_cmd, "xo_debug_toggle_rayportal_info", xo_debug_toggle_rayportal_info_fn, "Toggle debug information for rayportals spawned via the remix api");
+	
+		// -----
+		m_initialized = true;
+		common::log("RemixRayportal", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

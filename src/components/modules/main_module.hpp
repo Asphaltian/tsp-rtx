@@ -1,4 +1,5 @@
 #pragma once
+#include "map_settings.hpp"
 
 namespace components
 {
@@ -15,14 +16,21 @@ namespace components
 		extern bool debug_node_vis;
 	}
 
-	class main_module : public component
+	class main_module final : public common::loader::component_module
 	{
 	public:
 		main_module();
-		~main_module();
 
 		static inline main_module* p_this = nullptr;
 		static main_module* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		static inline std::uint64_t framecount = 0u;
 		static inline LPD3DXFONT d3d_font = nullptr;
@@ -36,5 +44,8 @@ namespace components
 		int  m_hud_debug_node_vis_pos[2] = { 250, 135 };
 		bool m_hud_debug_node_vis_has_forced_leafs = false;
 		bool m_hud_debug_node_vis_has_forced_arealeafs = false;
+
+	private:
+		bool m_initialized = false;
 	};
 }

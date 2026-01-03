@@ -2,14 +2,21 @@
 
 namespace components
 {
-	class imgui : public component
+	class imgui final : public common::loader::component_module
 	{
 	public:
 		imgui();
-		~imgui();
 
 		static inline imgui* p_this = nullptr;
 		static imgui* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		static void on_present();
 		static void on_map_load();
@@ -54,6 +61,8 @@ namespace components
 		}
 
 	private:
+		bool m_initialized = false;
+
 		void tab_general();
 		void tab_map_settings();
 		void tab_game_settings();

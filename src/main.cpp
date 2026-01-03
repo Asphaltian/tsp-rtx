@@ -1,6 +1,8 @@
 #include "std_include.hpp"
 #include <wincrypt.h>
 
+#include "components/modules/game_settings.hpp"
+
 std::string hash_file_sha1(const char* file_path)
 {
 	const auto file = CreateFileA(file_path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -65,9 +67,7 @@ BOOL CALLBACK enum_windows_proc(HWND hwnd, LPARAM lParam)
 
 		if (!wnd_class_list.contains(hwnd))
 		{
-			char debug_msg[256];
-			wsprintfA(debug_msg, "[RTX-COMP] |> HWND: %p, PID: %u, Class: %s, Visible: %d \n", hwnd, window_pid, class_name, IsWindowVisible(hwnd));
-			std::cout << debug_msg;
+			common::log("Main", std::format("|> HWND: 0x{:X}, PID: {}, Class: {}, Visible: {}", reinterpret_cast<std::uintptr_t>(hwnd), window_pid, (const char*)&class_name, IsWindowVisible(hwnd)), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 			wnd_class_list.insert(hwnd);
 		}
 
@@ -84,7 +84,7 @@ BOOL CALLBACK enum_windows_proc(HWND hwnd, LPARAM lParam)
 void init_fail_msg_setup()
 {
 	Beep(300, 100); Sleep(100); Beep(200, 100);
-	game::console(); std::cout << "[RTX-COMP] Not loading P2-RTX Compatibility Mod" << std::endl;
+	common::log("Main", "Not loading P2-RTX Compatibility Mod", common::LOG_TYPE::LOG_TYPE_ERROR, false);
 }
 
 void init_fail_msg_post()
@@ -102,7 +102,9 @@ void init_fail_msg_post()
 		if ((HANDLE_OUT) = (DWORD)GetModuleHandleA(NAME); !(HANDLE_OUT)) { \
 			Sleep(100); (T) += 100u; \
 			if ((T) >= 30000) { \
-				init_fail_msg_setup(); std::cout << "[RTX-COMP] ---------------> Failed to find module: " << (NAME) << std::endl; init_fail_msg_post(); \
+				init_fail_msg_setup(); \
+				common::log("Main", std::format("Failed to find module: '{}'", NAME), common::LOG_TYPE::LOG_TYPE_ERROR, false); \
+				init_fail_msg_post(); \
 				return TRUE; \
 			} \
 		} \
@@ -116,14 +118,11 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	const std::string sha1 = hash_file_sha1(exe_path);
 
 	if (sha1 != (IS_LATEST_BUILD ? "754149fc8da2e131c2f13324c9e087f2a690f197" : "393ca001b796245e2d5425dd3505627810daecf8")) {
-		std::cout << "[RTX-COMP] ---------------> Unexpected portal2.exe hash. Hash was: " << sha1.c_str() << std::endl;
-	}
-	else {
-		std::cout << "[RTX-COMP] Correct SHA1 Hash of portal2.exe." << std::endl;
+		common::log("Main", std::format("Unexpected portal2.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
 	}
 
-	std::cout << "[RTX-COMP] Path to exe: " << exe_path << std::endl;
-	std::cout << "[RTX-COMP] Waiting for window with classname containing 'Valve001' ... \n";
+	common::log("Main", std::format("Path to exe: '{}'", exe_path), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
+	common::log("Main", "Waiting for window with classname containing 'Valve001'...", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 
 	{
 		while (!glob::main_window)
@@ -136,7 +135,7 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 			if (T >= 30000)
 			{
 				Beep(300, 100); Sleep(100); Beep(200, 100);
-				game::console(); std::cout << "[RTX-COMP] ---------------> Could not find Valve001 Window. Not loading RTX Compatibility Mod.\n";
+				common::log("Main", "Could not find Valve001 Window. Not loading RTX Compatibility Mod", common::LOG_TYPE::LOG_TYPE_ERROR);
 				return TRUE;
 			}
 		}
@@ -148,20 +147,7 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	GET_MODULE_HANDLE(game::client_module, "client.dll", T);
 	GET_MODULE_HANDLE(game::server_module, "server.dll", T);
 	GET_MODULE_HANDLE(game::vstdlib_module, "vstdlib.dll", T);
-
-	if (const auto MH_INIT_STATUS = MH_Initialize(); MH_INIT_STATUS != MH_STATUS::MH_OK)
-	{
-		std::cout << "[RTX-COMP] ---------------> MinHook failed to initialize with code: " << MH_INIT_STATUS << "\n";
-		return TRUE;
-	}
-
-#ifdef DEBUG
 	Beep(523, 100);
-#else
-	if (glob::has_debug_arg) {
-		Beep(523, 100);
-	}
-#endif
 
 #ifdef GIT_DESCRIBE
 	SetWindowTextA(glob::main_window, IS_LATEST_BUILD ? utils::va("Portal 2 - RTX - %s", GIT_DESCRIBE) : utils::va("Portal 2 - RTX - %s - DEV", GIT_DESCRIBE));
@@ -169,26 +155,39 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	SetWindowTextA(glob::main_window, "Portal 2 - RTX");
 #endif
 
-	loader::initialize();
+	p2::main();
 	return TRUE;
 }
 
-BOOL APIENTRY DllMain(HMODULE, const DWORD ul_reason_for_call, LPVOID)
+BOOL APIENTRY DllMain(HMODULE hmodule, const DWORD ul_reason_for_call, LPVOID)
 {
-#ifdef DEBUG
-	game::console();
-#else
-	if (glob::has_debug_arg = flags::has_flag("debug"); glob::has_debug_arg) {
-		game::console();
-	}
-#endif
+	if (ul_reason_for_call == DLL_PROCESS_ATTACH) 
+	{
+		common::console();
+		globals::setup_dll_module(hmodule);
+		globals::setup_exe_module();
+		globals::setup_homepath();
 
-	if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
-		CreateThread(nullptr, 0, find_game_window_by_sha1, nullptr, 0, nullptr);
-	}
+		common::set_console_color_blue(true);
+		std::cout << "Launching GTAIV RTX Remix Compatiblity Mod Version [" << GIT_DESCRIBE << "]\n";
+		std::cout << "> Compiled On : " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
+		std::cout << "> https://github.com/xoxor4d/p2-rtx\n\n";
+		common::set_console_color_default();
 
-	else if (ul_reason_for_call == DLL_PROCESS_DETACH) {
-		loader::uninitialize();
+		if (const auto MH_INIT_STATUS = MH_Initialize(); MH_INIT_STATUS != MH_STATUS::MH_OK)
+		{
+			common::log("Main", std::format("MinHook failed to initialize with code: {:d}", static_cast<int>(MH_INIT_STATUS)), common::LOG_TYPE::LOG_TYPE_ERROR, true);
+			return TRUE;
+		}
+
+		game::init_game_addresses();
+
+		//common::loader::module_loader::register_module(std::make_unique<components::d3d9ex>());
+		common::loader::module_loader::register_module(std::make_unique<game_settings>());
+
+		if (const auto t = CreateThread(nullptr, 0, find_game_window_by_sha1, nullptr, 0, nullptr); t) {
+			CloseHandle(t);
+		}
 	}
 
 	return TRUE;

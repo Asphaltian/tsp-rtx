@@ -349,13 +349,7 @@ namespace utils
 	*/
 	bool open_file_homepath(const std::string& sub_dir, const std::string& file_name, std::ifstream& file)
 	{
-		if (game::root_path.empty())
-		{
-			char path[MAX_PATH]; GetModuleFileNameA(nullptr, path, MAX_PATH);
-			game::root_path = path; utils::erase_substring(game::root_path, "portal2.exe");
-		}
-
-		file.open(game::root_path + sub_dir + "\\" + file_name);
+		file.open(globals::root_path + sub_dir + "\\" + file_name);
 		if (!file.is_open()) {
 			return false;
 		}

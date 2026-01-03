@@ -1,10 +1,17 @@
 #include "std_include.hpp"
+
+#include "game_settings.hpp"
+#include "imgui.hpp"
+#include "interfaces.hpp"
+#include "main_module.hpp"
+#include "remix_lights.hpp"
+#include "remix_rayportal.hpp"
+#include "components/common/flags.hpp"
+#include "components/common/remix_api.hpp"
 #include "components/common/toml.hpp"
 
 namespace components
 {
-#define CATCH_ERR	catch (toml::type_error& err) { game::console(); printf("%s\n", err.what()); return; }
-
 	void map_settings::set_settings_for_map(const std::string& map_name)
 	{
 		m_map_settings.mapname = !map_name.empty() ? map_name : game::get_map_name();
@@ -13,8 +20,8 @@ namespace components
 
 		parse_toml();
 
-		static bool disable_map_configs = flags::has_flag("xo_disable_map_conf");
-		if (remix_api::is_initialized())
+		static bool disable_map_configs = common::flags::has_flag("xo_disable_map_conf");
+		if (common::remix_api::is_initialized())
 		{
 			if (!disable_map_configs)
 			{
@@ -178,9 +185,10 @@ namespace components
 		// add / remove texture hashes
 		for (const auto& entry : m_map_settings.api_texture_category_tweaks)
 		{
-			const auto& bridge = remix_api::get()->m_bridge;
+			auto& bridge = common::remix_api::get().m_bridge;
 
-			if (!entry.second.add_hashes.empty())
+			// TODO!
+			/*if (!entry.second.add_hashes.empty())
 			{
 				for (const auto& h : entry.second.add_hashes) 
 				{
@@ -205,16 +213,8 @@ namespace components
 						bridge.AddTextureHash(entry.first.c_str(), h.c_str());
 					}
 				}
-			}
+			}*/
 		}
-	}
-
-#define TOML_ERROR(TITLE, ENTRY, MSG, ...) \
-	game::console(); std::cout << toml::format_error(toml::make_error_info(#TITLE, (ENTRY), utils::va(#MSG, __VA_ARGS__))) << std::endl; \
-
-#define TOML_CATCH \
-	catch (toml::type_error& err) { \
-		game::console(); std::cout << err.what() << std::endl; return; \
 	}
 
 	bool map_settings::parse_toml()
@@ -236,10 +236,7 @@ namespace components
 
 					try { // this will fail and let the user know whats wrong
 						return static_cast<float>(entry.as_floating());
-					}
-					catch (toml::type_error& err) {
-						game::console(); printf("%s\n", err.what());
-					}
+					} TOML_CATCH_TYPE_ERROR;
 
 					return default_val;
 				};
@@ -257,10 +254,7 @@ namespace components
 
 					try { // this will fail and let the user know whats wrong
 						return static_cast<int>(entry.as_integer());
-					}
-					catch (toml::type_error& err) {
-						game::console(); printf("%s\n", err.what());
-					}
+					} TOML_CATCH_TYPE_ERROR
 
 					return default_val;
 				};
@@ -277,10 +271,7 @@ namespace components
 
 					try { // this will fail and let the user know whats wrong
 						return static_cast<std::uint32_t>(entry.as_integer());
-					}
-					catch (toml::type_error& err) {
-						game::console(); printf("%s\n", err.what());
-					}
+					} TOML_CATCH_TYPE_ERROR
 
 					return default_val;
 				};
@@ -298,10 +289,7 @@ namespace components
 
 					try { // this will fail and let the user know whats wrong
 						return static_cast<bool>(entry.as_boolean());
-					}
-					catch (toml::type_error& err) {
-						game::console(); printf("%s\n", err.what());
-					}
+					} TOML_CATCH_TYPE_ERROR
 
 					return default_setting;
 				};
@@ -425,7 +413,7 @@ namespace components
 								auto m = to_uint(entry.at("cull"));
 								if (m >= AREA_CULL_INFO_COUNT)
 								{
-									game::console(); printf("MapSettings: param 'cull' was out-of-range (%d)\n", m);
+									common::log("MapSettings", std::format("param 'cull' was out-of-range {:d}", m), common::LOG_TYPE::LOG_TYPE_ERROR, false);
 									m = 0u;
 								}
 								cmode = (AREA_CULL_MODE)(std::uint8_t)m;
@@ -782,7 +770,7 @@ namespace components
 							try { config_name = entry.at("conf").as_string(); }
 							catch (toml::type_error& err)
 							{
-								game::console(); printf("%s\n", err.what());
+								common::log("MapSettings", std::format("{}", err.what()), common::LOG_TYPE::LOG_TYPE_ERROR, false);
 								return;
 							}
 
@@ -823,24 +811,24 @@ namespace components
 									std::string choreo_param1;
 
 									try { choreo_name = trigger.at("choreo").as_string(); }
-									CATCH_ERR;
+									TOML_CATCH_TYPE_ERROR;
 
 									if (trigger.contains("actor"))
 									{
 										try { choreo_actor = trigger.at("actor").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									if (trigger.contains("event"))
 									{
 										try { choreo_event = trigger.at("event").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									if (trigger.contains("param1"))
 									{
 										try { choreo_param1 = trigger.at("param1").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									if (!choreo_name.empty())
@@ -871,14 +859,13 @@ namespace components
 									std::uint32_t temp_sound_hash = 0u;
 									std::string temp_sound_name;
 
-									if (trigger.at("sound").type() == toml::value_t::integer)
-									{
+									if (trigger.at("sound").type() == toml::value_t::integer) {
 										temp_sound_hash = to_uint(trigger.at("sound"), 0u);
 									}
 									else
 									{
 										try { temp_sound_name = trigger.at("sound").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									const auto hash = utils::string_hash64(utils::va("%d%s%s%.2f", temp_sound_hash, temp_sound_name.c_str(), config_name.c_str(), duration));
@@ -945,7 +932,7 @@ namespace components
 							std::string cat_name;
 							if (entry.contains("category"))
 							{
-								try { cat_name = entry.at("category").as_string(); } TOML_CATCH;
+								try { cat_name = entry.at("category").as_string(); } TOML_CATCH_TYPE_ERROR;
 								if ( !cat_name.empty())
 								{
 									std::unordered_set<std::string> add_hash_set, remove_hash_set;
@@ -956,7 +943,7 @@ namespace components
 										for (const auto& hash_entry : add) 
 										{
 											std::string temp_hash_str;
-											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH;
+											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH_TYPE_ERROR;
 											add_hash_set.insert(std::move(temp_hash_str));
 										}
 									}
@@ -967,7 +954,7 @@ namespace components
 										for (const auto& hash_entry : remove)
 										{
 											std::string temp_hash_str;
-											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH;
+											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH_TYPE_ERROR;
 											remove_hash_set.insert(std::move(temp_hash_str));
 										}
 									}
@@ -1002,7 +989,7 @@ namespace components
 										m_map_settings.api_var_configs.emplace_back(conf.as_string());
 									}
 									catch (toml::type_error& err) {
-										game::console(); printf("%s\n", err.what());
+										common::log("MapSettings", std::format("{}", err.what()), common::LOG_TYPE::LOG_TYPE_ERROR, false);
 									}
 								}
 							}
@@ -1137,24 +1124,24 @@ namespace components
 								if (trigger.contains("choreo"))
 								{
 									try { temp_trigger_choreo_name = trigger.at("choreo").as_string(); }
-									CATCH_ERR;
+									TOML_CATCH_TYPE_ERROR;
 
 									if (trigger.contains("actor"))
 									{
 										try { temp_trigger_choreo_actor = trigger.at("actor").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									if (trigger.contains("event"))
 									{
 										try { temp_trigger_choreo_event = trigger.at("event").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									if (trigger.contains("param1"))
 									{
 										try { temp_trigger_choreo_param1 = trigger.at("param1").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 
 									has_valid_trigger = true;
@@ -1194,7 +1181,7 @@ namespace components
 								if (kill.contains("choreo"))
 								{
 									try { temp_kill_choreo_name = kill.at("choreo").as_string(); }
-									CATCH_ERR;
+									TOML_CATCH_TYPE_ERROR;
 
 									has_valid_kill_trigger = true;
 								}
@@ -1377,7 +1364,7 @@ namespace components
 								else if (attach.contains("name"))
 								{
 									try { temp_attach_prop_str = attach.at("name").as_string(); }
-									CATCH_ERR;
+									TOML_CATCH_TYPE_ERROR;
 
 									has_valid_attach = true;
 								}
@@ -1403,7 +1390,7 @@ namespace components
 									if (attach.contains("bone_name"))
 									{
 										try { temp_attach_bone_str = attach.at("bone_name").as_string(); }
-										CATCH_ERR;
+										TOML_CATCH_TYPE_ERROR;
 									}
 								}
 							}
@@ -1492,15 +1479,8 @@ namespace components
 					}
 				}
 			} // end 'CVARS'
-		}
-
-		catch (const toml::syntax_error& err)
-		{
-			game::console();
-			printf("%s\n", err.what());
-			return false;
-		}
-
+		} TOML_CATCH_SYNTAX_ERROR;
+		
 		return true;
 	}
 
@@ -1551,10 +1531,8 @@ namespace components
 
 			file.close();
 		}
-		else if (!no_error)
-		{
-			game::console();
-			printf("[MapSettings] Failed to find config: \"%s\" in %s \n", config.c_str(), custom_path ? custom_path : "\"" COMPMOD_ASSET_DIR "map_configs\"");
+		else if (!no_error) {
+			common::log("MapSettings", std::format("Failed to find config: '{}' in '{}'", config, custom_path ? custom_path : "'" COMPMOD_ASSET_DIR "map_configs'"), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 		}
 	}
 
@@ -1572,7 +1550,7 @@ namespace components
 
 	void map_settings::on_map_unload()
 	{
-		if (remix_api::is_initialized())
+		if (common::remix_api::is_initialized())
 		{
 			// re-add hashes that were removed on map load
 			// and remove hashes that were added on map load
@@ -1581,10 +1559,10 @@ namespace components
 
 		if (const auto& imgui = imgui::get();  imgui->m_was_mapsettings_tab_open)
 		{
-			std::filesystem::create_directories(game::root_path + COMPMOD_ASSET_DIR "logs\\");
+			std::filesystem::create_directories(globals::root_path + COMPMOD_ASSET_DIR "logs\\");
 
 			std::ofstream file;
-			file.open((game::root_path + COMPMOD_ASSET_DIR "logs\\autosave_mapsettings.toml").c_str());
+			file.open((globals::root_path + COMPMOD_ASSET_DIR "logs\\autosave_mapsettings.toml").c_str());
 
 			file << "# This file is autogenerated. It contains the the latest imgui map-setting changes.\n\n";
 
@@ -1656,10 +1634,11 @@ namespace components
 	{
 		p_this = this;
 		game::con_add_command(&xo_mapsettings_update, "xo_mapsettings_update", map_settings::reload, "Reloads the map_settings.toml file + map.conf");
-	}
 
-	map_settings::~map_settings()
-	{ }
+		// -----
+		m_initialized = true;
+		common::log("MapSettings", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
+	}
 
 #undef CATCH_ERR
 }

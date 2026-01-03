@@ -2,7 +2,7 @@
 
 namespace components
 {
-	class remix_vars : public component
+	class remix_vars final : public common::loader::component_module
 	{
 	public:
 		remix_vars();
@@ -10,6 +10,14 @@ namespace components
 
 		static inline remix_vars* p_this = nullptr;
 		static remix_vars* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		static void xo_vars_parse_options_fn();
 
@@ -141,5 +149,8 @@ namespace components
 		//static bool add_progressive_interpolate_entry(option_handle handle, const option_value& goal, float speed, const std::string& remix_var_name = "");
 
 		bool add_interpolate_entry(const std::uint64_t& identifier, option_handle handle, const option_value& goal, float duration, float delay, float delay_transition_back, EASE_TYPE ease, const std::string& remix_var_name = "");
+	
+	private:
+		bool m_initialized = false;
 	};
 }

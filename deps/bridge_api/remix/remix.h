@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -173,8 +173,6 @@ namespace remix {
     Result< void >                    DestroyLight(remixapi_LightHandle handle);
     Result< void >                    DrawLightInstance(remixapi_LightHandle handle);
     Result< void >                    SetConfigVariable(const char* key, const char* value);
-    Result< void >                    AddTextureHash(const char* textureCategory, const char* textureHash);
-    Result< void >                    RemoveTextureHash(const char* textureCategory, const char* textureHash);
 
     // DXVK interoperability
     Result< IDirect3D9Ex* >                  dxvk_CreateD3D9(bool editorModeEnabled = false);
@@ -210,7 +208,7 @@ namespace remix {
         return status;
       }
 
-      static_assert(sizeof(remixapi_Interface) == 184,
+      static_assert(sizeof(remixapi_Interface) == 168,
                     "Change version, update C++ wrapper when adding new functions");
 
       remix::Interface interfaceInCpp = {};
@@ -251,20 +249,6 @@ namespace remix {
       return REMIXAPI_ERROR_CODE_NOT_INITIALIZED;
     }
     return m_CInterface.SetConfigVariable(key, value);
-  }
-
-  inline Result< void > Interface::AddTextureHash(const char* textureCategory, const char* textureHash) {
-    if (!m_CInterface.AddTextureHash) {
-      return REMIXAPI_ERROR_CODE_NOT_INITIALIZED;
-    }
-    return m_CInterface.AddTextureHash(textureCategory, textureHash);
-  }
-
-  inline Result< void > Interface::RemoveTextureHash(const char* textureCategory, const char* textureHash) {
-    if (!m_CInterface.RemoveTextureHash) {
-      return REMIXAPI_ERROR_CODE_NOT_INITIALIZED;
-    }
-    return m_CInterface.RemoveTextureHash(textureCategory, textureHash);
   }
 
   inline Result< void > Interface::Present(const remixapi_PresentInfo* info) {
@@ -726,6 +710,10 @@ namespace remix {
       srcColorBlendFactor = 1 /* VK_BLEND_FACTOR_ONE */;
       dstColorBlendFactor = 0 /* VK_BLEND_FACTOR_ZERO */;
       colorBlendOp = 0 /* VK_BLEND_OP_ADD */;
+      srcAlphaBlendFactor = 1 /* VK_BLEND_FACTOR_ONE */;
+      dstAlphaBlendFactor = 0 /* VK_BLEND_FACTOR_ZERO */;
+      alphaBlendOp = 0 /* VK_BLEND_OP_ADD */;
+      writeMask = 0xFFFFFFFF;
       textureColorArg1Source = 1 /* RtTextureArgSource::Texture */;
       textureColorArg2Source = 0 /* RtTextureArgSource::None */;
       textureColorOperation = 3 /* DxvkRtTextureOperation::Modulate */;
@@ -734,7 +722,8 @@ namespace remix {
       textureAlphaOperation = 1 /* DxvkRtTextureOperation::SelectArg1 */;
       tFactor = 0XFFFFFFFF;
       isTextureFactorBlend = false;
-      static_assert(sizeof remixapi_InstanceInfoBlendEXT == 80);
+      isVertexColorBakedLighting = true;
+      static_assert(sizeof remixapi_InstanceInfoBlendEXT == 96);
     }
   };
 
@@ -743,6 +732,47 @@ namespace remix {
       sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO_OBJECT_PICKING_EXT;
       pNext = nullptr;
       objectPickingValue = 0;
+    }
+  };
+
+  struct InstanceInfoParticleSystemEXT : remixapi_InstanceInfoParticleSystemEXT {
+    InstanceInfoParticleSystemEXT() {
+      sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO_PARTICLE_SYSTEM_EXT;
+      pNext = nullptr;
+      maxNumParticles = 10000;
+      spawnRatePerSecond = 0.f;
+      minTimeToLive = 1.0f;
+      maxTimeToLive = 1.0f;
+      minSpawnSize = 10.0f;
+      maxSpawnSize = 10.0f;
+      minSpawnRotationSpeed = 0.0f;
+      maxSpawnRotationSpeed = 0.0f;
+      minSpawnColor = {1, 1, 1, 1};
+      maxSpawnColor = {1, 1, 1, 1};
+      minTargetSize = 0.0f;
+      maxTargetSize = 0.0f;
+      minTargetRotationSpeed = 0.0f;
+      maxTargetRotationSpeed = 0.0f;
+      minTargetColor = { 1, 1, 1, 0 };
+      maxTargetColor = { 1, 1, 1, 0 };
+      useSpawnTexcoords = false;
+      initialVelocityFromMotion = 0.0f;
+      initialVelocityFromNormal = 0.0f;
+      initialVelocityConeAngleDegrees = 0.0f;
+      maxSpeed = -1.0f;
+      gravityForce = -0.98f;
+      useTurbulence = false;
+      turbulenceForce = 5.0f;
+      turbulenceFrequency = 0.05f;
+      enableCollisionDetection = false;
+      collisionRestitution = 0.5f;
+      collisionThickness = 5.0f;
+      alignParticlesToVelocity = false;
+      enableMotionTrail = false;
+      motionTrailMultiplier = 1.0f;
+      hideEmitter = false;
+      billboardType = 0;
+      static_assert(sizeof InstanceInfoParticleSystemEXT == 200);
     }
   };
 

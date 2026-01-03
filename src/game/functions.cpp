@@ -1,5 +1,7 @@
 #include "std_include.hpp"
 
+#include "components/modules/interfaces.hpp"
+
 namespace glob
 {
 	bool spawned_external_console = false;
@@ -11,7 +13,7 @@ namespace glob
 namespace game
 {
 	std::vector<std::string> loaded_modules;
-	std::string root_path;
+	//std::string root_path;
 	DWORD shaderapidx9_module = 0u;
 	DWORD studiorender_module = 0u;
 	DWORD materialsystem_module = 0u;
@@ -247,5 +249,11 @@ namespace game
 		}
 
 		return nullptr;
+	}
+
+	// ----
+
+	void init_game_addresses()
+	{
 	}
 }

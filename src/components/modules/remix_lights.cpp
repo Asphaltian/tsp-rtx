@@ -1,4 +1,10 @@
 #include "std_include.hpp"
+#include "remix_lights.hpp"
+
+#include "game_settings.hpp"
+#include "imgui.hpp"
+#include "main_module.hpp"
+#include "components/common/remix_api.hpp"
 
 namespace components
 {
@@ -11,7 +17,6 @@ namespace components
 
 	/**
 	 * Initializes the light interpolator
-	 * @param l					Parent light
 	 * @param points			Reference to point-list
 	 * @param looping			Light is looping
 	 * @param loop_smoothing	Add additional segment between last and first point
@@ -36,8 +41,7 @@ namespace components
 
 		if (points.size() > 1 && m_total_duration == 0.0f)
 		{
-			game::console();
-			std::cout << "[RemixLights][light_interpolator::init] Encountered a light were the last point has no defined timepoint! Placeholder in-use, please fix!" << std::endl;
+			common::log("RemixLights", "[light_interpolator::init]  Encountered a light were the last point has no defined timepoint! Placeholder in-use, please fix!", common::LOG_TYPE::LOG_TYPE_WARN, false);
 
 			// use timepoint of prev. point + 1.0
 			m_total_duration = (m_points)[m_points.size() - 2].timepoint + 1.0f;
@@ -389,7 +393,7 @@ namespace components
 			l->m_info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
 			l->m_info.pNext = &l->m_ext;
 
-			return remix_api::get()->m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+			return common::remix_api::get().m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
 		}
 
 		return false;
@@ -432,7 +436,7 @@ namespace components
 			l->m_info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
 			l->m_info.pNext = &l->m_ext;
 
-			return remix_api::get()->m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+			return common::remix_api::get().m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
 		}
 
 		return false;
@@ -474,8 +478,8 @@ namespace components
 			l->m_info.hash = utils::string_hash64(utils::va("api-light%d", l->m_light_num));
 			l->m_info.radiance = (pt.radiance * pt.radiance_scalar).ToRemixFloat3D();
 
-			const auto api = remix_api::get();
-			return api->m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
+			auto& api = common::remix_api::get();
+			return api.m_bridge.CreateLight(&l->m_info, &l->m_handle) == REMIXAPI_ERROR_CODE_SUCCESS;
 		}
 
 		return false;
@@ -569,7 +573,7 @@ namespace components
 	{
 		if (l->m_handle)
 		{
-			remix_api::get()->m_bridge.DestroyLight(l->m_handle);
+			common::remix_api::get().m_bridge.DestroyLight(l->m_handle);
 			l->m_handle = nullptr;
 		}
 	}
@@ -682,7 +686,7 @@ namespace components
 		for (auto& l : m_active_lights)
 		{
 			if (l.m_handle) {
-				remix_api::get()->m_bridge.DrawLightInstance(l.m_handle);
+				common::remix_api::get().m_bridge.DrawLightInstance(l.m_handle);
 			}
 		}
 	}
@@ -694,7 +698,7 @@ namespace components
 	{
 		if (map_settings::is_level.sp_a2_bts3)
 		{
-			const auto remixapi = remix_api::get();
+			auto& remixapi = common::remix_api::get();
 
 			if (!m_bts3_flashlight_pos.IsZero(0.0001f) && !m_bts3_wheatly_pos.IsZero(0.0001f))
 			{
@@ -736,14 +740,14 @@ namespace components
 
 				if (m_bts3_flashlight_handle)
 				{
-					remixapi->m_bridge.DestroyLight(m_bts3_flashlight_handle);
+					remixapi.m_bridge.DestroyLight(m_bts3_flashlight_handle);
 					m_bts3_flashlight_handle = nullptr;
 				}
 
-				remixapi->m_bridge.CreateLight(&info, &m_bts3_flashlight_handle);
+				remixapi.m_bridge.CreateLight(&info, &m_bts3_flashlight_handle);
 
 				if (m_bts3_flashlight_handle) {
-					remixapi->m_bridge.DrawLightInstance(m_bts3_flashlight_handle);
+					remixapi.m_bridge.DrawLightInstance(m_bts3_flashlight_handle);
 				}
 
 				// ---
@@ -761,14 +765,14 @@ namespace components
 
 				if (m_bts3_flashlight_sphere_handle)
 				{
-					remixapi->m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
+					remixapi.m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
 					m_bts3_flashlight_sphere_handle = nullptr;
 				}
 
-				remixapi->m_bridge.CreateLight(&info, &m_bts3_flashlight_sphere_handle);
+				remixapi.m_bridge.CreateLight(&info, &m_bts3_flashlight_sphere_handle);
 
 				if (m_bts3_flashlight_sphere_handle) {
-					remixapi->m_bridge.DrawLightInstance(m_bts3_flashlight_sphere_handle);
+					remixapi.m_bridge.DrawLightInstance(m_bts3_flashlight_sphere_handle);
 				}
 
 				// ---
@@ -781,17 +785,17 @@ namespace components
 
 	void remix_lights::a2_bts3_flashlight_destroy()
 	{
-		const auto remixapi = remix_api::get();
+		auto& remixapi = common::remix_api::get();
 
 		if (m_bts3_flashlight_handle)
 		{
-			remixapi->m_bridge.DestroyLight(m_bts3_flashlight_handle);
+			remixapi.m_bridge.DestroyLight(m_bts3_flashlight_handle);
 			m_bts3_flashlight_handle = nullptr;
 		}
 
 		if (m_bts3_flashlight_sphere_handle)
 		{
-			remixapi->m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
+			remixapi.m_bridge.DestroyLight(m_bts3_flashlight_sphere_handle);
 			m_bts3_flashlight_sphere_handle = nullptr;
 		}
 
@@ -1111,20 +1115,20 @@ namespace components
 				const float radius = l.m_ext.radius;
 				const Vector color = { 1.0f, 1.0f, 1.0f };
 
-				const auto remixapi = remix_api::get();
+				auto& remixapi = common::remix_api::get();
 
 				// we only need to craft one circle instance - everything else is instanced
 				if (!first_done)
 				{
 					first_done = true;
-					remixapi->add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, color);
+					remixapi.add_debug_circle(circle_pos, Vector(0.0f, 0.0f, 1.0f), radius - 0.02f, radius * 0.1f, color);
 				}
 				else {
-					remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(0, 0, 90), Vector(1.0f, 1.0f, 1.0f));
+					remixapi.add_debug_circle_based_on_previous(circle_pos, Vector(0, 0, 90), Vector(1.0f, 1.0f, 1.0f));
 				}
 
-				remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(0, 90, 0), Vector(1.0f, 1.0f, 1.0f));
-				remixapi->add_debug_circle_based_on_previous(circle_pos, Vector(90, 0, 90), Vector(1.0f, 1.0f, 1.0f));
+				remixapi.add_debug_circle_based_on_previous(circle_pos, Vector(0, 90, 0), Vector(1.0f, 1.0f, 1.0f));
+				remixapi.add_debug_circle_based_on_previous(circle_pos, Vector(90, 0, 90), Vector(1.0f, 1.0f, 1.0f));
 			}
 		}
 
@@ -1180,5 +1184,9 @@ namespace components
 		game::con_add_command(&xo_debug_toggle_show_api_lights_cmd, "xo_debug_toggle_show_api_lights", xo_debug_toggle_show_api_lights_fn, "Toggle debug vis for lights added via the remixapi");
 		game::con_add_command(&xo_debug_show_mesh_bone_info_attached_cmd, "xo_debug_show_mesh_bone_info_attached", xo_debug_show_mesh_bone_info_attached_fn, "Edit Mode + Attached to mesh only: Show bone information of mesh with an attached remixApi light (names/indices)");
 		game::con_add_command(&xo_debug_show_mesh_bone_info_cmd, "xo_debug_show_mesh_bone_info", xo_debug_show_mesh_bone_info_fn, "Show bone information for all nearby meshes (names/indices + entity indices)");
+	
+		// -----
+		m_initialized = true;
+		common::log("RemixLights", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }

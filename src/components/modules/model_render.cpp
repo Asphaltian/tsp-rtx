@@ -1,4 +1,11 @@
 #include "std_include.hpp"
+#include "model_render.hpp"
+
+#include "game_settings.hpp"
+#include "imgui.hpp"
+#include "main_module.hpp"
+#include "map_settings.hpp"
+#include "remix_lights.hpp"
 
 // surface dual render (displacement with blending) gets invisible when skinned objects are moved?
 // eg terrain gets invisible if cube is picked up?
@@ -4245,10 +4252,10 @@ namespace components
 		{
 			cmd::ms_unbake_info = false;
 
-			std::filesystem::create_directories(game::root_path + COMPMOD_ASSET_DIR "logs\\");
+			std::filesystem::create_directories(globals::root_path + COMPMOD_ASSET_DIR "logs\\");
 
 			std::ofstream file;
-			file.open((game::root_path + COMPMOD_ASSET_DIR "logs\\mapsettings_unbake_info.log").c_str());
+			file.open((globals::root_path + COMPMOD_ASSET_DIR "logs\\mapsettings_unbake_info.log").c_str());
 
 			file << "MapSettings [UNBAKE] : Logfile containing names of models that were drawn in the capture frame." << "\n\n";
 
@@ -4426,6 +4433,10 @@ namespace components
 
 		game::con_add_command(&xo_debug_toggle_model_info_cmd, "xo_debug_toggle_model_info", xo_debug_toggle_model_info_fn, "Toggle model name and radius visualizations");
 		game::con_add_command(&xo_mapsettings_get_unbake_info_cmd, "xo_mapsettings_get_unbake_info", xo_mapsettings_get_unbake_info_fn, "This log names of drawn models in the current frame to a logfile in portal2-rtx/logs/. Useful for MapSettings : [UNBAKE]");
+	
+		// -----
+		m_initialized = true;
+		common::log("ModelRender", "Module initialized.", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	}
 }
 

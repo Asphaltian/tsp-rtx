@@ -9,6 +9,14 @@
 // enable/disable benchmark logic
 //#define BENCHMARK
 
+#ifndef GIT_DESCRIBE
+#define GIT_DESCRIBE UNK
+#endif
+
+#ifndef GIT_TAG
+#define GIT_TAG 0
+#endif
+
 #if defined(DEV_BUILD)
 	inline constexpr bool IS_LATEST_BUILD = false;
 #else
@@ -71,20 +79,22 @@
 #include <misc/cpp/imgui_stdlib.h>
 #pragma warning(pop)
 
+#include "components/globals.hpp"
 #include "game/structs.hpp"
 #include "utils/utils.hpp"
 #include "utils/vector.hpp"
+#include "utils/hooking.hpp"
+#include "utils/memory.hpp"
+#include "utils/function.hpp"
+#include "components/common/console.hpp"
+#include "components/common/loader.hpp"
 
 #include "sdk/engine/c_engine_client.hpp"
 #include "sdk/vgui/surface/c_surface_mgr.hpp"
 #include "sdk/inputsystem/c_input_stackstystem.hpp"
 #include "sdk/entity/c_entity_list.hpp"
 
-#include "utils/hooking.hpp"
-#include "utils/memory.hpp"
-#include "utils/function.hpp"
 #include "game/functions.hpp"
-
-#include "components/loader.hpp"
+#include "p2.hpp"
 
 using namespace std::literals;

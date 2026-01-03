@@ -21,7 +21,7 @@ namespace glob
 namespace game
 {
 	extern std::vector<std::string> loaded_modules;
-	extern std::string root_path;
+	//extern std::string root_path;
 	extern DWORD shaderapidx9_module;
 	extern DWORD studiorender_module;
 	extern DWORD materialsystem_module;
@@ -129,6 +129,7 @@ namespace game
 			/// @param boneToWorld		out bone matrix
 			inline void GetBoneTransform(void* this_ptr, const int bone, matrix3x4_t* boneToWorld)
 			{
+				// 55 8B EC 56 8B F1 83 BE ? ? ? ? ? 57 75 ? 8B 46 ? 8B 50 ? 8D 4E ? FF D2 85 C0 74 ? 8B CE E8 ? ? ? ? 8B 86
 				utils::hook::call<void(__fastcall)(void* this_ptr, void* null, int bone, matrix3x4_t* boneToWorld)>(CLIENT_BASE + USE_OFFSET(0x5F4E0, 0x5C380))
 					(this_ptr, nullptr, bone, boneToWorld);
 			}
@@ -139,6 +140,7 @@ namespace game
 			/// @return					bone index
 			inline int LookupBone(void* this_ptr, const char* bone_name)
 			{
+				// xref "weapon_bone"
 				return utils::hook::call<int(__fastcall)(void* this_ptr, void* null, const char* bone_name)>(CLIENT_BASE + USE_OFFSET(0x5CE30, 0x59D30))
 					(this_ptr, nullptr, bone_name);
 			}
@@ -155,26 +157,11 @@ namespace game
 	}
 	
 
-	/**
-	 * Creates an external console
-	 */
-	inline void console()
-	{
-		if (!glob::spawned_external_console)
-		{
-			glob::spawned_external_console = true;
-			setvbuf(stdout, nullptr, _IONBF, 0);
-			if (AllocConsole())
-			{
-				FILE* file = nullptr;
-				freopen_s(&file, "CONIN$", "r", stdin);
-				freopen_s(&file, "CONOUT$", "w", stdout);
-				freopen_s(&file, "CONOUT$", "w", stderr);
-				SetConsoleTitleA("P2-RTX Debug Console");
-			}
-		}
-	}
-
 	extern void lock_cursor();
 	extern void unlock_cursor();
+
+
+	// -----
+
+	extern void init_game_addresses();
 }

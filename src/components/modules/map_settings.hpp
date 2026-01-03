@@ -1,16 +1,24 @@
 #pragma once
 #include "remix_vars.hpp"
+#include "utils/vector.hpp"
 
 namespace components
 {
-	class map_settings : public component
+	class map_settings final : public common::loader::component_module
 	{
 	public:
 		map_settings();
-		~map_settings();
 
 		static inline map_settings* p_this = nullptr;
 		static map_settings* get() { return p_this; }
+
+		static bool is_initialized()
+		{
+			if (p_this && p_this->m_initialized) {
+				return true;
+			}
+			return false;
+		}
 
 		enum TRANSITION_MODE : uint8_t
 		{
@@ -324,6 +332,8 @@ namespace components
 		static inline level_bool_s is_level = {};
 
 	private:
+		bool m_initialized = false;
+
 		static inline map_settings_s m_map_settings = {};
 		static inline std::vector<std::string> m_args;
 		static inline bool m_spawned_markers = false;

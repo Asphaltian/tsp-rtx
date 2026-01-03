@@ -1,166 +1,153 @@
 #include "std_include.hpp"
+#include "remix_api.hpp"
+#include "bridge_remix_api.h"
 
-namespace components
+namespace common
 {
-	// called on device->BeginScene
-	void remix_api::begin_scene_callback()
+	// gets the singleton instance
+	remix_api& remix_api::get()
 	{
-		const auto api = get();
-		if (api->m_debug_line_amount)
+		static remix_api instance;
+		return instance;
+	}
+
+	// called on device->BeginScene
+	void remix_api::begin_scene_callback_internal()
+	{
+		auto& api = get();
+		if (api.is_initialized())
 		{
-			for (auto l = 1u; l < api->m_debug_line_amount + 1; l++)
+			if (api.m_debug_line_amount)
 			{
-				if (api->m_debug_line_list[l])
+				for (auto l = 1u; l < api.m_debug_line_amount + 1; l++)
 				{
-					remixapi_Transform t0 = {};
-					t0.matrix[0][0] = 1.0f;
-					t0.matrix[1][1] = 1.0f;
-					t0.matrix[2][2] = 1.0f;
-
-					const remixapi_InstanceInfo inst =
+					if (api.m_debug_line_list[l])
 					{
-						.sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO,
-						.pNext = nullptr,
-						.categoryFlags = 0,
-						.mesh = api->m_debug_line_list[l],
-						.transform = t0,
-						.doubleSided = true
-					};
-
-					api->m_bridge.DrawInstance(&inst);
-				}
-			}
-		}
-
-		// --
-
-		//const auto& im = imgui::get();
-		if (!api->m_debug_circles.empty())
-		{
-			for (const auto circle : api->m_debug_circles)
-			{
-				if (circle.handle)
-				{
-					remixapi_Transform t0 = {};
-
-					if (!circle.uses_custom_transform)
-					{
+						remixapi_Transform t0 = {};
 						t0.matrix[0][0] = 1.0f;
 						t0.matrix[1][1] = 1.0f;
 						t0.matrix[2][2] = 1.0f;
+
+						const remixapi_InstanceInfo inst =
+						{
+							.sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO,
+							.pNext = nullptr,
+							.categoryFlags = 0,
+							.mesh = api.m_debug_line_list[l],
+							.transform = t0,
+							.doubleSided = true
+						};
+
+						api.m_bridge.DrawInstance(&inst);
 					}
+				}
+			}
 
-					const remixapi_InstanceInfo inst =
+			// --
+
+			if (!api.m_debug_circles.empty())
+			{
+				for (const auto circle : api.m_debug_circles)
+				{
+					if (circle.handle)
 					{
-						.sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO,
-						.pNext = nullptr,
-						.categoryFlags = REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_LIGHTS,
-						//.categoryFlags = 0,
-						.mesh = circle.handle,
-						.transform = circle.uses_custom_transform ? circle.transform : t0,
-						.doubleSided = true,
-					};
+						remixapi_Transform t0 = {};
 
-					api->m_bridge.DrawInstance(&inst);
+						if (!circle.uses_custom_transform)
+						{
+							t0.matrix[0][0] = 1.0f;
+							t0.matrix[1][1] = 1.0f;
+							t0.matrix[2][2] = 1.0f;
+						}
+
+						const remixapi_InstanceInfo inst =
+						{
+							.sType = REMIXAPI_STRUCT_TYPE_INSTANCE_INFO,
+							.pNext = nullptr,
+							.categoryFlags = REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_LIGHTS,
+							.mesh = circle.handle,
+							.transform = circle.uses_custom_transform ? circle.transform : t0,
+							.doubleSided = true,
+						};
+
+						api.m_bridge.DrawInstance(&inst);
+					}
+				}
+
+				// remove all instances
+				for (auto& circle : api.m_debug_circles)
+				{
+					if (circle.handle) {
+						api.m_bridge.DestroyMesh(circle.handle);
+					}
+				}
+				api.m_debug_circles.clear();
+			}
+
+			// --
+
+			for (const auto& [n, fl] : api.m_flashlights)
+			{
+				if (fl.handle) {
+					api.m_bridge.DrawLightInstance(fl.handle);
 				}
 			}
 
-			// remove all instances
-			for (auto& circle : api->m_debug_circles)
+
+			// --
+			// clear all after submitting them
+
+			if (api.m_debug_line_amount)
 			{
-				if (circle.handle) {
-					api->m_bridge.DestroyMesh(circle.handle);
+				for (auto& line : api.m_debug_line_list)
+				{
+					if (line)
+					{
+						api.m_bridge.DestroyMesh(line);
+						line = nullptr;
+					}
 				}
+				api.m_debug_line_amount = 0;
 			}
-			api->m_debug_circles.clear();
-		}
 
-		// --
+			if (!api.m_debug_circle_materials.empty())
+			{
+				for (auto& m : api.m_debug_circle_materials)
+				{
+					if (m) {
+						api.m_bridge.DestroyMaterial(m);
+					}
+				}
+				api.m_debug_circle_materials.clear();
+			}
 
-		for (const auto& [n, fl] : api->m_flashlights)
-		{
-			if (fl.handle) {
-				api->m_bridge.DrawLightInstance(fl.handle);
+
+			// --
+			// external callback (if registered)
+
+			if (api.begin_scene_callback_external) {
+				api.begin_scene_callback_external();
 			}
 		}
 	}
 
-	// called on device->EndScene
-	void remix_api::end_scene_callback()
+	void remix_api::end_scene_callback_internal()
 	{
-		//imgui::endscene_stub();
-
-#if 0
-		if (!model_render::get()->m_drew_hud)
-		{
-			const auto dev = game::get_d3d_device();
-			IDirect3DVertexShader9* og_vs = nullptr;
-			dev->GetVertexShader(&og_vs);
-			dev->SetVertexShader(nullptr);
-
-			IDirect3DPixelShader9* og_ps = nullptr;
-			dev->GetPixelShader(&og_ps);
-			dev->SetPixelShader(nullptr);
-
-			IDirect3DBaseTexture9* og_tex = nullptr;
-			dev->GetTexture(0, &og_tex);
-			dev->SetTexture(0, nullptr);
-
-			DWORD og_zwrite;
-			dev->GetRenderState(D3DRS_ZWRITEENABLE, &og_zwrite);
-			dev->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-
-			D3DMATRIX* og_view = nullptr;
-			dev->GetTransform(D3DTS_VIEW, og_view);
-
-			D3DMATRIX* og_proj = nullptr;
-			dev->GetTransform(D3DTS_PROJECTION, og_proj);
-
-			dev->SetTransform(D3DTS_WORLD, &game::IDENTITY);
-			dev->SetTransform(D3DTS_VIEW, &game::IDENTITY);
-			dev->SetTransform(D3DTS_PROJECTION, &game::IDENTITY);
-
-			struct CUSTOMVERTEX
-			{
-				float x, y, z, rhw;
-				D3DCOLOR color = D3DCOLOR_COLORVALUE(0.0f, 0.0f, 0.0f, 0.0f);
-			};
-
-			CUSTOMVERTEX vertices[] =
-			{
-				{ -0.5f,  -0.5f,  0.0f, 1.0f }, // tl
-				{ -0.49f, -0.5f,  0.0f, 1.0f }, // tr
-				{ -0.5f,  -0.49f, 0.0f, 1.0f }, // bl
-				{ -0.49f, -0.49f, 0.0f, 1.0f }  // br
-			};
-
-			DWORD og_unused;
-			dev->GetRenderState((D3DRENDERSTATETYPE)42, &og_unused);
-			dev->SetRenderState((D3DRENDERSTATETYPE)42, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_MATTE);
-
-			dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-			dev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(CUSTOMVERTEX));
-
-			dev->SetVertexShader(og_vs);
-			dev->SetPixelShader(og_ps);
-			dev->SetTexture(0, og_tex);
-			dev->SetRenderState(D3DRS_ZWRITEENABLE, og_zwrite);
-			dev->SetTransform(D3DTS_VIEW, og_view);
-			dev->SetTransform(D3DTS_PROJECTION, og_proj);
-
-			model_render::get()->m_drew_hud = true;
+		// external callback (if registered)
+		if (get().is_initialized() && get().end_scene_callback_external) {
+			get().end_scene_callback_external();
 		}
-#endif
 	}
 
-	// called on device->Present
-	void remix_api::on_present_callback()
+	void remix_api::present_callback_internal()
 	{
-		main_module::hud_draw_area_info();
+		// external callback (if registered)
+		if (get().is_initialized() && get().present_callback_external) {
+			get().present_callback_external();
+		}
 	}
 
-	// #
-	// #
+	// ---
 
 	void remix_api::init_debug_lines()
 	{
@@ -187,7 +174,7 @@ namespace components
 				.normalTexture = L"",
 				.tangentTexture = L"",
 				.emissiveTexture = L"",
-				.emissiveIntensity = 0.1f,
+				.emissiveIntensity = 5.0f,
 				.emissiveColorConstant = { 1.0f, 0.0f, 0.0f },
 			};
 			m_bridge.CreateMaterial(&info, &m_debug_line_materials[0]);
@@ -263,7 +250,7 @@ namespace components
 		}
 
 		// perpendicular vector to line
-		Vector perp = dir.Cross(up); 
+		Vector perp = dir.Cross(up);
 		perp.Normalize();
 
 		// scale by half width to offset vertices
@@ -363,7 +350,7 @@ namespace components
 	{
 		// material
 		{
-			/*	// BlendType 
+			/*	// BlendType
 				kAlpha = 0,
 				kAlphaEmissive = 1,
 				kReverseAlphaEmissive = 2,
@@ -375,7 +362,7 @@ namespace components
 				kDoubleMultiplicative = 8,
 				kReverseAlpha = 9,
 				kReverseColor = 10,
-			
+
 				kMinValue = 0, // kAlpha
 				kMaxValue = 10, // kReverseColor */
 
@@ -408,7 +395,7 @@ namespace components
 				.emissiveColorConstant = color.ToRemixFloat3D(),
 			};
 
-			m_debug_circle_materials.push_back(nullptr); 
+			m_debug_circle_materials.push_back(nullptr);
 			m_bridge.CreateMaterial(&mat_info, &m_debug_circle_materials.back());
 		}
 
@@ -471,7 +458,7 @@ namespace components
 			Vector outer2_top = next_offset_outer + normal_offset;
 			Vector outer2_bottom = next_offset_outer - normal_offset;
 			Vector inner2_top = next_offset_inner + normal_offset;
-			Vector inner2_bottom =  next_offset_inner - normal_offset;
+			Vector inner2_bottom = next_offset_inner - normal_offset;
 
 			uint32_t idx = vertices.size();
 			vertices.push_back({ { outer1_top.x, outer1_top.y, outer1_top.z }, { normal.x, normal.y, normal.z }, {}, 0xFFFFFFFF });  // 0
@@ -512,9 +499,9 @@ namespace components
 			.surfaces_count = 1,
 		};
 
-		m_debug_circles.push_back({}); 
+		m_debug_circles.push_back({});
 
-		auto &circle = m_debug_circles.back();
+		auto& circle = m_debug_circles.back();
 
 		circle.transform.matrix[0][0] = 1.0f;
 		circle.transform.matrix[1][1] = 1.0f;
@@ -582,138 +569,119 @@ namespace components
 		debug_draw_box(center - half_diagonal, center + half_diagonal, line_width, color);
 	}
 
-	//void remix_api::flashlight_create_or_update(const char* player_name, const Vector& pos, const Vector& fwd, const Vector& rt, const Vector& up, bool is_enabled, bool is_player)
-	//{
-	//	if (const auto it = m_flashlights.find(player_name);
-	//		it == m_flashlights.end())
-	//	{
-	//		// insert new flashlight data
-	//		m_flashlights[player_name] =
-	//		{
-	//			.def = {.pos = pos, .fwd = fwd, .rt = rt, .up = up },
-	//			.is_player = is_player,
-	//			.is_enabled = is_enabled
-	//		};
-	//	}
-	//	else
-	//	{
-	//		// update existing flashlight data
-	//		it->second.def.pos = pos;
-	//		it->second.def.fwd = fwd;
-	//		it->second.def.rt = rt;
-	//		it->second.def.up = up;
-	//		it->second.is_player = is_player;
-	//		it->second.is_enabled = is_enabled;
-	//	}
-	//}
-
-	//void remix_api::flashlight_frame()
-	//{
-	//	if (const auto api = remix_api::get();
-	//		remix_api::is_initialized())
-	//	{
-	//		for (auto& [name, fl] : api->m_flashlights)
-	//		{
-	//			if (fl.handle)
-	//			{
-	//				api->m_bridge.DestroyLight(fl.handle);
-	//				fl.handle = nullptr;
-	//			}
-
-	//			if (fl.is_enabled)
-	//			{
-	//				const auto gs = game_settings::get();
-
-	//				auto& info = fl.info;
-	//				auto& ext = fl.ext;
-
-	//				ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
-	//				ext.pNext = nullptr;
-
-	//				/*const Vector light_org = fl.def.pos + 
-	//					(fl.is_player ? gs->flashlight_offset_player.get_as<float*>() :
-	//									gs->flashlight_offset_bot.get_as<float*>());*/
-
-	//				Vector lpos = fl.def.pos;
-	//				const Vector offs = fl.is_player ? gs->flashlight_offset_player.get_as<float*>() : gs->flashlight_offset_bot.get_as<float*>();
-	//				lpos += (fl.def.fwd * offs.x) + (fl.def.rt * offs.z) + (fl.def.up * offs.y);
-
-	//				ext.position = lpos.ToRemixFloat3D(); 
-
-	//				ext.radius = gs->flashlight_radius.get_as<float>();
-	//				ext.shaping_hasvalue = TRUE;
-	//				ext.shaping_value = {};
-
-	//				ext.shaping_value.direction = fl.def.fwd.ToRemixFloat3D();
-
-	//				ext.shaping_value.coneAngleDegrees = gs->flashlight_angle.get_as<float>();
-	//				ext.shaping_value.coneSoftness = gs->flashlight_softness.get_as<float>();
-	//				ext.shaping_value.focusExponent = gs->flashlight_expo.get_as<float>();
-
-	//				info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
-	//				info.pNext = &fl.ext;
-	//				info.hash = utils::string_hash64(utils::va("fl%s", name.c_str()));
-
-	//				const float intensity = gs->flashlight_intensity.get_as<float>();
-	//				info.radiance = remixapi_Float3D{ 20.0f * intensity, 20.0f * intensity, 20.0f * intensity };
-
-	//				api->m_bridge.CreateLight(&fl.info, &fl.handle);
-	//			}
-	//		}
-	//	}
-	//}
-
-	// called from main_module::on_renderview()
-	void remix_api::on_renderview()
+	void remix_api::flashlight_create_or_update(const char* player_name, flashlight_def_s& def, bool is_enabled, bool is_player)
 	{
-		if (is_initialized()) 
+		if (const auto it = m_flashlights.find(player_name);
+			it == m_flashlights.end())
 		{
-			//main_module::iterate_entities();
-			//remix_api::flashlight_frame();
-
-			init_debug_lines();
-
-			// destroy all lines added the prev. frame
-			if (m_debug_line_amount)
+			// insert new flashlight data
+			m_flashlights[player_name] =
 			{
-				for (auto& line : m_debug_line_list)
-				{
-					if (line)
-					{
-						m_bridge.DestroyMesh(line);
-						line = nullptr;
-					}
-				}
-				m_debug_line_amount = 0;
-			}
+				.def = std::move(def),
+				.is_player = is_player,
+				.is_enabled = is_enabled
+			};
+		}
+		else
+		{
+			// update existing flashlight data
+			it->second.def = std::move(def);
+			/*it->second.def.pos = def.pos;
+			it->second.def.fwd = def.fwd;
+			it->second.def.rt = def.rt;
+			it->second.def.up = def.up;*/
+			it->second.is_player = is_player;
+			it->second.is_enabled = is_enabled;
+		}
+	}
 
-			// destroy all circles materials added the prev. frame
-			if (!m_debug_circle_materials.empty())
+	void remix_api::flashlight_frame()
+	{
+		if (auto& api = remix_api::get();
+			api.is_initialized())
+		{
+			for (auto& [name, fl] : api.m_flashlights)
 			{
-				for (auto& m : m_debug_circle_materials)
+				if (fl.handle)
 				{
-					if (m) {
-						m_bridge.DestroyMaterial(m);
-					}
+					api.m_bridge.DestroyLight(fl.handle);
+					fl.handle = nullptr;
 				}
-				m_debug_circle_materials.clear();
+
+				if (fl.is_enabled)
+				{
+					//const auto gs = game_settings::get();
+
+					auto& info = fl.info;
+					auto& ext = fl.ext;
+
+					ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
+					ext.pNext = nullptr;
+
+					/*const Vector light_org = fl.def.pos +
+						(fl.is_player ? gs->flashlight_offset_player.get_as<float*>() :
+										gs->flashlight_offset_bot.get_as<float*>());*/
+
+					Vector lpos = fl.def.pos;
+					const Vector offs = fl.def.offset; //fl.is_player ? gs->flashlight_offset_player.get_as<float*>() : gs->flashlight_offset_bot.get_as<float*>();
+					lpos += (fl.def.fwd * offs.x) + (fl.def.rt * offs.z) + (fl.def.up * offs.y);
+
+					ext.position = lpos.ToRemixFloat3D();
+
+					ext.radius = fl.def.radius; //gs->flashlight_radius.get_as<float>();
+					ext.shaping_hasvalue = TRUE;
+					ext.shaping_value = {};
+
+					ext.shaping_value.direction = fl.def.fwd.ToRemixFloat3D();
+
+					ext.shaping_value.coneAngleDegrees = fl.def.angle; //gs->flashlight_angle.get_as<float>();
+					ext.shaping_value.coneSoftness = fl.def.softness; //gs->flashlight_softness.get_as<float>();
+					ext.shaping_value.focusExponent = fl.def.expo; //gs->flashlight_expo.get_as<float>();
+
+					info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+					info.pNext = &fl.ext;
+					info.hash = utils::string_hash64(utils::va("fl%s", name.c_str()));
+
+					const float intensity = fl.def.intensity; //gs->flashlight_intensity.get_as<float>();
+					info.radiance = remixapi_Float3D{ 20.0f * intensity, 20.0f * intensity, 20.0f * intensity };
+
+					api.m_bridge.CreateLight(&fl.info, &fl.handle);
+				}
 			}
 		}
 	}
 
-	// #
-	// #
+	// ---
 
-	remix_api::remix_api()
+	void remix_api::initialize(
+		PFN_remixapi_BridgeCallback begin_scene_callback,
+		PFN_remixapi_BridgeCallback end_scene_callback,
+		PFN_remixapi_BridgeCallback present_callback, 
+		bool is_asi)
 	{
-		p_this = this;
-
-		if (const auto status = remixapi::bridge_initRemixApi(&m_bridge); 
-			status == REMIXAPI_ERROR_CODE_SUCCESS)
+		auto& instance = get();
+		if (!instance.m_initialized)
 		{
-			remixapi::bridge_setRemixApiCallbacks(begin_scene_callback, end_scene_callback, on_present_callback);
-			m_initialized = true;
+			if (const auto status = remixapi::bridge_initRemixApi(&instance.m_bridge, is_asi);
+				status == REMIXAPI_ERROR_CODE_SUCCESS)
+			{
+				instance.begin_scene_callback_external = begin_scene_callback;
+				instance.end_scene_callback_external = end_scene_callback;
+				instance.present_callback_external = present_callback;
+
+				remixapi::bridge_setRemixApiCallbacks(begin_scene_callback_internal, end_scene_callback_internal, present_callback_internal);
+
+				instance.init_debug_lines();
+
+				instance.m_debug_circles.reserve(512);
+				instance.m_debug_circle_materials.reserve(512);
+
+				instance.m_initialized = true;
+				common::log("RemixApi", "Initialized RemixApi", common::LOG_TYPE::LOG_TYPE_STATUS, true);
+			}
+			else {
+				common::log("RemixApi", std::format("Failed to initialize the remixApi - Code: {:d}", static_cast<int>(status)), common::LOG_TYPE::LOG_TYPE_ERROR, true);
+			}
 		}
-		else { game::console(); std::cout <<"[!][RemixApi] Failed to initialize the remixApi - Code: " << std::to_string(status) << "\n"; }
 	}
 }
