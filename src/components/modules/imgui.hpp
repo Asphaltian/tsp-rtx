@@ -52,6 +52,10 @@ namespace components
 		Vector m_debug_vector = { 0.0f, 0.0f, 0.0f };
 		Vector m_debug_vector2 = { 0.0f, 0.0f, 0.0f };
 
+		float m_debug_float01 = 0.0f;
+		float m_debug_float02 = 0.0f;
+		float m_debug_float03 = 0.0f;
+
 		bool m_disable_ms_unbake_check = false;
 
 		bool m_was_mapsettings_tab_open = false;

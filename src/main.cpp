@@ -155,6 +155,7 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	SetWindowTextA(glob::main_window, "Portal 2 - RTX");
 #endif
 
+	Sleep(500);
 	p2::main();
 	return TRUE;
 }
@@ -169,7 +170,7 @@ BOOL APIENTRY DllMain(HMODULE hmodule, const DWORD ul_reason_for_call, LPVOID)
 		globals::setup_homepath();
 
 		common::set_console_color_blue(true);
-		std::cout << "Launching GTAIV RTX Remix Compatiblity Mod Version [" << GIT_DESCRIBE << "]\n";
+		std::cout << "Launching Portal 2 RTX Remix Compatiblity Mod Version [" << GIT_DESCRIBE << "]\n";
 		std::cout << "> Compiled On : " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
 		std::cout << "> https://github.com/xoxor4d/p2-rtx\n\n";
 		common::set_console_color_default();

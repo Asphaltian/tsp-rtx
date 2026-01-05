@@ -25,9 +25,6 @@ namespace components
 		static void xo_gamesettings_update_fn();
 		static void delayed_init();
 
-	private:
-		bool m_initialized = false;
-
 		union var_value
 		{
 			bool boolean;
@@ -159,6 +156,30 @@ namespace components
 				return out;
 			}
 
+			const bool& _bool(const bool default_value = false) const
+			{
+				assert(m_type == var_type_boolean && "Type mismatch: expected boolean");
+				return !default_value ? m_var.boolean : m_var_default.boolean;
+			}
+
+			const bool* _bool_ptr(const bool default_value = false)
+			{
+				assert(m_type == var_type_boolean && "Type mismatch: expected boolean");
+				return &(!default_value ? m_var.boolean : m_var_default.boolean);
+			}
+
+			const float& _float(const bool default_value = false) const
+			{
+				assert(m_type == var_type_value && "Type mismatch: expected float");
+				return !default_value ? m_var.value[0] : m_var_default.value[0];
+			}
+
+			const float* _float_ptr(const bool default_value = false)
+			{
+				assert(m_type == var_type_value && "Type mismatch: expected float");
+				return !default_value ? m_var.value : m_var_default.value;
+			}
+
 			template <typename T>
 			T get_as(bool default_val = false)
 			{
@@ -283,6 +304,9 @@ namespace components
 			var_type m_type;
 		};
 
+	private:
+		bool m_initialized = false;
+
 		struct var_definitions
 		{
 			variable lod_forcing =
@@ -362,6 +386,20 @@ namespace components
 				"player_backwards_offset",
 				"Can be used to offset the shadow casting first person player body backwards. Same logic as found within remix but without the body mesh getting smeary.",
 				18.0f
+			};
+
+			variable vgui_progress_board_emissive_offset =
+			{
+				"vgui_progress_board_emissive_offset",
+				"Additional emissive offset applied to progress boards.",
+				3.0f
+			};
+
+			variable enable_dual_layered_water =
+			{
+				"enable_dual_layered_water",
+				"Draws a secondary water layer over water.",
+				true
 			};
 		};
 

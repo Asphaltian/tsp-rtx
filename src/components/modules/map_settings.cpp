@@ -9,6 +9,7 @@
 #include "components/common/flags.hpp"
 #include "components/common/remix_api.hpp"
 #include "components/common/toml.hpp"
+#include "toml11/parser.hpp"
 
 namespace components
 {
@@ -221,7 +222,8 @@ namespace components
 	{
 		try
 		{
-			auto config = toml::parse(COMPMOD_ASSET_DIR "map_settings.toml", toml::spec::v(1, 1, 0));
+			const std::string file_path = globals::root_path + COMPMOD_ASSET_DIR "map_settings.toml";
+			auto config = toml::parse(file_path, toml::spec::v(1, 1, 0));
 
 			// #
 			auto to_float = [](const toml::value& entry, const float default_val = 0.0f)

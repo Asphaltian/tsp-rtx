@@ -4,7 +4,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 
-#define COMPMOD_ASSET_DIR "portal2-rtx\\"
+#define COMPMOD_ASSET_DIR "\\portal2-rtx\\"
 
 // enable/disable benchmark logic
 //#define BENCHMARK

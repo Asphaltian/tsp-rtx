@@ -17,10 +17,10 @@ namespace p2
 	void main()
 	{
 		// init remix api
-		/*common::remix_api::initialize(nullptr, nullptr, []
+		common::remix_api::initialize(nullptr, nullptr, []
 		{
 			main_module::hud_draw_area_info();
-		}, false);*/
+		}, false);
 
 		game_settings::delayed_init();
 

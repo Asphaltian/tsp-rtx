@@ -107,33 +107,44 @@ namespace components
 			return;
 		}
 
+		common::log("ModelRenderer", "Loading CompMod Textures ...", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
+
+		auto load_texture = [](IDirect3DDevice9* dev, const char* filename, LPDIRECT3DTEXTURE9* tex)
+			{
+				const std::string file_path = globals::root_path + COMPMOD_ASSET_DIR "textures\\" + filename;
+
+				HRESULT hr;
+				hr = D3DXCreateTextureFromFileA(dev, file_path.c_str(), tex);
+				if (FAILED(hr)) common::log("Renderer", std::format("Failed to load {}", file_path), common::LOG_TYPE::LOG_TYPE_ERROR, true);
+			};
+
 		const auto dev = game::get_d3d_device();
 
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_mask.png", &tex_addons::portal_mask);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_blue.png", &tex_addons::portal_blue);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_blue_overlay.png", &tex_addons::portal_blue_overlay);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_blue_closed.png", &tex_addons::portal_blue_closed);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_orange.png", &tex_addons::portal_orange);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_orange_overlay.png", &tex_addons::portal_orange_overlay);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_orange_closed.png", &tex_addons::portal_orange_closed);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_red.png", &tex_addons::portal_red);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\portal_purple.png", &tex_addons::portal_purple);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\glass_shards.png", &tex_addons::glass_shards);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\glass_window_refract.png", &tex_addons::glass_window_lamps);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\glass_window_observ.png", &tex_addons::glass_window_observ);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\black_shader.png", &tex_addons::black_shader);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\laser_blue_dualrender_alpha_col.png", &tex_addons::blue_laser_dualrender);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_ft.jpg", &tex_addons::sky_gray_ft);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_bk.jpg", &tex_addons::sky_gray_bk);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_lf.jpg", &tex_addons::sky_gray_lf);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_rt.jpg", &tex_addons::sky_gray_rt);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_up.jpg", &tex_addons::sky_gray_up);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\graycloud_dn.jpg", &tex_addons::sky_gray_dn);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill.png", &tex_addons::emancipation_grill);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill_bg.png", &tex_addons::emancipation_grill_bg);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\emancipation_grill_emissive.png", &tex_addons::emancipation_grill_emissive);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\water_drip.png", &tex_addons::water_drip);
-		D3DXCreateTextureFromFileA(dev, "portal2-rtx\\textures\\white.dds", &tex_addons::white);
+		load_texture(dev, "portal_mask.png", &tex_addons::portal_mask);
+		load_texture(dev, "portal_blue.png", &tex_addons::portal_blue);
+		load_texture(dev, "portal_blue_overlay.png", &tex_addons::portal_blue_overlay);
+		load_texture(dev, "portal_blue_closed.png", &tex_addons::portal_blue_closed);
+		load_texture(dev, "portal_orange.png", &tex_addons::portal_orange);
+		load_texture(dev, "portal_orange_overlay.png", &tex_addons::portal_orange_overlay);
+		load_texture(dev, "portal_orange_closed.png", &tex_addons::portal_orange_closed);
+		load_texture(dev, "portal_red.png", &tex_addons::portal_red);
+		load_texture(dev, "portal_purple.png", &tex_addons::portal_purple);
+		load_texture(dev, "glass_shards.png", &tex_addons::glass_shards);
+		load_texture(dev, "glass_window_refract.png", &tex_addons::glass_window_lamps);
+		load_texture(dev, "glass_window_observ.png", &tex_addons::glass_window_observ);
+		load_texture(dev, "black_shader.png", &tex_addons::black_shader);
+		load_texture(dev, "laser_blue_dualrender_alpha_col.png", &tex_addons::blue_laser_dualrender);
+		load_texture(dev, "graycloud_ft.jpg", &tex_addons::sky_gray_ft);
+		load_texture(dev, "graycloud_bk.jpg", &tex_addons::sky_gray_bk);
+		load_texture(dev, "graycloud_lf.jpg", &tex_addons::sky_gray_lf);
+		load_texture(dev, "graycloud_rt.jpg", &tex_addons::sky_gray_rt);
+		load_texture(dev, "graycloud_up.jpg", &tex_addons::sky_gray_up);
+		load_texture(dev, "graycloud_dn.jpg", &tex_addons::sky_gray_dn);
+		load_texture(dev, "emancipation_grill.png", &tex_addons::emancipation_grill);
+		load_texture(dev, "emancipation_grill_bg.png", &tex_addons::emancipation_grill_bg);
+		load_texture(dev, "emancipation_grill_emissive.png", &tex_addons::emancipation_grill_emissive);
+		load_texture(dev, "water_drip.png", &tex_addons::water_drip);
+		load_texture(dev, "white.dds", &tex_addons::white);
 	}
 
 	// check for specific material var and return it in 'out_var'
@@ -186,29 +197,55 @@ namespace components
 		}
 	}
 
-	// uses unused Renderstate 149 to tweak the emissive intensity of remix legacy materials
-	// ~ currently req. runtime changes
-	void set_remix_emissive_intensity(IDirect3DDevice9* dev, prim_fvf_context& ctx, float intensity)
+
+	// Uses unused Renderstate 149 to set per drawcall modifiers
+	// ~ req. runtime changes
+	void model_render::set_remix_modifier(IDirect3DDevice9* dev, RemixModifier mod)
 	{
-		ctx.save_rs(dev, (D3DRENDERSTATETYPE)149);
-		dev->SetRenderState((D3DRENDERSTATETYPE)149, *reinterpret_cast<DWORD*>(&intensity));
+		primctx.save_rs(dev, RS_149_REMIX_MODIFIER);
+		primctx.modifiers.remix_modifier |= mod;
+		dev->SetRenderState((D3DRENDERSTATETYPE)RS_149_REMIX_MODIFIER, static_cast<DWORD>(primctx.modifiers.remix_modifier));
 	}
 
-	// set remix texture categories - RemixInstanceCategories
-	// ~ currently req. runtime changes
-	void set_remix_texture_categories(IDirect3DDevice9* dev, prim_fvf_context& ctx, const std::uint32_t& cat)
+	// Uses unused Renderstate 149 & 169 to tweak the emissive intensity of remix materials (legacy/opaque)
+	// ~ currently req. runtime changes --> remixTempFloat01FromD3D
+	/// @param no_overrides	will not override any previously set intensity if true
+	void model_render::set_remix_emissive_intensity(IDirect3DDevice9* dev, float intensity, bool no_overrides)
 	{
-		
-		ctx.save_rs(dev, (D3DRENDERSTATETYPE)42);
-		dev->SetRenderState((D3DRENDERSTATETYPE)42, cat);
+		const bool result = primctx.save_rs(dev, RS_169_EMISSIVE_SCALE);
+		if (!result && no_overrides) {
+			return;
+		}
+
+		primctx.info.shaderconst_emissive_intensity = intensity;
+		set_remix_modifier(dev, RemixModifier::EmissiveScalar);
+		set_remix_free_float_rs169(dev, intensity);
 	}
 
-	// set custom remix hash
-	// ~ currently req. runtime changes
-	void set_remix_texture_hash(IDirect3DDevice9* dev, prim_fvf_context& ctx, const std::uint32_t& hash)
+	// Uses unused Renderstate 42 to set remix texture categories
+	// ~ req. runtime changes
+	void model_render::set_remix_texture_categories(IDirect3DDevice9* dev, const InstanceCategories& cat)
 	{
-		ctx.save_rs(dev, (D3DRENDERSTATETYPE)150);
-		dev->SetRenderState((D3DRENDERSTATETYPE)150, hash);
+		primctx.save_rs(dev, RS_42_TEXTURE_CATEGORY);
+		primctx.modifiers.remix_instance_categories |= cat;
+		dev->SetRenderState((D3DRENDERSTATETYPE)RS_42_TEXTURE_CATEGORY, static_cast<DWORD>(primctx.modifiers.remix_instance_categories));
+	}
+
+	// Uses unused Renderstate 150 to set custom remix hash
+	// ~ req. runtime changes
+	void model_render::set_remix_texture_hash(IDirect3DDevice9* dev, const std::uint32_t& hash)
+	{
+		primctx.save_rs(dev, RS_150_TEXTURE_HASH);
+		dev->SetRenderState((D3DRENDERSTATETYPE)RS_150_TEXTURE_HASH, hash);
+	}
+
+	// uses unused Renderstate 169 to pass per drawcall data
+	// - used by emissive scalar mod
+	// ~ req. runtime changes --> remixFloatRS169FromD3D
+	void model_render::set_remix_free_float_rs169(IDirect3DDevice9* dev, float value)
+	{
+		primctx.save_rs(dev, RS_169_EMISSIVE_SCALE);
+		dev->SetRenderState((D3DRENDERSTATETYPE)RS_169_EMISSIVE_SCALE, *reinterpret_cast<DWORD*>(&value));
 	}
 
 
@@ -736,8 +773,8 @@ namespace components
 			}
 
 			// this requires dxvk-remix modifications (https://github.com/NVIDIAGameWorks/dxvk-remix/pull/79)
-			set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_OPACITY_MICROMAP | REMIXAPI_INSTANCE_CATEGORY_BIT_DECAL_STATIC);
-			set_remix_texture_hash(dev, ctx, 0x1337);
+			model_render::set_remix_texture_categories(dev, InstanceCategories::IgnoreOpacityMicromap | InstanceCategories::DecalStatic);
+			model_render::set_remix_texture_hash(dev, 0x1337);
 		}
 	}
 
@@ -1541,6 +1578,7 @@ namespace components
 
 		auto& ctx = model_render::primctx;
 		const auto shaderapi = game::get_shaderapi();
+		const auto gs = game_settings::get();
 
 		if (ctx.get_info_for_pass(shaderapi)) 
 		{
@@ -1566,7 +1604,7 @@ namespace components
 								// we only need one surface
 								ctx.modifiers.as_water = true;
 								ctx.modifiers.og_mesh_z_offset = ms.water_offset_bottom;
-								ctx.modifiers.dual_render_with_specified_texture = true;
+								ctx.modifiers.dual_render_with_specified_texture = gs->enable_dual_layered_water._bool();
 								ctx.modifiers.dual_render_texture_z_offset = ms.water_offset_top; //0.5f;
 								ctx.modifiers.dual_render_texture = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[2]);
 
@@ -1613,7 +1651,7 @@ namespace components
 
 								const auto& ms = map_settings::get_map_settings();
 								ctx.modifiers.og_mesh_z_offset = ms.water_offset_bottom;
-								ctx.modifiers.dual_render_with_specified_texture = true;
+								ctx.modifiers.dual_render_with_specified_texture = gs->enable_dual_layered_water._bool();;
 								ctx.modifiers.dual_render_texture_z_offset = ms.water_offset_top;
 								ctx.modifiers.dual_render_texture = shaderapi->vtbl->GetD3DTexture(shaderapi, nullptr, ctx.info.buffer_state.m_BoundTexture[2]);
 							}
@@ -1634,11 +1672,11 @@ namespace components
 
 		// hack for runtime hack: https://github.com/xoxor4d/dxvk-remix/commit/3867843a68db7ec8a5ab603a250689cca1505970
 		// TODO: fix this asap
-		if (static bool runtime_hack_once = false; !runtime_hack_once)
+		/*if (static bool runtime_hack_once = false; !runtime_hack_once)
 		{
 			runtime_hack_once = true;
-			set_remix_emissive_intensity(dev, ctx, 0.0f);
-		}
+			model_render::set_remix_emissive_intensity(dev, 0.0f);
+		}*/
 
 		if (ff_bmodel::s_shader && mesh->m_VertexFormat == 0x2480033)
 		{
@@ -1688,7 +1726,7 @@ namespace components
 					dev->SetTexture(0, tex_addons::glass_shards);
 
 					if (map_settings::is_level.sp_a1_intro1) {
-						set_remix_texture_hash(dev, ctx, 0xB9C1E4B); // glass_shards_intro1
+						model_render::set_remix_texture_hash(dev, 0xB9C1E4B); // glass_shards_intro1
 					}
 				}
 			}
@@ -1745,7 +1783,7 @@ namespace components
 					using_custom_transform = true;
 				}
 
-				set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_THIRD_PERSON_PLAYER_BODY | REMIXAPI_INSTANCE_CATEGORY_BIT_THIRD_PERSON_PLAYER_MODEL);
+				model_render::set_remix_texture_categories(dev, InstanceCategories::ThirdPersonPlayerBody | InstanceCategories::ThirdPersonPlayerModel);
 			}
 
 
@@ -1932,8 +1970,8 @@ namespace components
 				// render bik using shaders
 				else if (ctx.info.material_name.starts_with("videobik") || ctx.info.material_name.starts_with("media/"))
 				{
-					set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_DECAL_STATIC);
-					set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
+					model_render::set_remix_texture_categories(dev, InstanceCategories::DecalStatic);
+					model_render::set_remix_texture_hash(dev, utils::string_hash32(ctx.info.material_name));
 
 					// works but not of much use if we cant use the albedo as emissive
 					//ctx.save_rs(dev, D3DRS_TEXTUREFACTOR);
@@ -2386,7 +2424,7 @@ namespace components
 					bool is_world_ui_text = ctx.info.buffer_state.m_Transform[0].m[3][0] != 0.0f && ctx.info.material_name == "vgui__fontpage";
 
 					if (is_world_ui_text) {
-						set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_UI);
+						model_render::set_remix_texture_categories(dev, InstanceCategories::WorldUI);
 					}
 
 					// vgui/screens/vgui_coop_progress_board
@@ -2454,7 +2492,9 @@ namespace components
 							vcol_g * scalar, 
 							vcol_b * scalar, 1.0f));
 
-						set_remix_emissive_intensity(dev, ctx, model_render::vgui_progress_board_scalar);
+						model_render::vgui_progress_board_scalar += gs->vgui_progress_board_emissive_offset._float();
+						model_render::set_remix_emissive_intensity(dev, model_render::vgui_progress_board_scalar);
+						model_render::set_remix_modifier(dev, RemixModifier::EmissiveForceOnWithAlbedo);
 					}
 
 					else if (is_world_ui_text
@@ -2622,7 +2662,7 @@ namespace components
 				const bool is_spark = ctx.info.material_name.starts_with("particle/sparks/"); //|| ctx.info.material_name == "particle/particle_glow_02_additive_trail";
 
 				if (is_spark || ctx.info.material_name.ends_with("additive_trail")) {
-					set_remix_emissive_intensity(dev, ctx, 2.0f);
+					model_render::set_remix_emissive_intensity(dev, 2.0f);
 				}
 
 #ifdef SPRITE_TRAIL_TEST
@@ -2749,7 +2789,7 @@ namespace components
 						{
 							// modify light of add-light-to-texture light
 							add_light_to_texture_color_edit(0.4f, 0.85f, 0.55f, 0.001f);
-							set_remix_emissive_intensity(dev, ctx, 0.2f);
+							model_render::set_remix_emissive_intensity(dev, 0.2f);
 						}
 					}
 				}
@@ -3043,7 +3083,7 @@ namespace components
 					//ctx.save_rs(dev, D3DRS_DESTBLEND);
 					//dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 					//dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-					set_remix_emissive_intensity(dev, ctx, 0.01f);
+					model_render::set_remix_emissive_intensity(dev, 0.01f);
 				}
 
 				if (!disable_vertex_color_modulation) 
@@ -3205,9 +3245,8 @@ namespace components
 				dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 				dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 
-				if (ctx.info.material_name == "particle/vistasmokev1_add_nearcull")
-				{
-					set_remix_emissive_intensity(dev, ctx, 0.01f);
+				if (ctx.info.material_name == "particle/vistasmokev1_add_nearcull") {
+					model_render::set_remix_emissive_intensity(dev, 0.01f);
 				}
 			}
 			
@@ -3552,7 +3591,7 @@ namespace components
 
 			//add_light_to_texture_color_edit(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs);
 
-			set_remix_texture_hash(dev, ctx, utils::string_hash32("emancidual")); 
+			model_render::set_remix_texture_hash(dev, utils::string_hash32("emancidual"));
 
 			// draw surface a second time
 			dev->DrawIndexedPrimitive(type, base_vert_index, min_vert_index, num_verts, start_index, prim_count);
@@ -3610,7 +3649,7 @@ namespace components
 				ctx.save_rs(dev, D3DRS_ZENABLE);
 				dev->SetRenderState(D3DRS_ZENABLE, FALSE);
 
-				set_remix_texture_categories(dev, ctx, REMIXAPI_INSTANCE_CATEGORY_BIT_WORLD_MATTE | REMIXAPI_INSTANCE_CATEGORY_BIT_IGNORE_OPACITY_MICROMAP);
+				model_render::set_remix_texture_categories(dev, InstanceCategories::WorldMatte | InstanceCategories::IgnoreOpacityMicromap);
 			}
 
 			if (ctx.modifiers.dual_render_texture_z_offset != 0.0f)
@@ -3621,7 +3660,7 @@ namespace components
 
 			if (ctx.modifiers.as_water) 
 			{
-				set_remix_texture_hash(dev, ctx, utils::string_hash32(ctx.info.material_name));
+				model_render::set_remix_texture_hash(dev, utils::string_hash32(ctx.info.material_name));
 
 				const auto& scale_setting = map_settings::get_map_settings().water_uv_top_scale;
 				if (!utils::float_equal(scale_setting, 0.0f)) // use scale of parent (bottom) water surface if 0

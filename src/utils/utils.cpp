@@ -349,7 +349,13 @@ namespace utils
 	*/
 	bool open_file_homepath(const std::string& sub_dir, const std::string& file_name, std::ifstream& file)
 	{
-		file.open(globals::root_path + sub_dir + "\\" + file_name);
+		const std::filesystem::path path = globals::root_path + "\\" + sub_dir + file_name;
+
+		if (!std::filesystem::exists(path)) {
+			return false;
+		}
+
+		file.open(globals::root_path + "\\" + sub_dir + "\\" + file_name);
 		if (!file.is_open()) {
 			return false;
 		}

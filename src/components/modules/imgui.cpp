@@ -35,6 +35,9 @@ namespace components
 	{
 		bool pass_msg_to_game = false;
 
+		//common::log("ImGui", utils::va("MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam));
+		//printf("MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam);
+
 		switch (message_type)
 		{
 		case WM_KEYUP: // always pass button up events to prevent "stuck" game keys
@@ -43,7 +46,9 @@ namespace components
 		case WM_NCLBUTTONDOWN: case WM_NCLBUTTONUP: case WM_NCMOUSEMOVE: case WM_NCMOUSELEAVE:
 		case WM_WINDOWPOSCHANGED: //case WM_WINDOWPOSCHANGING:
 
-		//case WM_INPUT:
+		/*case WM_MOUSEFIRST:
+		case WM_PAINT:*/
+
 		//case WM_NCHITTEST: // sets cursor to center
 		//case WM_SETCURSOR: case WM_CAPTURECHANGED:
 
@@ -77,8 +82,9 @@ namespace components
 			}
 		}
 
-		//game::console(); printf("MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam);
-			
+		//printf("-------------- PASS: MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam);
+		//common::log("ImGui", utils::va("-------- PASS: MSG 0x%x -- w: 0x%x -- l: 0x%x\n", message_type, wparam, lparam));
+
 		return CallWindowProc(g_game_wndproc, window, message_type, wparam, lparam);
 	}
 
@@ -507,6 +513,10 @@ namespace components
 
 				ImGui::DragFloat3("Debug Vector", &im->m_debug_vector.x, 0.01f);
 				ImGui::DragFloat3("Debug Vector 2", &im->m_debug_vector2.x, 0.01f);
+
+				ImGui::DragFloat("Debug Float 1", &im->m_debug_float01, 0.01f);
+				ImGui::DragFloat("Debug Float 2", &im->m_debug_float02, 0.01f);
+				ImGui::DragFloat("Debug Float 3", &im->m_debug_float03, 0.01f);
 
 				ImGui::Spacing(0, 6);
 
@@ -3383,6 +3393,22 @@ namespace components
 	// #
 	// #
 
+	bool compsettings_bool_widget(const char* desc, game_settings::variable& var)
+	{
+		const auto gs_var_ptr = var.get_as<bool*>();
+		const bool result = ImGui::Checkbox(desc, gs_var_ptr);
+		TT(var.get_tooltip_string().c_str());
+		return result;
+	}
+
+	bool compsettings_float_widget(const char* desc, game_settings::variable& var, const float& min = 0.0f, const float& max = 0.0f, const float& speed = 0.02f)
+	{
+		const auto gs_var_ptr = var.get_as<float*>();
+		const bool result = ImGui::DragFloat(desc, gs_var_ptr, speed, min, max, "%.2f", (min != 0.0f || max != 0.0f) ? ImGuiSliderFlags_AlwaysClamp : ImGuiSliderFlags_None);
+		TT(var.get_tooltip_string().c_str());
+		return result;
+	}
+
 	void cont_gamesettings_flashlight()
 	{
 		//const auto gs = game_settings::get();
@@ -3471,21 +3497,22 @@ namespace components
 	void cont_gamesettings_renderer_settings()
 	{
 		const auto gs = game_settings::get();
-		ImGui::Checkbox("Enable LOD Forcing", gs->lod_forcing.get_as<bool*>()); TT(gs->lod_forcing.get_tooltip_string().c_str());
-		ImGui::Checkbox("Force Graphic Settings", gs->force_graphic_settings.get_as<bool*>()); TT(gs->force_graphic_settings.get_tooltip_string().c_str());
-		ImGui::Checkbox("Portal Visibility Culling", gs->portal_visibility_culling.get_as<bool*>()); TT(gs->portal_visibility_culling.get_tooltip_string().c_str());
-		ImGui::Checkbox("Check Nodes (Visleafs) For Potential Lights", gs->check_nodes_for_potential_lights.get_as<bool*>()); TT(gs->check_nodes_for_potential_lights.get_tooltip_string().c_str());
-		ImGui::Checkbox("Spotlight Billboard Spawning", gs->spotlight_billboard_spawning.get_as<bool*>()); TT(gs->spotlight_billboard_spawning.get_tooltip_string().c_str());
-		ImGui::Checkbox("Emancipationgrill Emissive Proxy", gs->emancipationgrill_emissive_proxy_old.get_as<bool*>()); TT(gs->emancipationgrill_emissive_proxy_old.get_tooltip_string().c_str());
-		ImGui::Checkbox("Use Brush(model) Fast Path", gs->use_brushfastpath.get_as<bool*>()); TT(gs->use_brushfastpath.get_tooltip_string().c_str());
+		compsettings_bool_widget("Enable LOD Forcing", gs->lod_forcing);
+		compsettings_bool_widget("Force Graphic Settings", gs->force_graphic_settings);
+		compsettings_bool_widget("Portal Visibility Culling", gs->portal_visibility_culling);
+		compsettings_bool_widget("Check Nodes (Visleafs) For Potential Lights", gs->check_nodes_for_potential_lights);
+		compsettings_bool_widget("Spotlight Billboard Spawning", gs->spotlight_billboard_spawning);
+		compsettings_bool_widget("Emancipationgrill Emissive Proxy", gs->emancipationgrill_emissive_proxy_old);
+		compsettings_bool_widget("Use Brush(model) Fast Path", gs->use_brushfastpath);
 
+		compsettings_float_widget("VGUI Progress Board Emissive Offset", gs->vgui_progress_board_emissive_offset, 0.0f, 20.0f);
 
 		/*if (ImGui::Checkbox("Enable 3D Skybox (very unstable)", gs->enable_3d_sky.get_as<bool*>())) {
 			remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, gs->enable_3d_sky.get_as<bool>() ? "1" : "0"));
 		}
 		TT(gs->enable_3d_sky.get_tooltip_string().c_str());*/
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
+		//SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
 		auto gs_nocull_dist_ptr = game_settings::get()->default_nocull_distance.get_as<float*>();
 		if (ImGui::DragFloat("Def. NoCull Dist", gs_nocull_dist_ptr, 0.5f, 0.0f, FLT_MAX, "%.2f")) 
 		{
@@ -3494,13 +3521,11 @@ namespace components
 		}
 		TT(gs->default_nocull_distance.get_tooltip_string().c_str());
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		ImGui::DragFloat("Debug Info Distance", gs->debug_info_distance.get_as<float*>(), 0.1f);
-		TT(gs->debug_info_distance.get_tooltip_string().c_str());
+		compsettings_float_widget("Debug Info Distance", gs->debug_info_distance, 0.0f, 0.0f, 0.1f);
+		compsettings_float_widget("Player Backwards Offset", gs->player_backwards_offset, 0.0f, 0.0f, 0.01f);
 
-		SET_CHILD_WIDGET_WIDTH_MAN(120.0f);
-		ImGui::DragFloat("Player Backwards Offset", gs->player_backwards_offset.get_as<float*>(), 0.01f);
-		TT(gs->player_backwards_offset.get_tooltip_string().c_str());
+
+		compsettings_bool_widget("Enable Dual Layered Water", gs->enable_dual_layered_water);
 	}
 
 	void imgui::tab_game_settings()
