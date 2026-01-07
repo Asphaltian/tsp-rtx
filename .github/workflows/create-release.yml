@@ -57,12 +57,12 @@ jobs:
       - name: Extract d3d9 runtime
         shell: pwsh
         run: |
-          if (Test-Path "assets/.trex/d3d9_runtime.zip") {
+          if (Test-Path "assets/bin/.trex/d3d9_runtime.zip") {
             Expand-Archive `
-              -Path assets/.trex/d3d9_runtime.zip `
-              -DestinationPath assets/.trex `
+              -Path assets/bin/.trex/d3d9_runtime.zip `
+              -DestinationPath assets/bin/.trex `
               -Force
-            Remove-Item assets/.trex/d3d9_runtime.zip
+            Remove-Item assets/bin/.trex/d3d9_runtime.zip
           }
 
       - name: Prepare release files

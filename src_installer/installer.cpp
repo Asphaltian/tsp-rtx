@@ -4,15 +4,16 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <shlobj.h>
-#include <urlmon.h>
-#include <objbase.h>
+#include <winhttp.h>
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 
-#pragma comment(lib, "urlmon.lib")
+#pragma comment(lib, "winhttp.lib")
 
 std::string open_file_dialog()
 {
@@ -134,101 +135,6 @@ bool extract_single_file_from_zip(const std::filesystem::path& zip_path, const s
 	return result;
 }
 
-// Progress callback for URLDownloadToFileW (native Windows, no external deps)
-struct DownloadProgressCallback final : IBindStatusCallback
-{
-	ULONG refCount = 1;
-	ULONGLONG startTick = 0;
-	ULONG lastProgressPercent = 101;
-
-	// IUnknown
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) override
-	{
-		if (!ppvObject) return E_POINTER;
-		*ppvObject = nullptr;
-		if (riid == IID_IUnknown || riid == IID_IBindStatusCallback) {
-			*ppvObject = static_cast<IBindStatusCallback*>(this);
-			AddRef();
-			return S_OK;
-		}
-		return E_NOINTERFACE;
-	}
-
-	ULONG STDMETHODCALLTYPE AddRef(void) override
-	{
-		return ++refCount;
-	}
-
-	ULONG STDMETHODCALLTYPE Release(void) override
-	{
-		ULONG r = --refCount;
-		if (r == 0) {
-			delete this;
-		}
-		return r;
-	}
-
-	// IBindStatusCallback
-	HRESULT STDMETHODCALLTYPE OnStartBinding(DWORD /*dwReserved*/, IBinding* /*pib*/) override
-	{
-		startTick = GetTickCount64();
-		lastProgressPercent = 101;
-		std::cout << "Downloading... 0%" << std::flush;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE GetPriority(LONG* /*pnPriority*/) override { return E_NOTIMPL; }
-	HRESULT STDMETHODCALLTYPE OnLowResource(DWORD /*reserved*/) override { return S_OK; }
-
-	HRESULT STDMETHODCALLTYPE OnProgress(ULONG ulProgress, ULONG ulProgressMax, ULONG /*ulStatusCode*/, LPCWSTR /*szStatusText*/) override
-	{
-		if (ulProgressMax == 0) {
-			return S_OK;
-		}
-
-		const ULONG percent = static_cast<ULONG>((static_cast<unsigned long long>(ulProgress) * 100ull) / ulProgressMax);
-		if (percent == lastProgressPercent) {
-			return S_OK;
-		}
-		lastProgressPercent = percent;
-
-		const ULONGLONG now = GetTickCount64();
-		const double seconds = (now > startTick) ? (static_cast<double>(now - startTick) / 1000.0) : 0.0;
-		const double bytes = static_cast<double>(ulProgress);
-		const double bytes_per_sec = (seconds > 0.0) ? (bytes / seconds) : 0.0;
-		const double mb_per_sec = bytes_per_sec / (1024.0 * 1024.0);
-
-		std::cout << "\rDownloading... " << percent << "%";
-		if (mb_per_sec > 0.01) {
-			std::cout << " (" << mb_per_sec << " MB/s)";
-		}
-		std::cout << std::flush;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnStopBinding(HRESULT /*hresult*/, LPCWSTR /*szError*/) override
-	{
-		std::cout << "\rDownloading... done.           \n" << std::flush;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE GetBindInfo(DWORD* grfBINDF, BINDINFO* pbindinfo) override
-	{
-		if (!grfBINDF || !pbindinfo) {
-			return E_POINTER;
-		}
-
-		// Use conservative defaults; URLDownloadToFileW handles the details.
-		*grfBINDF = BINDF_GETNEWESTVERSION;
-		ZeroMemory(pbindinfo, sizeof(BINDINFO));
-		pbindinfo->cbSize = sizeof(BINDINFO);
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnObjectAvailable(REFIID /*riid*/, IUnknown* /*punk*/) override { return S_OK; }
-	HRESULT STDMETHODCALLTYPE OnDataAvailable(DWORD /*grfBSCF*/, DWORD /*dwSize*/, FORMATETC* /*pformatetc*/, STGMEDIUM* /*pstgmed*/) override { return S_OK; }
-};
-
 bool download_file_to_path(const std::wstring& url, const std::filesystem::path& target_path)
 {
 	// Ensure parent directory exists
@@ -238,18 +144,231 @@ bool download_file_to_path(const std::wstring& url, const std::filesystem::path&
 		return false;
 	}
 
-	// Ensure COM is initialized for urlmon callbacks
-	HRESULT hrCo = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	// Download to a temp file first, then atomically replace the target.
+	std::filesystem::path tmp_path = target_path;
+	tmp_path += L".download";
 
-	DownloadProgressCallback* cb = new DownloadProgressCallback();
-	HRESULT hr = URLDownloadToFileW(nullptr, url.c_str(), target_path.wstring().c_str(), 0, cb);
-	cb->Release();
+	URL_COMPONENTS uc{};
+	uc.dwStructSize = sizeof(uc);
+	uc.dwSchemeLength = static_cast<DWORD>(-1);
+	uc.dwHostNameLength = static_cast<DWORD>(-1);
+	uc.dwUrlPathLength = static_cast<DWORD>(-1);
+	uc.dwExtraInfoLength = static_cast<DWORD>(-1);
 
-	if (SUCCEEDED(hrCo)) {
-		CoUninitialize();
+	if (!WinHttpCrackUrl(url.c_str(), 0, 0, &uc)) {
+		return false;
 	}
 
-	return SUCCEEDED(hr);
+	const bool is_https = (uc.nScheme == INTERNET_SCHEME_HTTPS);
+	const std::wstring host(uc.lpszHostName, uc.dwHostNameLength);
+	std::wstring path;
+	if (uc.lpszUrlPath && uc.dwUrlPathLength > 0) {
+		path.append(uc.lpszUrlPath, uc.dwUrlPathLength);
+	}
+	if (uc.lpszExtraInfo && uc.dwExtraInfoLength > 0) {
+		path.append(uc.lpszExtraInfo, uc.dwExtraInfoLength);
+	}
+	if (path.empty()) {
+		path = L"/";
+	}
+
+	HINTERNET hSession = WinHttpOpen(L"Portal2-Remix-CompMod-Installer/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS,
+		0);
+	if (!hSession) {
+		return false;
+	}
+
+	// Always follow redirects (GitHub often redirects to codeload).
+	DWORD redirectPolicy = WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS;
+	WinHttpSetOption(hSession, WINHTTP_OPTION_REDIRECT_POLICY, &redirectPolicy, sizeof(redirectPolicy));
+
+	HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), uc.nPort, 0);
+	if (!hConnect) {
+		WinHttpCloseHandle(hSession);
+		return false;
+	}
+
+	DWORD reqFlags = is_https ? WINHTTP_FLAG_SECURE : 0;
+	HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", path.c_str(),
+		nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, reqFlags);
+	if (!hRequest) {
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return false;
+	}
+
+	size_t lastPrintedLen = 0;
+	const auto print_progress_line = [&](const std::string& line) {
+		std::cout << "\r" << line;
+		if (line.size() < lastPrintedLen) {
+			std::cout << std::string(lastPrintedLen - line.size(), ' ');
+		}
+		std::cout << std::flush;
+		lastPrintedLen = line.size();
+	};
+
+	const ULONGLONG startTick = GetTickCount64();
+	print_progress_line("Downloading... 0%");
+
+	bool ok = false;
+	std::ofstream out(tmp_path, std::ios::binary);
+	if (!out.is_open()) {
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		WinHttpCloseHandle(hSession);
+		return false;
+	}
+
+	if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+		WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
+		WinHttpReceiveResponse(hRequest, nullptr))
+	{
+		// Validate status code
+		DWORD statusCode = 0;
+		DWORD statusSize = sizeof(statusCode);
+		if (!WinHttpQueryHeaders(hRequest,
+			WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+			WINHTTP_HEADER_NAME_BY_INDEX,
+			&statusCode, &statusSize, WINHTTP_NO_HEADER_INDEX))
+		{
+			statusCode = 0;
+		}
+
+		if (statusCode >= 200 && statusCode < 300)
+		{
+			// Try to read content length (optional)
+			ULONGLONG contentLength = 0;
+			{
+				std::wstring lenStr;
+				DWORD lenSize = 0;
+				if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH, WINHTTP_HEADER_NAME_BY_INDEX, nullptr, &lenSize, WINHTTP_NO_HEADER_INDEX)
+					&& GetLastError() == ERROR_INSUFFICIENT_BUFFER && lenSize > 0)
+				{
+					lenStr.resize(lenSize / sizeof(wchar_t));
+					if (WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH, WINHTTP_HEADER_NAME_BY_INDEX, lenStr.data(), &lenSize, WINHTTP_NO_HEADER_INDEX)) {
+						// Ensure null-termination then parse
+						lenStr.resize((lenSize / sizeof(wchar_t)) ? (lenSize / sizeof(wchar_t) - 1) : 0);
+						try {
+							contentLength = std::stoull(lenStr);
+						} catch (...) {
+							contentLength = 0;
+						}
+					}
+				}
+			}
+
+			std::vector<char> buffer(64 * 1024);
+			ULONGLONG downloaded = 0;
+			DWORD lastPercent = 101;
+			ULONGLONG lastPrintTick = startTick;
+
+			for (;;)
+			{
+				DWORD avail = 0;
+				if (!WinHttpQueryDataAvailable(hRequest, &avail)) {
+					break;
+				}
+				if (avail == 0) {
+					ok = true;
+					break;
+				}
+
+				while (avail > 0)
+				{
+					DWORD toRead = (avail > buffer.size()) ? static_cast<DWORD>(buffer.size()) : avail;
+					DWORD read = 0;
+					if (!WinHttpReadData(hRequest, buffer.data(), toRead, &read) || read == 0) {
+						avail = 0;
+						break;
+					}
+
+					out.write(buffer.data(), read);
+					if (!out) {
+						avail = 0;
+						break;
+					}
+
+					downloaded += read;
+					avail -= read;
+
+					const ULONGLONG now = GetTickCount64();
+					const double seconds = (now > startTick) ? (static_cast<double>(now - startTick) / 1000.0) : 0.0;
+					const double mbps = (seconds > 0.0) ? (static_cast<double>(downloaded) / seconds / (1024.0 * 1024.0)) : 0.0;
+
+					if (contentLength > 0)
+					{
+						const DWORD percent = static_cast<DWORD>((downloaded * 100ull) / contentLength);
+						if (percent != lastPercent && (now - lastPrintTick) >= 100) {
+							lastPercent = percent;
+							lastPrintTick = now;
+							std::ostringstream oss;
+							oss.setf(std::ios::fixed);
+							oss << "Downloading... " << percent << "%";
+							if (mbps > 0.01) {
+								oss << " (" << std::setprecision(2) << mbps << " MB/s)";
+							}
+							print_progress_line(oss.str());
+						}
+					}
+					else
+					{
+						// No content-length; print periodic progress
+						if ((now - lastPrintTick) >= 250) {
+							lastPrintTick = now;
+							const double downloadedMB = static_cast<double>(downloaded) / (1024.0 * 1024.0);
+							std::ostringstream oss;
+							oss.setf(std::ios::fixed);
+							oss << "Downloading... " << std::setprecision(2) << downloadedMB << " MB";
+							if (mbps > 0.01) {
+								oss << " (" << std::setprecision(2) << mbps << " MB/s)";
+							}
+							print_progress_line(oss.str());
+						}
+					}
+				}
+
+				if (!out) {
+					break;
+				}
+			}
+		}
+	}
+
+	out.close();
+
+	WinHttpCloseHandle(hRequest);
+	WinHttpCloseHandle(hConnect);
+	WinHttpCloseHandle(hSession);
+
+	if (!ok) {
+		std::error_code ec;
+		std::filesystem::remove(tmp_path, ec);
+		print_progress_line("Downloading... failed.");
+		std::cout << "\n" << std::flush;
+		return false;
+	}
+
+	// Replace target with tmp
+	{
+		std::error_code ec;
+		std::filesystem::remove(target_path, ec); // ignore if doesn't exist
+		ec.clear();
+		std::filesystem::rename(tmp_path, target_path, ec);
+		if (ec) {
+			// Best-effort cleanup
+			std::filesystem::remove(tmp_path, ec);
+			print_progress_line("Downloading... failed.");
+			std::cout << "\n" << std::flush;
+			return false;
+		}
+	}
+
+	print_progress_line("Downloading... done.");
+	std::cout << "\n" << std::flush;
+	return true;
 }
 
 bool extract_zip(const std::filesystem::path& zip_path, const std::string& target_dir, const std::string& inner_folder = "", size_t* out_extracted_files = nullptr)
@@ -455,16 +574,23 @@ int main()
 		const std::filesystem::path base_zip_path = get_installer_dir() / "master.zip";
 		const std::filesystem::path mods_dir = std::filesystem::path(game_dir) / "rtx-remix" / "mods";
 
-		if (MessageBoxA(nullptr, prompt.c_str(), "Base Remix-Mod", MB_YESNO | MB_ICONQUESTION) != IDYES)
+		const int userChoice = MessageBoxA(nullptr, prompt.c_str(), "Base Remix-Mod", MB_YESNO | MB_ICONQUESTION);
+
+		// Handle "No" but file already exists (or was downloaded while the prompt was open).
+		if (std::filesystem::exists(base_zip_path))
+		{
+			std::cout << "Found existing base remix-mod zip: " << base_zip_path.string() << "\n";
+		}
+		else if (userChoice != IDYES)
 		{
 			MessageBoxA(nullptr,
 				("Base remix-mod is required to continue.\n\n"
-				 "Please download 'master.zip' and place it next to the installer here:\n"
+				 "File was not found:\n"
 				 + base_zip_path.string() +
-				 "\n\nLinks are printed in the console window.\n"
-				 "After that, run the installer again.").c_str(),
+				 "\n\nPlease download 'master.zip' and place it next to the installer.\n"
+				 "Links are printed in the console window.").c_str(),
 				"Base Remix-Mod Required",
-				MB_ICONERROR);
+				MB_OK | MB_ICONERROR);
 			return 0;
 		}
 
@@ -484,10 +610,6 @@ int main()
 					MB_ICONERROR);
 				return 0;
 			}
-		}
-		else
-		{
-			std::cout << "Found existing base remix-mod zip: " << base_zip_path.string() << "\n";
 		}
 
 		try {
