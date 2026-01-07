@@ -110,16 +110,18 @@ cl_brushfastpath 1
 <br></details>
 
 
-<details><summary>Crashing or startup issues</summary>
+<details><summary>Crashing, startup issues, not working ..</summary>
 <br>
 
 - Make sure that you have no clipping software such as "medal" running in the background
+
+- Follow [this #209](https://github.com/xoxor4d/p2-rtx/issues/209) and place `dxwrapper.asi` into the `bin` folder (next to `winmm.dll`) 
 
 - If your game is installed within `Program Files`:
   - right click `portal2.exe` and click settings - compatibility tab and enable run as admin
   - or install the game somewhere outside `Program Files`
 
-- Other startup issues? 
+- Other startup issues?
   - Add `-debug` as a launch arg to `run-p2-rtx.bat` (`START portal2.exe -debug -insecure ...`)
   - An external console window should show up when launching the game, copy and paste it's contents when you create an issue on GitHub
 
