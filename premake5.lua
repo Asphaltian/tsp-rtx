@@ -392,3 +392,39 @@ workspace "p2-rtx"
             dependencies.projects()
 		group ""
 	
+project "installer"
+    kind "ConsoleApp"
+	targetname "Portal2-Remix-CompMod-Installer"
+    language "C++"
+    cppdialect "C++20"
+    staticruntime "On"
+    targetdir "./bin"
+    
+
+	files {
+		"./src_installer/**.hpp",
+		"./src_installer/**.cpp",
+		"./deps/miniz/miniz.c",
+		"./deps/miniz/miniz.h",
+		"./src_installer/installer.rc",
+		"./src_installer/installer.manifest"
+	}
+
+	includedirs {
+		"%{prj.location}/src_installer",
+		"./src_installer",
+		"./deps/miniz",
+	}
+
+    filter "configurations:Release*"
+        optimize "Full"
+        flags { "LinkTimeOptimization" }
+	filter {}
+
+	flags { "NoManifest" }     -- prevents VS/mt.exe from generating its own
+
+	dependencies.imports()
+
+	group "Dependencies"
+		dependencies.projects()
+	group ""

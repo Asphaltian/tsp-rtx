@@ -59,6 +59,9 @@ Temporary Items
 *.suo
 *.zip
 
+!assets/.trex/ad3d9_runtime.zip
+bin/
+
 # Additional stuff
 build
 user*.bat

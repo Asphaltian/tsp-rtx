@@ -82,8 +82,10 @@ jobs:
           # Copy the built p2-rtx.asi to the mod folder
           $asiPath = "build\bin\Release\p2-rtx.asi"
           if (Test-Path $asiPath) {
-            Copy-Item -Path $asiPath -Destination $modFolder -Force
-            Write-Host "Copied p2-rtx.asi to mod folder"
+            $pluginsDir = Join-Path $modFolder "bin\plugins"
+            New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
+            Copy-Item -Path $asiPath -Destination $pluginsDir -Force
+            Write-Host "Copied p2-rtx.asi to: $pluginsDir"
           } else {
             Write-Host "Error: p2-rtx.asi not found at $asiPath"
             Write-Host "Listing build/bin/Release contents:"
@@ -92,13 +94,6 @@ jobs:
             }
             exit 1
           }
-          
-          # Create _installer_options folder and copy assets_installer
-          $installerOptionsFolder = Join-Path $tempDir "_installer_options"
-          New-Item -ItemType Directory -Path $installerOptionsFolder -Force | Out-Null
-          
-          # Copy all files from assets_installer folder
-          Copy-Item -Path "assets_installer\*" -Destination $installerOptionsFolder -Recurse -Force
           
           Write-Host "Release files prepared in $tempDir"
 

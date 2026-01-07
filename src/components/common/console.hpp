@@ -133,7 +133,7 @@ namespace common
 		{
 			log_file_initiated = true;
 
-			const std::string file_path = globals::root_path + COMPMOD_ASSET_DIR "logfile.txt";
+			const std::string file_path = globals::root_path + COMPMOD_ASSET_DIR "logs\\logfile.txt";
 			log_file.open(file_path, std::ios::out | std::ios::trunc);
 		}
 	}
