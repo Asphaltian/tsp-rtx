@@ -36,9 +36,6 @@ namespace components
 				for (const auto& f : m_map_settings.api_var_configs) {
 					open_and_set_var_config(f);
 				}
-
-				// handle tweaked texture hashes
-				handle_texture_category_tweaks(false);
 			}
 
 			main_module::cross_handle_map_and_game_settings();
@@ -177,45 +174,6 @@ namespace components
 
 		m_map_settings.map_markers.clear();
 		m_spawned_markers = false;
-	}
-
-	/// Adds or Removes texture hashes tweaked via map settings
-	/// @param invert	hashes within 'add' will be removed and hashes within 'remove' will be added
-	void map_settings::handle_texture_category_tweaks(bool invert)
-	{
-		// add / remove texture hashes
-		for (const auto& entry : m_map_settings.api_texture_category_tweaks)
-		{
-			auto& bridge = common::remix_api::get().m_bridge;
-
-			// TODO!
-			/*if (!entry.second.add_hashes.empty())
-			{
-				for (const auto& h : entry.second.add_hashes) 
-				{
-					if (!invert) {
-						bridge.AddTextureHash(entry.first.c_str(), h.c_str());
-					}
-					else {
-						bridge.RemoveTextureHash(entry.first.c_str(), h.c_str());
-					}
-					
-				}
-			}
-
-			if (!entry.second.remove_hashes.empty())
-			{
-				for (const auto& h : entry.second.remove_hashes) 
-				{
-					if (!invert) {
-						bridge.RemoveTextureHash(entry.first.c_str(), h.c_str());
-					}
-					else {
-						bridge.AddTextureHash(entry.first.c_str(), h.c_str());
-					}
-				}
-			}*/
-		}
 	}
 
 	bool map_settings::parse_toml()
@@ -929,51 +887,6 @@ namespace components
 						}
 					};
 
-					auto process_texture_category_entry = [](const toml::value& entry)
-						{
-							std::string cat_name;
-							if (entry.contains("category"))
-							{
-								try { cat_name = entry.at("category").as_string(); } TOML_CATCH_TYPE_ERROR;
-								if ( !cat_name.empty())
-								{
-									std::unordered_set<std::string> add_hash_set, remove_hash_set;
-
-									if (const auto& add = entry.at("add").as_array(); 
-										!add.empty())
-									{
-										for (const auto& hash_entry : add) 
-										{
-											std::string temp_hash_str;
-											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH_TYPE_ERROR;
-											add_hash_set.insert(std::move(temp_hash_str));
-										}
-									}
-
-									if (const auto& remove = entry.at("remove").as_array();
-										!remove.empty())
-									{
-										for (const auto& hash_entry : remove)
-										{
-											std::string temp_hash_str;
-											try { temp_hash_str = hash_entry.as_string(); } TOML_CATCH_TYPE_ERROR;
-											remove_hash_set.insert(std::move(temp_hash_str));
-										}
-									}
-
-									m_map_settings.api_texture_category_tweaks.insert(
-									{
-										std::move(cat_name),
-										api_texture_category_tweak
-										{
-											std::move(add_hash_set),
-											std::move(remove_hash_set)
-										}
-									});
-								}
-							}
-						};
-
 				// try to find the loaded map
 				if (configvar_table.contains(m_map_settings.mapname))
 				{
@@ -1004,18 +917,6 @@ namespace components
 							{
 								for (const auto& entry : transitions) {
 									process_transition_entry(entry);
-								}
-							}
-						}
-
-						// handled @ map_settings::set_settings_for_map && map_settings::on_map_unload 
-						if (map.contains("texture_categories"))
-						{
-							if (auto& tex_categories = map.at("texture_categories").as_array();
-								!tex_categories.empty())
-							{
-								for (const auto& entry : tex_categories) {
-									process_texture_category_entry(entry);
 								}
 							}
 						}
@@ -1552,13 +1453,6 @@ namespace components
 
 	void map_settings::on_map_unload()
 	{
-		if (common::remix_api::is_initialized())
-		{
-			// re-add hashes that were removed on map load
-			// and remove hashes that were added on map load
-			handle_texture_category_tweaks(true);
-		}
-
 		if (const auto& imgui = imgui::get();  imgui->m_was_mapsettings_tab_open)
 		{
 			std::filesystem::create_directories(globals::root_path + COMPMOD_ASSET_DIR "logs\\");
@@ -1604,7 +1498,6 @@ namespace components
 		m_map_settings.hide_models.radii.clear();
 		m_map_settings.unbake_models.clear();
 		m_map_settings.remix_transitions.clear();
-		m_map_settings.api_texture_category_tweaks.clear();
 
 		destroy_markers();
 		m_map_settings.map_markers.clear();
@@ -1626,7 +1519,6 @@ namespace components
 	ConCommand xo_mapsettings_update {};
 	void map_settings::reload()
 	{
-		handle_texture_category_tweaks(true);
 		clear_map_settings();
 		map_settings::get()->set_settings_for_map("");
 		imgui::get()->m_light_edit_mode = false;

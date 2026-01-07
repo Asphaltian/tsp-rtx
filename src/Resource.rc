@@ -2,8 +2,6 @@
 //
 #pragma code_page(65001)
 
-#include "version.hpp"
-
 #define STRINGIZE_(x) #x
 #define STRINGIZE(x) STRINGIZE_(x)
 #define APSTUDIO_READONLY_SYMBOLS
@@ -48,8 +46,6 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION VERSION_FILE_RC
- PRODUCTVERSION VERSION_PRODUCT_RC
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -65,12 +61,10 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Portal 2 RTX Remix Compatibility Mod"
-            VALUE "FileVersion", VERSION_FILE
             VALUE "InternalName", "p2-rtx"
             VALUE "LegalCopyright", "xoxor4d.github.io"
             VALUE "OriginalFilename", "p2-rtx.dll"
             VALUE "ProductName", "p2-rtx"
-            VALUE "ProductVersion", VERSION_PRODUCT
         END
     END
     BLOCK "VarFileInfo"

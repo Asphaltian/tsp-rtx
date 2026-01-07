@@ -12,7 +12,7 @@ namespace components
 {
 	std::string get_current_comp_version_string()
 	{
-		return std::string(GIT_TAG);
+		return std::string(std::to_string(COMP_MOD_VERSION_MAJOR) + "." + std::to_string(COMP_MOD_VERSION_MINOR) + "." + std::to_string(COMP_MOD_VERSION_PATCH));
 	}
 
 	void game_settings::write_toml()

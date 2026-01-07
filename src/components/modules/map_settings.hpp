@@ -232,7 +232,6 @@ namespace components
 		void set_settings_for_map(const std::string& map_name);
 		static void spawn_markers_once();
 		static void destroy_markers();
-		static void handle_texture_category_tweaks(bool invert = false);
 		static void on_map_load(const std::string& map_name);
 		static void on_map_unload();
 		static void clear_map_settings();

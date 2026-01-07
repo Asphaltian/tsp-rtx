@@ -13,14 +13,6 @@ constexpr auto COMP_MOD_VERSION_PATCH = 0;
 // enable/disable benchmark logic
 //#define BENCHMARK
 
-#ifndef GIT_DESCRIBE
-#define GIT_DESCRIBE UNK
-#endif
-
-#ifndef GIT_TAG
-#define GIT_TAG 0
-#endif
-
 #if defined(DEV_BUILD)
 	inline constexpr bool IS_LATEST_BUILD = false;
 #else
@@ -29,9 +21,6 @@ constexpr auto COMP_MOD_VERSION_PATCH = 0;
 
 #define USE_OFFSET(LATEST, OTHER) \
 	(IS_LATEST_BUILD ? (LATEST) : (OTHER))
-
-// Version number
-#include <version.hpp>
 
 #define NOMINMAX
 #include <windows.h>
