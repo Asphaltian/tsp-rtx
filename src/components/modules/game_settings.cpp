@@ -236,6 +236,7 @@ namespace components
 				ASSIGN(debug_info_distance);
 				ASSIGN(player_backwards_offset);
 				ASSIGN(vgui_progress_board_emissive_offset);
+				ASSIGN(bik_emissive_intensity);
 				ASSIGN(enable_dual_layered_water);
 
 			#undef ASSIGN

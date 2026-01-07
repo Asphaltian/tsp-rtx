@@ -14,7 +14,7 @@ namespace components
 		None = 0,
 		EmissiveScalar = 1 << 0,
 		EmissiveForceOnWithAlbedo = 1 << 1,
-		Free02 = 1 << 2,
+		Bik = 1 << 2,
 		Free03 = 1 << 3,
 		Free04 = 1 << 4,
 		Free05 = 1 << 5,

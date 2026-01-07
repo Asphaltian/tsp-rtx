@@ -1972,17 +1972,8 @@ namespace components
 				{
 					model_render::set_remix_texture_categories(dev, InstanceCategories::DecalStatic);
 					model_render::set_remix_texture_hash(dev, utils::string_hash32(ctx.info.material_name));
-
-					// works but not of much use if we cant use the albedo as emissive
-					//ctx.save_rs(dev, D3DRS_TEXTUREFACTOR);
-					//ctx.save_tss(dev, D3DTSS_COLORARG1);
-					//ctx.save_tss(dev, D3DTSS_COLORARG2);
-					//ctx.save_tss(dev, D3DTSS_COLOROP);
-					//dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(255, 255, 255, 255));
-					//dev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
-					//dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TEXTURE);
-					//dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-
+					model_render::set_remix_modifier(dev, RemixModifier::EmissiveForceOnWithAlbedo | RemixModifier::Bik);
+					model_render::set_remix_emissive_intensity(dev, gs->bik_emissive_intensity._float());
 					mod_shader = false; 
 				}
 

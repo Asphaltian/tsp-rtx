@@ -518,6 +518,13 @@ namespace components
 				ImGui::DragFloat("Debug Float 2", &im->m_debug_float02, 0.01f);
 				ImGui::DragFloat("Debug Float 3", &im->m_debug_float03, 0.01f);
 
+				ImGui::Checkbox("Debug Bool 0", &im->m_debug_bool00);
+				ImGui::Checkbox("Debug Bool 1", &im->m_debug_bool01);
+				ImGui::Checkbox("Debug Bool 2", &im->m_debug_bool02);
+				ImGui::Checkbox("Debug Bool 3", &im->m_debug_bool03);
+				ImGui::Checkbox("Debug Bool 4", &im->m_debug_bool04);
+				ImGui::Checkbox("Debug Bool 5", &im->m_debug_bool05);
+
 				ImGui::Spacing(0, 6);
 
 				const auto coloredit_flags = ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_PickerHueBar | ImGuiColorEditFlags_Float;
@@ -3506,7 +3513,8 @@ namespace components
 		compsettings_bool_widget("Use Brush(model) Fast Path", gs->use_brushfastpath);
 
 		compsettings_float_widget("VGUI Progress Board Emissive Offset", gs->vgui_progress_board_emissive_offset, 0.0f, 20.0f);
-
+		compsettings_float_widget("BIK Emissive Intensity", gs->bik_emissive_intensity, 0.0f, 20.0f);
+		
 		/*if (ImGui::Checkbox("Enable 3D Skybox (very unstable)", gs->enable_3d_sky.get_as<bool*>())) {
 			remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, gs->enable_3d_sky.get_as<bool>() ? "1" : "0"));
 		}

@@ -395,6 +395,13 @@ namespace components
 				3.0f
 			};
 
+			variable bik_emissive_intensity =
+			{
+				"bik_emissive_intensity",
+				"Emissive Intensity of BIK videos",
+				1.0f
+			};
+
 			variable enable_dual_layered_water =
 			{
 				"enable_dual_layered_water",

@@ -56,6 +56,13 @@ namespace components
 		float m_debug_float02 = 0.0f;
 		float m_debug_float03 = 0.0f;
 
+		bool m_debug_bool00 = false;
+		bool m_debug_bool01 = false;
+		bool m_debug_bool02 = false;
+		bool m_debug_bool03 = false;
+		bool m_debug_bool04 = false;
+		bool m_debug_bool05 = false;
+
 		bool m_disable_ms_unbake_check = false;
 
 		bool m_was_mapsettings_tab_open = false;
