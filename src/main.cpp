@@ -149,11 +149,8 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	GET_MODULE_HANDLE(game::vstdlib_module, "vstdlib.dll", T);
 	Beep(523, 100);
 
-#ifdef GIT_DESCRIBE
-	SetWindowTextA(glob::main_window, IS_LATEST_BUILD ? utils::va("Portal 2 - RTX - %s", GIT_DESCRIBE) : utils::va("Portal 2 - RTX - %s - DEV", GIT_DESCRIBE));
-#else
-	SetWindowTextA(glob::main_window, "Portal 2 - RTX");
-#endif
+	SetWindowTextA(glob::main_window, 
+		utils::va("Portal 2 - RTX - %d.%d.%d%s", COMP_MOD_VERSION_MAJOR, COMP_MOD_VERSION_MINOR, COMP_MOD_VERSION_PATCH, (IS_LATEST_BUILD ? "" : " - DEV")));
 
 	Sleep(500);
 	p2::main();
