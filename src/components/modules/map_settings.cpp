@@ -1410,6 +1410,8 @@ namespace components
 		std::ifstream file;
 		if (utils::open_file_homepath(path, config, file))
 		{
+			common::log("MapSettings", std::format("Applying {}", config), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
+
 			std::string input;
 			while (std::getline(file, input))
 			{

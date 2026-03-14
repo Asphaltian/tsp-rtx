@@ -513,6 +513,10 @@ namespace components
 
 				ImGui::DragFloat3("Debug Vector", &im->m_debug_vector.x, 0.01f);
 				ImGui::DragFloat3("Debug Vector 2", &im->m_debug_vector2.x, 0.01f);
+				ImGui::DragFloat3("Debug Vector 3", &im->m_debug_vector3.x, 0.01f);
+				ImGui::DragFloat3("Debug Vector 4", &im->m_debug_vector4.x, 0.01f);
+				ImGui::DragFloat3("Debug Vector 5", &im->m_debug_vector5.x, 0.01f);
+				ImGui::DragFloat3("Debug Vector 6", &im->m_debug_vector6.x, 0.01f);
 
 				ImGui::DragFloat("Debug Float 1", &im->m_debug_float01, 0.01f);
 				ImGui::DragFloat("Debug Float 2", &im->m_debug_float02, 0.01f);
@@ -3400,11 +3404,55 @@ namespace components
 	// #
 	// #
 
+	void compsettings_var_reset_logic(game_settings::variable& var)
+	{
+		std::string popup_id = "Reset "s + var.m_name + " ?";
+
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+		{
+			if (!ImGui::IsPopupOpen(popup_id.c_str())) {
+				ImGui::OpenPopup(popup_id.c_str());
+			}
+		}
+
+		ImGui::SetNextWindowSize(ImVec2(300.0f, 140.0f));
+		if (ImGui::BeginPopupModal(popup_id.c_str(), nullptr, ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::Spacing(0.0f, 0.0f);
+
+			ImGui::Spacing();
+			ImGui::CenterText("This will reset the current variable");
+
+			ImGui::PushFont(common::imgui::font::BOLD);
+			ImGui::CenterText("Are you sure?");
+			ImGui::PopFont();
+
+			ImGui::Spacing(0, 8);
+			ImGui::Spacing(0, 0); ImGui::SameLine();
+
+			const auto half_width = ImGui::GetContentRegionMax().x * 0.5f;
+			ImVec2 button_size(half_width - (ImGui::GetStyle().WindowPadding.x * 2.0f) - ImGui::GetStyle().ItemSpacing.x, 0.0f);
+			if (ImGui::Button("Yes", button_size))
+			{
+				var.reset();
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", button_size)) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
 	bool compsettings_bool_widget(const char* desc, game_settings::variable& var)
 	{
 		const auto gs_var_ptr = var.get_as<bool*>();
 		const bool result = ImGui::Checkbox(desc, gs_var_ptr);
 		TT(var.get_tooltip_string().c_str());
+		compsettings_var_reset_logic(var);
 		return result;
 	}
 
@@ -3413,6 +3461,59 @@ namespace components
 		const auto gs_var_ptr = var.get_as<float*>();
 		const bool result = ImGui::DragFloat(desc, gs_var_ptr, speed, min, max, "%.2f", (min != 0.0f || max != 0.0f) ? ImGuiSliderFlags_AlwaysClamp : ImGuiSliderFlags_None);
 		TT(var.get_tooltip_string().c_str());
+		compsettings_var_reset_logic(var);
+		return result;
+	}
+
+	bool compsettings_vec_widget(const char* desc, game_settings::variable& var, const int& size, const float& min = 0.0f, const float& max = 0.0f, const float& speed = 0.02f)
+	{
+		const auto cs_var_ptr = var.get_as<float*>();
+		bool result = false;
+		switch (size)
+		{
+		case 2:
+			assert(var.get_type() == game_settings::var_type_vec2 && "Type mismatch: expected vec2");
+			result = ImGui::DragFloat2(desc, cs_var_ptr, speed, min, max, "%.2f", (min != 0.0f || max != 0.0f) ? ImGuiSliderFlags_AlwaysClamp : ImGuiSliderFlags_None);
+			break;
+
+		case 3:
+			assert(var.get_type() == game_settings::var_type_vec3 && "Type mismatch: expected vec3");
+			result = ImGui::DragFloat3(desc, cs_var_ptr, speed, min, max, "%.2f", (min != 0.0f || max != 0.0f) ? ImGuiSliderFlags_AlwaysClamp : ImGuiSliderFlags_None);
+			break;
+
+		default:
+		case 4:
+			assert(var.get_type() == game_settings::var_type_vec4 && "Type mismatch: expected vec4");
+			result = ImGui::DragFloat4(desc, cs_var_ptr, speed, min, max, "%.2f", (min != 0.0f || max != 0.0f) ? ImGuiSliderFlags_AlwaysClamp : ImGuiSliderFlags_None);
+			break;
+		}
+
+		TT(var.get_tooltip_string().c_str());
+		compsettings_var_reset_logic(var);
+		return result;
+	}
+
+	bool compsettings_color_widget(const char* desc, game_settings::variable& var, const int& size, const ImGuiColorEditFlags_& flags)
+	{
+		const auto cs_var_ptr = var.get_as<float*>();
+		bool result = false;
+
+		switch (size)
+		{
+		case 3:
+			assert(var.get_type() == game_settings::var_type_vec3 && "Type mismatch: expected vec3");
+			result = ImGui::ColorEdit3(desc, cs_var_ptr, flags);
+			break;
+
+		default:
+		case 4:
+			assert(var.get_type() == game_settings::var_type_vec4 && "Type mismatch: expected vec4");
+			result = ImGui::ColorEdit4(desc, cs_var_ptr, flags);
+			break;
+		}
+
+		TT(var.get_tooltip_string().c_str());
+		compsettings_var_reset_logic(var);
 		return result;
 	}
 
@@ -3509,11 +3610,31 @@ namespace components
 		compsettings_bool_widget("Portal Visibility Culling", gs->portal_visibility_culling);
 		compsettings_bool_widget("Check Nodes (Visleafs) For Potential Lights", gs->check_nodes_for_potential_lights);
 		compsettings_bool_widget("Spotlight Billboard Spawning", gs->spotlight_billboard_spawning);
-		compsettings_bool_widget("Emancipationgrill Emissive Proxy", gs->emancipationgrill_emissive_proxy_old);
 		compsettings_bool_widget("Use Brush(model) Fast Path", gs->use_brushfastpath);
 
+		ImGui::Spacing(0, 4);
 		compsettings_float_widget("VGUI Progress Board Emissive Offset", gs->vgui_progress_board_emissive_offset, 0.0f, 20.0f);
 		compsettings_float_widget("BIK Emissive Intensity", gs->bik_emissive_intensity, 0.0f, 20.0f);
+
+		ImGui::Spacing(0, 8);
+		ImGui::SeparatorText("  Emancipationgrill  ");
+		ImGui::Spacing(0, 4);
+
+		ImGui::PushID("Emanci");
+		compsettings_bool_widget("Emissive Proxy", gs->emancipationgrill_emissive_proxy_old);
+		compsettings_bool_widget("Alpha Modulate1X", gs->emancipationgrill_alpha_modulate1x);
+		compsettings_bool_widget("Alpha Modulate2X", gs->emancipationgrill_alpha_modulate2x);
+		compsettings_bool_widget("Alpha Modulate4X", gs->emancipationgrill_alpha_modulate4x);
+		compsettings_bool_widget("Force Emissive", gs->emancipationgrill_force_emissive);
+		compsettings_float_widget("Emissive Scale", gs->emancipationgrill_emissive_scale, 0.0f, 200.0f);
+		compsettings_vec_widget("Color Scalar Center", gs->emancipationgrill_color_scalar_center, 4, 0.0f, 2.0f);
+		compsettings_vec_widget("Color Scalar SideEmitters", gs->emancipationgrill_color_scalar_side_emitters, 4, 0.0f, 2.0f);
+		ImGui::PopID();
+
+		ImGui::Spacing(0, 6);
+
+
+		
 		
 		/*if (ImGui::Checkbox("Enable 3D Skybox (very unstable)", gs->enable_3d_sky.get_as<bool*>())) {
 			remix_vars::set_option(remix_vars::get_option("rtx.skyAutoDetect"), remix_vars::string_to_option_value(remix_vars::OPTION_TYPE_FLOAT, gs->enable_3d_sky.get_as<bool>() ? "1" : "0"));
@@ -3531,7 +3652,6 @@ namespace components
 
 		compsettings_float_widget("Debug Info Distance", gs->debug_info_distance, 0.0f, 0.0f, 0.1f);
 		compsettings_float_widget("Player Backwards Offset", gs->player_backwards_offset, 0.0f, 0.0f, 0.01f);
-
 
 		compsettings_bool_widget("Enable Dual Layered Water", gs->enable_dual_layered_water);
 	}

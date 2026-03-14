@@ -231,6 +231,13 @@ namespace components
 				ASSIGN(check_nodes_for_potential_lights);
 				ASSIGN(spotlight_billboard_spawning);
 				ASSIGN(emancipationgrill_emissive_proxy_old);
+				ASSIGN(emancipationgrill_alpha_modulate1x);
+				ASSIGN(emancipationgrill_alpha_modulate2x);
+				ASSIGN(emancipationgrill_alpha_modulate4x);
+				ASSIGN(emancipationgrill_force_emissive);
+				ASSIGN(emancipationgrill_emissive_scale);
+				ASSIGN(emancipationgrill_color_scalar_center);
+				ASSIGN(emancipationgrill_color_scalar_side_emitters);
 				ASSIGN(use_brushfastpath);
 				ASSIGN(use_hardcoded_wheatly_flashlight_bts3);
 				ASSIGN(debug_info_distance);

@@ -51,6 +51,10 @@ namespace components
 
 		Vector m_debug_vector = { 0.0f, 0.0f, 0.0f };
 		Vector m_debug_vector2 = { 0.0f, 0.0f, 0.0f };
+		Vector m_debug_vector3 = { 0.0f, 0.0f, 0.0f };
+		Vector m_debug_vector4 = { 0.0f, 0.0f, 0.0f };
+		Vector m_debug_vector5 = { 0.0f, 0.0f, 0.0f };
+		Vector m_debug_vector6 = { 0.0f, 0.0f, 0.0f };
 
 		float m_debug_float01 = 0.0f;
 		float m_debug_float02 = 0.0f;

@@ -180,6 +180,30 @@ namespace components
 				return !default_value ? m_var.value : m_var_default.value;
 			}
 
+			const float& _vec_x(const bool default_value = false) const
+			{
+				assert(((m_type == var_type_vec2) || (m_type == var_type_vec3) || (m_type == var_type_vec4)) && "Type mismatch: expected vec2, vec3 or vec4");
+				return !default_value ? m_var.value[0] : m_var_default.value[0];
+			}
+
+			const float& _vec_y(const bool default_value = false) const
+			{
+				assert(((m_type == var_type_vec2) || (m_type == var_type_vec3) || (m_type == var_type_vec4)) && "Type mismatch: expected vec2, vec3 or vec4");
+				return !default_value ? m_var.value[1] : m_var_default.value[1];
+			}
+
+			const float& _vec_z(const bool default_value = false) const
+			{
+				assert(((m_type == var_type_vec3) || (m_type == var_type_vec4)) && "Type mismatch: expected vec2, vec3 or vec4");
+				return !default_value ? m_var.value[2] : m_var_default.value[2];
+			}
+
+			const float& _vec_w(const bool default_value = false) const
+			{
+				assert(m_type == var_type_vec4 && "Type mismatch: expected vec2, vec3 or vec4");
+				return !default_value ? m_var.value[3] : m_var_default.value[3];
+			}
+
 			template <typename T>
 			T get_as(bool default_val = false)
 			{
@@ -190,46 +214,70 @@ namespace components
 					using base_type = std::remove_pointer_t<T>;
 
 					if constexpr (std::is_same_v<base_type, bool>) {
+						assert(m_type == var_type_boolean && "Type mismatch: expected boolean");
 						return &(!default_val ? m_var.boolean : m_var_default.boolean);
 					}
-
 					else if constexpr (std::is_same_v<base_type, int>) {
+						assert(m_type == var_type_integer && "Type mismatch: expected integer");
 						return &(!default_val ? m_var.integer : m_var_default.integer);
 					}
-
 					else if constexpr (std::is_same_v<base_type, float>) {
-						return &(!default_val ? m_var.value[0] : m_var_default.value[0]);
+						if (m_type == var_type_value) {
+							return &(!default_val ? m_var.value[0] : m_var_default.value[0]);
+						}
+						if (m_type >= var_type_vec2 && m_type <= var_type_vec4) {
+							return !default_val ? m_var.value : m_var_default.value;
+						}
+						assert(false && "Type mismatch: expected float or vector type");
+						return nullptr;
 					}
-
-					// vec2, vec3, vec4 
-					else if constexpr (std::is_same_v<base_type, float[4]>) {
-						return !default_val ? m_var.value : m_var_default.value;
+					else if constexpr (std::is_same_v<base_type, Vector2D>) {
+						assert(m_type == var_type_vec2 && "Type mismatch: expected vec2 for Vector");
+						return reinterpret_cast<Vector2D*>(!default_val ? m_var.value : m_var_default.value);
 					}
-
+					else if constexpr (std::is_same_v<base_type, Vector>) {
+						assert(m_type == var_type_vec3 && "Type mismatch: expected vec3 for Vector");
+						return reinterpret_cast<Vector*>(!default_val ? m_var.value : m_var_default.value);
+					}
+					else if constexpr (std::is_same_v<base_type, Vector4D>) {
+						assert(m_type == var_type_vec4 && "Type mismatch: expected vec4 for Vector");
+						return reinterpret_cast<Vector4D*>(!default_val ? m_var.value : m_var_default.value);
+					}
 					else {
 						static_assert(std::is_same_v<T, void>, "Unsupported pointer type in get_as");
 						return nullptr;
 					}
 				}
-
 				// return by value for non-pointer types
 				else
 				{
 					if constexpr (std::is_same_v<T, bool>) {
+						assert(m_type == var_type_boolean && "Type mismatch: expected boolean");
 						return static_cast<T>(!default_val ? m_var.boolean : m_var_default.boolean);
 					}
-
 					else if constexpr (std::is_same_v<T, int>) {
+						assert(m_type == var_type_integer && "Type mismatch: expected integer");
 						return static_cast<T>(!default_val ? m_var.integer : m_var_default.integer);
 					}
-
 					else if constexpr (std::is_same_v<T, float>) {
+						assert(m_type == var_type_value && "Type mismatch: expected float");
 						return static_cast<T>(!default_val ? m_var.value[0] : m_var_default.value[0]);
 					}
-
+					else if constexpr (std::is_same_v<T, Vector2D>) {
+						assert(m_type == var_type_vec2 && "Type mismatch: expected vec2 for Vector");
+						return Vector2D(!default_val ? m_var.value : m_var_default.value);
+					}
+					else if constexpr (std::is_same_v<T, Vector>) {
+						assert(m_type == var_type_vec3 && "Type mismatch: expected vec3 for Vector");
+						return Vector(!default_val ? m_var.value : m_var_default.value);
+					}
+					else if constexpr (std::is_same_v<T, Vector4D>) {
+						assert(m_type == var_type_vec4 && "Type mismatch: expected vec4 for Vector");
+						return Vector4D(!default_val ? m_var.value : m_var_default.value);
+					}
 					else {
 						static_assert(std::is_same_v<T, void>, "Unsupported return type in get_as");
-						return 0;
+						return T{};
 					}
 				}
 			}
@@ -295,6 +343,10 @@ namespace components
 				}
 			}
 
+			void reset() {
+				m_var = m_var_default;
+			}
+
 			const char* m_name;
 			const char* m_desc;
 
@@ -357,6 +409,55 @@ namespace components
 				"emancipationgrill_emissive_proxy_old",
 				"Spawns an additional surface on emancipation grills that can be turned into an invisible, but emissive surface using the toolkit",
 				false
+			};
+
+			variable emancipationgrill_alpha_modulate1x =
+			{
+				"emancipationgrill_alpha_modulate1x",
+				"Use D3DTOP_MODULATE, use ADD if false",
+				false
+			};
+
+			variable emancipationgrill_alpha_modulate2x =
+			{
+				"emancipationgrill_alpha_modulate2x",
+				"Use D3DTOP_MODULATE2X, use 1x if false",
+				false
+			};
+
+			variable emancipationgrill_alpha_modulate4x =
+			{
+				"emancipationgrill_alpha_modulate4x",
+				"Use D3DTOP_MODULATE4X, use 1x if false",
+				true
+			};
+
+			variable emancipationgrill_force_emissive =
+			{
+				"emancipationgrill_force_emissive",
+				"Automatically make grill emissive and use 'emancipationgrill_emissive_scale'",
+				true
+			};
+
+			variable emancipationgrill_emissive_scale =
+			{
+				"emancipationgrill_emissive_scale",
+				"Emissive scale when 'emancipationgrill_force_emissive' is true",
+				200.0f
+			};
+
+			variable emancipationgrill_color_scalar_center =
+			{
+				"emancipationgrill_color_scalar_center",
+				"Color scale RGBA of emancipation grills",
+				0.2f, 0.4f, 0.6f, 0.06f
+			};
+
+			variable emancipationgrill_color_scalar_side_emitters =
+			{
+				"emancipationgrill_color_scalar_side_emitters",
+				"Color scale RGBA of emancipation grills side emitters",
+				1.0f, 0.85f, 0.5f, 0.5f
 			};
 
 			variable use_brushfastpath =

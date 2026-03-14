@@ -1295,6 +1295,8 @@ namespace components
 	void render_emancipation_grill(prim_fvf_context& ctx)
 	{
 		const auto dev = game::get_d3d_device();
+		const auto gs = game_settings::get();
+		//const auto im = imgui::get();
 
 		// ps
 		//const float4 g_vWriteDepthToAlpha_FlowParams : register(c3);
@@ -1319,7 +1321,6 @@ namespace components
 		float g_vFlowColor[4] = {};
 		dev->GetPixelShaderConstantF(8, g_vFlowColor, 1); // 0.025, 0.08, 0.1
 
-
 		bool side_emitters = ctx.info.material_name.ends_with("side_emitters");
 		//ctx.modifiers.do_not_render = true;
 
@@ -1333,35 +1334,38 @@ namespace components
 		ctx.save_tss(dev, D3DTSS_ALPHAOP);
 		ctx.save_tss(dev, D3DTSS_ALPHAARG2);
 
-		//if (side_emitters) 
+		if (gs->emancipationgrill_force_emissive._bool()) {
+			model_render::set_remix_emissive_intensity(dev, gs->emancipationgrill_emissive_scale._float());
+		}
+
 		{
 			ctx.save_texture(dev, 0);
 			dev->SetTexture(0, tex_addons::emancipation_grill);
 
-			dev->SetRenderState(D3DRS_TEXTUREFACTOR, 
-				
-				side_emitters ? 
-					D3DCOLOR_COLORVALUE(
-					g_vFlowColor[0] * g_flPowerUp * 0.5f, 
-					g_vFlowColor[1] * g_flPowerUp * 0.5f, 
-					g_vFlowColor[2] * g_flPowerUp * 0.35f, 
-					0.7f * g_flPowerUp)
+			const auto& center_color_scale = gs->emancipationgrill_color_scalar_center.get_as<Vector4D>();
+			const auto& side_emitter_color_scale = gs->emancipationgrill_color_scalar_side_emitters.get_as<Vector4D>();
+			const float x = std::clamp(side_emitters ? (side_emitter_color_scale.x * g_vFlowColor[0] * g_flPowerUp) : (center_color_scale.x * g_flPowerUp), 0.0f, 1.0f);
+			const float y = std::clamp(side_emitters ? (side_emitter_color_scale.y * g_vFlowColor[1] * g_flPowerUp) : (center_color_scale.y * g_flPowerUp), 0.0f, 1.0f);
+			const float z = std::clamp(side_emitters ? (side_emitter_color_scale.z * g_vFlowColor[2] * g_flPowerUp) : (center_color_scale.z * g_flPowerUp), 0.0f, 1.0f);
+			const float w = std::clamp(side_emitters ? (side_emitter_color_scale.w * g_flPowerUp) : (center_color_scale.w * g_flPowerUp), 0.0f, 1.0f);
 
-				  : D3DCOLOR_COLORVALUE(
-					  0.2f * g_flPowerUp, 0.4f * g_flPowerUp, 0.52f * g_flPowerUp, 0.05f * g_flPowerUp)
-			);
+			dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_COLORVALUE(x, y, z, w));
 		}
-		//else
-		//{
-		//	//dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_COLORVALUE(0.2f * g_flPowerUp, 0.4f * g_flPowerUp, 0.52f * g_flPowerUp, 0.05f * g_flPowerUp));
-		//	dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_COLORVALUE(1.0f, 0.0f, 0.0f, 0.05f * g_flPowerUp));
-		//}
 		
 		dev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
 		dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
 		dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
 
-		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_ADD);
+		if (gs->emancipationgrill_alpha_modulate4x._bool()) {
+			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE4X);
+		} else if (gs->emancipationgrill_alpha_modulate2x._bool()) {
+			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE2X);
+		} else if (gs->emancipationgrill_alpha_modulate1x._bool()) {
+			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+		} else {
+			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_ADD);
+		}
+		
 		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
 
 		D3DXMATRIX current_transform = {};
@@ -1383,14 +1387,13 @@ namespace components
 		current_transform *= scale_matrix;
 		ctx.modifiers.as_emancipation_grill = !side_emitters;
 
-		//auto& u1 = imgui::get()->m_debug_vector.x; // 1.2
-		//auto& u2 = imgui::get()->m_debug_vector.y; // 1.2
-		//auto& u3 = imgui::get()->m_debug_vector.z; // 1.0
-		//auto& u4 = imgui::get()->m_debug_vector2.x; // 0.01f
-		//auto& u5 = imgui::get()->m_debug_vector2.y; // -0.0015f
+		/*const float wave = std::cosf(g_flTime * (0.01f + im->m_debug_vector2.z));
+		ctx.modifiers.emancipation_scale = { im->m_debug_vector2.x - (wave * (im->m_debug_vector.x)), im->m_debug_vector2.y - (wave * (im->m_debug_vector.y)) };
+		ctx.modifiers.emancipation_offset = { g_flTime * (-0.001f + im->m_debug_vector3.z), g_flTime * (0.001f + im->m_debug_vector.z) };*/
 
-		ctx.modifiers.emancipation_scale = { 0.24f - (std::cosf(g_flTime * 0.01f) * 2.03f), 0.1f - (std::cosf(g_flTime * 0.01f) * 2.03f) };
-		ctx.modifiers.emancipation_offset = { g_flTime * -0.001f, g_flTime * 0.001f };
+		const float wave = std::cosf(g_flTime * (0.01f + 0.05f));
+		ctx.modifiers.emancipation_scale = { 0.73f - (wave * 0.12f), 0.73f - (wave * 0.12f) };
+		ctx.modifiers.emancipation_offset = { g_flTime * (-0.001f + -0.005f), g_flTime * (0.001f + 0.005f) };
 		ctx.modifiers.emancipation_color_scale = g_flPowerUp;
 
 		ctx.set_texture_transform(dev, &current_transform);
@@ -3346,6 +3349,7 @@ namespace components
 		const auto dev = game::get_d3d_device();
 		const auto shaderapi = game::get_shaderapi();
 		auto& ctx = model_render::primctx;
+		//const auto im = imgui::get();
 
 		// 0 = Gamma 1.0 (fixes dark albedo) :: 1 = Gamma 2.2
 		dev->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, ctx.modifiers.with_high_gamma ? 1u : 0u);
@@ -3560,7 +3564,9 @@ namespace components
 			D3DXMatrixScaling(&scale_matrix, ctx.modifiers.emancipation_scale.x, ctx.modifiers.emancipation_scale.y, 1.0f);
 
 			current_transform *= scale_matrix;
-			current_transform(3, 0) = ctx.modifiers.emancipation_offset.x;
+			//current_transform(3, 0) = ctx.modifiers.emancipation_offset.x + ctx.modifiers.emancipation_scale.x * im->m_debug_vector3.x;
+			//current_transform(3, 1) = ctx.modifiers.emancipation_offset.y + ctx.modifiers.emancipation_scale.y * im->m_debug_vector3.y;
+			current_transform(3, 0) = ctx.modifiers.emancipation_offset.x + ctx.modifiers.emancipation_scale.x * 1.0f;
 			current_transform(3, 1) = ctx.modifiers.emancipation_offset.y;
 
 			dev->SetTransform(D3DTS_TEXTURE0, &current_transform);
@@ -3574,13 +3580,6 @@ namespace components
 			ctx.save_rs(dev, D3DRS_TEXTUREFACTOR);
 			ctx.save_tss(dev, D3DTSS_ALPHAOP);
 			ctx.save_tss(dev, D3DTSS_ALPHAARG2);
-
-			const auto& cs = ctx.modifiers.emancipation_color_scale;
-			dev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_COLORVALUE(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs));
-			dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE2X);
-			dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
-
-			//add_light_to_texture_color_edit(0.2f * cs, 0.4f * cs, 0.52f * cs, 0.3f * cs);
 
 			model_render::set_remix_texture_hash(dev, utils::string_hash32("emancidual"));
 
