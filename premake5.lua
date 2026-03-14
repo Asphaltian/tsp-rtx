@@ -166,7 +166,7 @@ workspace "p2-rtx"
 		filter "configurations:Debug or configurations:Release"
 			if(os.getenv("PORTAL2_ROOT")) then
 				print ("Setup paths using environment variable 'PORTAL2_ROOT' :: '" .. os.getenv("PORTAL2_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_ROOT") .. "/" .. "bin/plugins")
+				targetdir(os.getenv("PORTAL2_ROOT"))
 				debugdir (os.getenv("PORTAL2_ROOT"))
 				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "run-p2-rtx.bat")
 			end
@@ -189,9 +189,9 @@ workspace "p2-rtx"
 		warnings "Extra"
 
 		-- Post-build
-		postbuildcommands {
+		--[[ postbuildcommands {
 			"MOVE /Y \"$(TargetDir)p2-rtx.dll\" \"$(TargetDir)p2-rtx.asi\"",
-		}
+		} ]]
 
 		dependencies.imports()
 

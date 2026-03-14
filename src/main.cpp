@@ -117,8 +117,13 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	char exe_path[MAX_PATH]; GetModuleFileNameA(nullptr, exe_path, MAX_PATH);
 	const std::string sha1 = hash_file_sha1(exe_path);
 
-	if (sha1 != (IS_LATEST_BUILD ? "754149fc8da2e131c2f13324c9e087f2a690f197" : "393ca001b796245e2d5425dd3505627810daecf8")) {
-		common::log("Main", std::format("Unexpected portal2.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
+	if (sha1 != (IS_LATEST_BUILD ? "754149fc8da2e131c2f13324c9e087f2a690f197" : "393ca001b796245e2d5425dd3505627810daecf8")) 
+	{
+		if (sha1 == "cca4a727f24b3e2eca89cbcc9e2f74908d0ce578") {
+			common::log("Main", "Using portal2.exe with p2-rtx imports", common::LOG_TYPE::LOG_TYPE_STATUS, false);
+		} else {
+			common::log("Main", std::format("Unexpected portal2.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
+		}
 	}
 
 	common::log("Main", std::format("Path to exe: '{}'", exe_path), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);

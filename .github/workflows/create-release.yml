@@ -79,15 +79,13 @@ jobs:
           # Copy all files from assets folder
           Copy-Item -Path "assets\*" -Destination $modFolder -Recurse -Force
           
-          # Copy the built p2-rtx.asi to the mod folder
-          $asiPath = "build\bin\Release\p2-rtx.asi"
-          if (Test-Path $asiPath) {
-            $pluginsDir = Join-Path $modFolder "bin\plugins"
-            New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
-            Copy-Item -Path $asiPath -Destination $pluginsDir -Force
-            Write-Host "Copied p2-rtx.asi to: $pluginsDir"
+          # Copy the built p2-rtx.dll to the mod folder
+          $dllPath = "build\bin\Release\p2-rtx.dll"
+          if (Test-Path $dllPath) {
+            Copy-Item -Path $dllPath -Destination $modFolder -Force
+            Write-Host "Copied p2-rtx.dll to: $modFolder"
           } else {
-            Write-Host "Error: p2-rtx.asi not found at $asiPath"
+            Write-Host "Error: p2-rtx.dll not found at $dllPath"
             Write-Host "Listing build/bin/Release contents:"
             if (Test-Path "build\bin\Release") {
               Get-ChildItem -Path "build\bin\Release" | ForEach-Object { Write-Host "  $($_.Name)" }

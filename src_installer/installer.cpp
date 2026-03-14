@@ -532,9 +532,22 @@ int main()
 
 	Sleep(500);
 
+	// check and disable asiloader if found
+	if (file_exists(game_dir + "\\bin\\winmm.dll"))
+	{
+		if (MoveFileExA(
+			(game_dir + "\\bin\\winmm.dll").c_str(),
+			(game_dir + "\\bin\\winmm.dll.bak").c_str(),
+			MOVEFILE_REPLACE_EXISTING))
+		{
+			std::cout << "Renamed 'bin/winmm.dll' to 'bin/winmm.dll.bak'\n";
+		}
+		Sleep(25);
+	}
+
 	// check if comp mod and remix are installed -> update
 	const bool has_remix_comp_mod = file_exists(game_dir + "\\bin\\d3d9.dll") &&
-									file_exists(game_dir + "\\bin\\plugins\\p2-rtx.asi");
+									file_exists(game_dir + "\\p2-rtx.dll");
 
 	if (has_remix_comp_mod) {
 		std::cout << "Detected another version of the RTX Remix Compatibility Mod. Updating ... \n";
@@ -644,7 +657,7 @@ int main()
 		}
 	}
 
-	// Only prompt about DirectX if this is a fresh install (p2-rtx.asi doesn't exist)
+	// Only prompt about DirectX if this is a fresh install (p2-rtx.dll doesn't exist)
 	if (!has_remix_comp_mod)
 	{
 		std::cout
