@@ -975,14 +975,18 @@ namespace components
 						}
 					};
 
-				// try to find the loaded map
-				if (portal_table.contains(m_map_settings.mapname))
+
+				if (common::remix_api::is_initialized())
 				{
-					if (const auto& map = portal_table[m_map_settings.mapname];
-						!map.is_empty() && !map.as_array().empty())
+					// try to find the loaded map
+					if (portal_table.contains(m_map_settings.mapname))
 					{
-						for (const auto& entry : map.as_array()) {
-							process_portal_pair_entry(entry);
+						if (const auto& map = portal_table[m_map_settings.mapname];
+							!map.is_empty() && !map.as_array().empty())
+						{
+							for (const auto& entry : map.as_array()) {
+								process_portal_pair_entry(entry);
+							}
 						}
 					}
 				}
@@ -1350,14 +1354,17 @@ namespace components
 						else { TOML_ERROR("[LIGHTS] #points", entry, "needs at least one point to define a light"); }
 					};
 
-				// try to find the loaded map
-				if (light_table.contains(m_map_settings.mapname))
+				if (common::remix_api::is_initialized())
 				{
-					if (const auto& map = light_table[m_map_settings.mapname];
-						!map.is_empty() && !map.as_array().empty())
+					// try to find the loaded map
+					if (light_table.contains(m_map_settings.mapname))
 					{
-						for (const auto& entry : map.as_array()) {
-							process_light_entry(entry);
+						if (const auto& map = light_table[m_map_settings.mapname];
+							!map.is_empty() && !map.as_array().empty())
+						{
+							for (const auto& entry : map.as_array()) {
+								process_light_entry(entry);
+							}
 						}
 					}
 				}
