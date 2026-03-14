@@ -5,8 +5,8 @@
 #define WIN32_LEAN_AND_MEAN
 
 constexpr auto COMP_MOD_VERSION_MAJOR = 2;
-constexpr auto COMP_MOD_VERSION_MINOR = 2;
-constexpr auto COMP_MOD_VERSION_PATCH = 3;
+constexpr auto COMP_MOD_VERSION_MINOR = 3;
+constexpr auto COMP_MOD_VERSION_PATCH = 0;
 
 #define COMPMOD_ASSET_DIR "\\portal2-rtx\\"
 
