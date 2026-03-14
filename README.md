@@ -67,7 +67,7 @@ If you want to support my work:
 - Take a look at the [Wiki](https://github.com/xoxor4d/p2-rtx/wiki/Compatibility-Mod-Feature-Guide) for in-depth guides on features that come with the compatibility mod 🍓
   
 - Current releases ship with:
-  - [custom build of the remix-dxvk runtime](https://github.com/xoxor4d/dxvk-remix/tree/game/p2) which includes necessary changes  
+  - [custom build of the remix-dxvk runtime]([https://github.com/xoxor4d/dxvk-remix/tree/game/p2](https://github.com/xoxor4d/dxvk-remix/tree/game/p2_rebase2)) which includes necessary changes  
 for Portal 2 (`bin/.trex/d3d9.dll`)
   - [custom build of bridge-remix](https://github.com/xoxor4d/bridge-remix/tree/pr/remixapi-add-remove-texhash) which includes necessary changes  
 for Portal 2 (`bin/.trex/NvRemixBridge.exe` & `bin/d3d9.dll`)
@@ -114,8 +114,6 @@ cl_brushfastpath 1
 <br>
 
 - Make sure that you have no clipping software such as "medal" running in the background
-
-- Follow [this #209](https://github.com/xoxor4d/p2-rtx/issues/209) and place `dxwrapper.asi` into the `bin` folder (next to `winmm.dll`) 
 
 - If your game is installed within `Program Files`:
   - right click `portal2.exe` and click settings - compatibility tab and enable run as admin
@@ -169,7 +167,6 @@ cl_brushfastpath 1
 - [imgui-blur-effect](https://github.com/3r4y/imgui-blur-effect)
 - [minhook](https://github.com/TsudaKageyu/minhook)
 - [toml11](https://github.com/ToruNiina/toml11)
-- [dxwrapper](https://github.com/elishacloud/dxwrapper)
 
 <br>
 
