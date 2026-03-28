@@ -2759,7 +2759,6 @@ namespace components
 		IDirect3DBaseTexture9* (__fastcall* GetD3DTexture)(void* shaderapi_ptr, void* ecx, int handle);
 		void* pad97;
 		void* pad98;
-		void* pad99;
 		void(__fastcall* GetBufferedState)(void* shaderapi_ptr, void* ecx, BufferedState_t*);
 		_D3DCULL(__fastcall* GetCullMode)(void* shaderapi_ptr, void* ecx);
 		void* ComputeFillRate;
@@ -2770,7 +2769,7 @@ namespace components
 		//char pad[0x41C];
 		//IMaterial* (__fastcall* GetBoundMaterial)(void* shaderapi_ptr, void* ecx);
 	};
-	STATIC_ASSERT_OFFSET(IShaderAPIDX8_vtbl, GetBoundMaterial, 0x41C);
+	STATIC_ASSERT_OFFSET(IShaderAPIDX8_vtbl, GetBoundMaterial, 0x418);
 
 	struct IShaderAPIDX8
 	{

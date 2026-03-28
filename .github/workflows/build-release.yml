@@ -37,8 +37,8 @@ jobs:
       - name: Set up problem matching
         uses: ammaraskar/msvc-problem-matcher@master
 
-      - name: Build ${{matrix.configuration}}-binaries-p2-rtx
-        run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=Win32 build/p2-rtx.sln
+      - name: Build ${{matrix.configuration}}-binaries-tsp-rtx
+        run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=Win32 build/tsp-rtx.sln
 
       - name: Move build files 
         run: |
@@ -56,10 +56,10 @@ jobs:
           
           Remove-Item assets/.trex/d3d9_runtime.zip
 
-      - name: Upload ${{matrix.configuration}}-binaries-p2-rtx
+      - name: Upload ${{matrix.configuration}}-binaries-tsp-rtx
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.configuration}}-binaries-p2-rtx
+          name: ${{matrix.configuration}}-binaries-tsp-rtx
           include-hidden-files: true
           path: |
             ./assets/

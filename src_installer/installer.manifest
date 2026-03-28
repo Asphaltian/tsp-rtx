@@ -3,10 +3,10 @@
   <assemblyIdentity
     version="1.0.0.0"
     processorArchitecture="*"
-    name="Portal2-Remix-CompMod-Installer"
+    name="TheStanleyParable-Remix-CompMod-Installer"
     type="win32"
   />
-  <description>Portal2 RTX Remix Compatibility Mod Installer</description>
+  <description>The Stanley Parable RTX Remix Compatibility Mod Installer</description>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges>

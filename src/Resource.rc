@@ -60,11 +60,11 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription", "Portal 2 RTX Remix Compatibility Mod"
-            VALUE "InternalName", "p2-rtx"
-            VALUE "LegalCopyright", "xoxor4d.github.io"
-            VALUE "OriginalFilename", "p2-rtx.dll"
-            VALUE "ProductName", "p2-rtx"
+            VALUE "FileDescription", "The Stanley Parable RTX Remix Compatibility Mod"
+            VALUE "InternalName", "tsp-rtx"
+            VALUE "LegalCopyright", "asphaltian.github.io"
+            VALUE "OriginalFilename", "tsp-rtx.dll"
+            VALUE "ProductName", "tsp-rtx"
         END
     END
     BLOCK "VarFileInfo"

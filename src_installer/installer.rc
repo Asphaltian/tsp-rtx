@@ -38,14 +38,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Installer for Portal2 RTX Remix Compatibility Mod"
-            VALUE "CompanyName", "#xoxor4d"
-            VALUE "FileDescription", "Portal2 RTX Remix Compatibility Mod Installer"
+            VALUE "Comments", "Installer for The Stanley Parable RTX Remix Compatibility Mod"
+            VALUE "CompanyName", "Asphaltian"
+            VALUE "FileDescription", "The Stanley Parable RTX Remix Compatibility Mod Installer"
             VALUE "FileVersion", "1.0.0.0"
-            VALUE "InternalName", "Portal2-Remix-CompMod-Installer"
-            VALUE "LegalCopyright", "Copyright (C) #xoxor4d"
-            VALUE "OriginalFilename", "GTAIV-Remix-CompMod-Installer.exe"
-            VALUE "ProductName", "Portal2 RTX Remix Compatibility Mod"
+            VALUE "InternalName", "TheStanleyParable-Remix-CompMod-Installer"
+            VALUE "LegalCopyright", "Copyright (C) Asphaltian"
+            VALUE "OriginalFilename", "TheStanleyParable-Remix-CompMod-Installer.exe"
+            VALUE "ProductName", "The Stanley Parable RTX Remix Compatibility Mod"
             VALUE "ProductVersion", "1.0.0.0"
         END
     END

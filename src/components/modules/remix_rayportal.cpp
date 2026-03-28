@@ -75,7 +75,7 @@ namespace components
 		if (m_square_mask)
 		{
 			mask_path = std::wstring(globals::root_path.begin(), globals::root_path.end());
-			mask_path += L"\\portal2-rtx\\textures\\white.dds";
+			mask_path += L"\\thestanleyparable-rtx\\textures\\white.dds";
 		}
 
 		remixapi_MaterialInfo info = {};

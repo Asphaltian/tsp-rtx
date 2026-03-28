@@ -650,7 +650,7 @@ namespace components
 		ImGui::SameLine();
 		{
 			bool temp_unbake = false;
-			if (common::imgui::toggle_button_bool(&temp_unbake, "Unbake: Log Info to File", two_row_button_size, "Log unbake info for all loaded meshes to \"portal2-rtx\\logs\\mapsettings_unbake_info.log\"\nUseful for UNBAKE (MapSettings)\n~~ cmd: xo_mapsettings_get_unbake_info")) {
+			if (common::imgui::toggle_button_bool(&temp_unbake, "Unbake: Log Info to File", two_row_button_size, "Log unbake info for all loaded meshes to \"thestanleyparable-rtx\\logs\\mapsettings_unbake_info.log\"\nUseful for UNBAKE (MapSettings)\n~~ cmd: xo_mapsettings_get_unbake_info")) {
 				cmd::ms_unbake_info = temp_unbake;
 			}
 		}

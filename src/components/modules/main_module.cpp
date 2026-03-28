@@ -123,7 +123,10 @@ namespace components
 		g_current_leaf = current_leaf;
 
 		// CM_LeafArea :: get current area the camera is in
-		g_current_area = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + USE_OFFSET(0x15ACE0, 0x159470))(current_leaf); // 0125
+		if (const auto worldbrush = game::get_hoststate_worldbrush_data();
+			worldbrush && worldbrush->leafs && current_leaf >= 0 && current_leaf < worldbrush->numleafs) {
+			g_current_area = worldbrush->leafs[current_leaf].area;
+		}
 
 		// fog
 		if (static bool allow_fog = !common::flags::has_flag("no_fog"); allow_fog)
@@ -425,8 +428,10 @@ namespace components
 	// - currently used to disable ghosts of chell and the world portalgun so that we can set 'portal_disable_ghosts' to 0
 	// - useful if we move a cube through a portal
 	// #TODO: fixme when remix virtual instances work?
+	// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
 	C_BaseEntity* cportalghost_should_draw(C_BaseEntity* ent)
 	{
+		/* Portal 2 specific - disabled for TSP
 		int player_team_num = 0;
 
 		const auto base_player = utils::hook::call<C_BaseEntity*(__cdecl)()>(CLIENT_BASE + USE_OFFSET(0x17B8B0, 0x176460))(); // 0125 // GetSplitScreenViewPlayer
@@ -453,6 +458,7 @@ namespace components
 				return nullptr; 
 			}
 		}
+		*/
 
 		return ent;
 	}
@@ -1025,8 +1031,9 @@ namespace components
 			popad;
 
 			// og
-			mov     edx, [edx + 0x54];
-			mov     ecx, ebx;
+			push    ebp;
+			mov     ebp, esp;
+			sub     esp, 0x10;
 			jmp		pre_recursive_world_node_retn;
 
 		}
@@ -1167,7 +1174,7 @@ namespace components
 		if (is_monitor)
 		{
 			// R_CullNode - uses area frustums if avail. and not in a solid - uses player frustum otherwise 
-			if (!utils::hook::call<bool(__cdecl)(mnode_t*)>(ENGINE_BASE + USE_OFFSET(0x10F950, 0x10E7E0))(node)) { // 0125
+			if (!utils::hook::call<bool(__cdecl)(mnode_t*)>(ENGINE_BASE + 0x10F3C0)(node)) {
 				return 0;
 			}
 
@@ -1278,7 +1285,7 @@ namespace components
 
 
 		// R_CullNode - uses area frustums if avail. and not in a solid - uses player frustum otherwise
-		if (!utils::hook::call<bool(__cdecl)(mnode_t*)>(ENGINE_BASE + USE_OFFSET(0x10F950, 0x10E7E0))(node)) { // 0125
+		if (!utils::hook::call<bool(__cdecl)(mnode_t*)>(ENGINE_BASE + 0x10F3C0)(node)) {
 			return 0;
 		}
 
@@ -1439,7 +1446,7 @@ namespace components
 	// Since we disabled the stencil'd rendering, we have to render everything in one pass.
 
 	// CViewRender* this
-	void viewdrawscene_custom_portal_vis(void* view_renderer, bool bDrew3dSkybox, int nSkyboxVisible, const CViewSetup* view, int nClearFlags, int viewID, bool bDrawViewModel, int baseDrawFlags, [[maybe_unused]] ViewCustomVisibility_t* pCustomVisibility)
+	void viewdrawscene_custom_portal_vis([[maybe_unused]] void* view_renderer, [[maybe_unused]] bool bDrew3dSkybox, [[maybe_unused]] int nSkyboxVisible, const CViewSetup* view, [[maybe_unused]] int nClearFlags, [[maybe_unused]] int viewID, [[maybe_unused]] bool bDrawViewModel, [[maybe_unused]] int baseDrawFlags, [[maybe_unused]] ViewCustomVisibility_t* pCustomVisibility)
 	{
 		portal_frustums.clear();
 		g_player_view_org = view->origin;
@@ -1499,8 +1506,11 @@ namespace components
 
 							//CPortalRenderable_FlatBasic::AddToVisAsExitPortal(CPortalRenderable_FlatBasic * this, ViewCustomVisibility_t * pCustomVisibility)
 							// this affects 'g_RenderAreaBits' (custom vis argument)
+							// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+							/* Portal 2 offsets - disabled for TSP
 							utils::hook::call<void(__fastcall)(void* this_ptr, void* null, ViewCustomVisibility_t*)>(CLIENT_BASE + USE_OFFSET(0x2C2DC0, 0x2BBDA0)) // 0125
 								(p->portal->m_pLinkedPortal, nullptr, vis);
+							*/
 
 							return true;
 						}
@@ -1541,8 +1551,11 @@ namespace components
 		model_render::linked_area_portals.clear();  
 
 		// CViewRender::ViewDrawScene
+		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+		/* Portal 2 offsets - disabled for TSP
 		utils::hook::call<void(__fastcall)(void* this_ptr, void* null, bool, int, const CViewSetup*, int, int, bool, int, ViewCustomVisibility_t*)>(CLIENT_BASE + USE_OFFSET(0x1EDFA0, 0x1E84E0)) // 0125
 			(view_renderer, nullptr, bDrew3dSkybox, nSkyboxVisible, view, nClearFlags, viewID, bDrawViewModel, baseDrawFlags, is_using_custom_vis ? &customVisibility : nullptr);
+		*/
 	}
 
 	HOOK_RETN_PLACE_DEF(viewdrawscene_push_args_retn);
@@ -1683,7 +1696,10 @@ namespace components
 		const auto current_leaf = game::get_leaf_from_position(*game::get_current_view_origin());
 
 		// CM_LeafArea :: get current area the camera is in
-		g_current_area_all_views = utils::hook::call<int(__cdecl)(int leafnum)>(ENGINE_BASE + USE_OFFSET(0x15ACE0, 0x159470))(current_leaf); // 0125
+		const auto worldbrush = game::get_hoststate_worldbrush_data();
+		if (worldbrush && worldbrush->leafs && current_leaf >= 0 && current_leaf < worldbrush->numleafs) {
+			g_current_area_all_views = worldbrush->leafs[current_leaf].area;
+		}
 
 		// we only calc vis for portals when we render the main view (ignore monitors etc.)
 		const auto view_id = game::get_current_view_id();
@@ -1776,8 +1792,11 @@ namespace components
 								//VMatrix world2proj = {};
 
 								// ComputeViewMatrices - override w2s (w2s_ptr)
+								// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+								/* Portal 2 offsets - disabled for TSP
 								utils::hook::call<void(__cdecl)(VMatrix* pWorldToView, VMatrix* pViewToProjection, VMatrix* pWorldToProjection, const CViewSetup* viewSetup)>(ENGINE_BASE + USE_OFFSET(0xDDE10, 0xDD4A0)) // 0125
-									(&world2view, &view2proj, w2s_ptr /*&world2proj*/, &view_copy);
+									(&world2view, &view2proj, w2s_ptr, &view_copy);
+								*/
 
 								// the w2s matrix is holding the WorldToProjection matrix .. 
 								// ComputeWorldToScreenMatrix
@@ -2215,67 +2234,72 @@ namespace components
 		// events
 
 		// CModelLoader::Map_LoadModel :: called on map load
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xFD8FC, 0xFCD5C), on_map_load_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(on_map_load_stub_retn, ENGINE_BASE + USE_OFFSET(0xFD901, 0xFCD61)); // 0125
+		utils::hook(ENGINE_BASE + 0xFE57C, on_map_load_stub).install()->quick(); // TSP
+		HOOK_RETN_PLACE(on_map_load_stub_retn, ENGINE_BASE + 0xFE581); // TSP
 
 		// Host_Disconnect :: called on map unload
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x19A3E1, 0x197DF1), on_host_disconnect_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(on_host_disconnect_retn, ENGINE_BASE + USE_OFFSET(0x19A3E6, 0x197DF6)); // 0125
+		utils::hook(ENGINE_BASE + 0x199F41, on_host_disconnect_stub).install()->quick(); // TSP
+		HOOK_RETN_PLACE(on_host_disconnect_retn, ENGINE_BASE + 0x199F46); // TSP
 
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x19620D, 0x193C6D), on_host_change_level_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(on_host_change_level_retn, ENGINE_BASE + USE_OFFSET(0x196212, 0x193C72)); // 0125
+		utils::hook(ENGINE_BASE + 0x196207, on_host_change_level_stub).install()->quick(); // TSP
+		HOOK_RETN_PLACE(on_host_change_level_retn, ENGINE_BASE + 0x19620C); // TSP
 
 
 		// CViewRender::RenderView :: "start" of current frame (after CViewRender::DrawMonitors)
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1F2885, 0x1ECDC5), 7); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x1F2885, 0x1ECDC5), cviewrenderer_renderview_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(cviewrenderer_renderview_retn, CLIENT_BASE + USE_OFFSET(0x1F288C, 0x1ECDCC)); // 0125
+		utils::hook::nop(CLIENT_BASE + 0x1E2CEF, 7); // TSP
+		utils::hook(CLIENT_BASE + 0x1E2CEF, cviewrenderer_renderview_stub).install()->quick(); // TSP
+		HOOK_RETN_PLACE(cviewrenderer_renderview_retn, CLIENT_BASE + 0x1E2CF6); // TSP
 
 		// CViewRender::DrawOneMonitor
+		// TODO: TSP - Find DrawOneMonitor offset
+		/* Portal 2 offsets - disabled for TSP
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x1EEDB4, 0x1E92F4), cviewrenderer_drawonemonitor_stub).install()->quick(); // 0125
 		HOOK_RETN_PLACE(cviewrenderer_drawonemonitor_retn, CLIENT_BASE + USE_OFFSET(0x1EEDB9, 0x1E92F9)); // 0125
+		*/
 
 		// #
 		// culling
 
 		// stub before calling 'R_RecursiveWorldNode' to override node/leaf vis
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xE76CD, 0xE6D6D), pre_recursive_world_node_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(pre_recursive_world_node_retn, ENGINE_BASE + USE_OFFSET(0xE76D2, 0xE6D72)); // 0125
+		utils::hook(ENGINE_BASE + 0xE6E00, pre_recursive_world_node_stub, HOOK_JUMP).install()->quick(); // TSP
+		HOOK_RETN_PLACE(pre_recursive_world_node_retn, ENGINE_BASE + 0xE6E06); // TSP
 
 		// ^ :: xnode->visframe == r_visframecount check - check for rectangular cuboids that could match emissive lights
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0xE7246, 0xE68E6), 9); // 0125
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xE7246, 0xE68E6), while_recursive_world_node_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(while_recursive_world_node_og_retn, ENGINE_BASE + USE_OFFSET(0xE73A2, 0xE6A42)); // 0125
-		HOOK_RETN_PLACE(while_recursive_world_node_cullnode_retn, ENGINE_BASE + USE_OFFSET(0xE7255, 0xE68F5)); // 0125
-		HOOK_RETN_PLACE(while_recursive_world_node_force_retn, ENGINE_BASE + USE_OFFSET(0xE726B, 0xE690B)); // 0125
+		utils::hook::nop(ENGINE_BASE + 0xE6E29, 12);
+		utils::hook(ENGINE_BASE + 0xE6E29, while_recursive_world_node_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(while_recursive_world_node_og_retn, ENGINE_BASE + 0xE6F82);
+		HOOK_RETN_PLACE(while_recursive_world_node_cullnode_retn, ENGINE_BASE + 0xE6E35);
+		HOOK_RETN_PLACE(while_recursive_world_node_force_retn, ENGINE_BASE + 0xE6E4B);
 
 		// ^ :: while( ... node->contents < -1 .. ) -> jl to jle
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0xE7258, 0xE68F8), 0x7E); // 0125
+		utils::hook::set<BYTE>(ENGINE_BASE + 0xE6E38, 0x7E);
 
 		// ^ :: while( ... !R_CullNode) - wrapper function to impl. additional culling control (force areas/leafs + use frustum culling when needed)
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xE725B, 0xE68FB), r_cullnode_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(r_cullnode_cull_retn, ENGINE_BASE + USE_OFFSET(0xE73A2, 0xE6A42)); // 0125
-		HOOK_RETN_PLACE(r_cullnode_skip_retn, ENGINE_BASE + USE_OFFSET(0xE726B, 0xE690B)); // 0125
+		utils::hook(ENGINE_BASE + 0xE6E3B, r_cullnode_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(r_cullnode_cull_retn, ENGINE_BASE + 0xE6F82);
+		HOOK_RETN_PLACE(r_cullnode_skip_retn, ENGINE_BASE + 0xE6E4B);
 
 		// ^ :: backface check -> je to jl
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0xE7323, 0xE69C3), 2); // 0125 // okay - draws a little more but not so heavy on perf.
+		utils::hook::nop(ENGINE_BASE + 0xE6F03, 2); // okay - draws a little more but not so heavy on perf.
 
 		// ^ :: backface check -> jnz to je
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0xE732D, 0xE69CD), 0x74); // 0125 // ^
+		utils::hook::set<BYTE>(ENGINE_BASE + 0xE6F0D, 0x74); // ^
 
 		// R_DrawLeaf :: backface check (emissive lamps) plane normal >= -0.00999f
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0xE6F23, 0xE65C3), 6); // 0125 // ^ 
+		utils::hook::nop(ENGINE_BASE + 0xE6B03, 6);
 
 		// CBrushBatchRender::DrawOpaqueBrushModel :: :: backface check - nop 'if ( bShadowDepth )' to disable culling
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x7196E, 0x7156E), 2); // 0125
+		utils::hook::nop(ENGINE_BASE + 0x71820, 2);
 
 		// CClientLeafSystem::ExtractCulledRenderables :: disable 'engine->CullBox' check to disable entity culling in leafs
 		// needs r_PortalTestEnts to be 0 -> je to jmp (0xEB)
-		utils::hook::set<BYTE>(CLIENT_BASE + USE_OFFSET(0xE20F5, 0xDE4D5), 0xEB); // 0125
+		utils::hook::set<BYTE>(CLIENT_BASE + 0xE2254, 0xEB);
 
 		// DrawDisplacementsInLeaf :: nop 'Frustum_t::CullBox' check to disable displacement (terrain) culling in leafs
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0xE6CE4, 0xE6384), 2); // 0125
+		utils::hook::nop(ENGINE_BASE + 0xE4CD2, 2);
 
+		// TODO: TSP - Find offsets for remaining hooks
+		/* Portal 2 offsets - disabled for TSP
 		// C_VGuiScreen::DrawModel :: vgui screens (world) :: nop C_VGuiScreen::IsBackfacing check
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xCDD1E, 0xCA14E), 2); // 0125
 
@@ -2324,6 +2348,7 @@ namespace components
 		// - Add player vis and call 'CPortalRenderable_FlatBasic::AddToVisAsExitPortal' for both active portals before rendering the main scene
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x1F29C4, 0x1ECF04), viewdrawscene_push_args_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(viewdrawscene_push_args_retn, CLIENT_BASE + USE_OFFSET(0x1F29C9, 0x1ECF09)); // 0125
+		*/
 
 		// not used rn
 		// ^ HACK: because 'AddToVisAsExitPortal' adds custom vis. we have to null the custom vis arg before the world list building func calculates area vis (R_SetupAreaBits)
@@ -2334,14 +2359,15 @@ namespace components
 		//HOOK_RETN_PLACE(pre_build_worldlists_retn, ENGINE_BASE + USE_OFFSET(0xDD54F, 0xDCBCF));
 
 		// ^ Portal area vis hack
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x11025C, 0x10F0EC), flow_through_area_wrapper, HOOK_CALL).install()->quick(); // 0125
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x110296, 0x10F126), 5); // 0125 // nop 'R_SetupVisibleAreaFrustums' call, handled in func above
+		utils::hook(ENGINE_BASE + 0x10FDEE, flow_through_area_wrapper, HOOK_CALL).install()->quick();
+		utils::hook::nop(ENGINE_BASE + 0x10FE28, 5);
 
 		// CBaseWorldView::DrawSetup :: save 'g_CurrentViewID' 
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x1F105A, 0x1EB59A), save_viewid_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(save_viewid_retn, CLIENT_BASE + USE_OFFSET(0x1F105F, 0x1EB59F)); // 0125
+		utils::hook(CLIENT_BASE + 0x3DFC8A, save_viewid_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(save_viewid_retn, CLIENT_BASE + 0x3DFC8F);
 
-
+		// TODO: TSP - Find offsets for remaining hooks
+		/* Portal 2 offsets - disabled for TSP
 		// C_BaseEntity::UpdateVisibility
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x76466, 0x73076), 10); // 0125
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x76466, 0x73076), base_ent_update_vis_stub, HOOK_JUMP).install()->quick(); // 0125
@@ -2356,11 +2382,11 @@ namespace components
 		utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x288198, 0x281FB8), 0x00015CE9); // 0125 // 0F85 5B01 0000 to E9 5C 01 00 00 + 1 nop
 
 		// C_BeamSpotLight::ClientThink :: disable spotlight billboards
-		/*utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937A9), 2);
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C4), 2);
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x938D1), 6);
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9) + 5, 1);
-		utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9), 0x0000FCE9);*/
+		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937A9), 2);
+		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C4), 2);
+		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x938D1), 6);
+		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9) + 5, 1);
+		// utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9), 0x0000FCE9);
 
 		// SpawnAllEntities:: try to not spawn sprites close to light models
 		utils::hook::nop(SERVER_BASE + USE_OFFSET(0x19FAA0, 0x19A870), 6); // 0125
@@ -2377,11 +2403,14 @@ namespace components
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AE9, 0x1D0FC9), 4); // 0125
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AF5, 0x1D0FD5), 2); // 0125
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AF9, 0x1D0FD9), 2); // 0125
+		*/
 
 		// force some gpu_level 3 logic
 		// C_EnvProjectedTexture::ShouldUpdate :: always return true
-		utils::hook::set<WORD>(CLIENT_BASE + USE_OFFSET(0x9E51C, 0x9AF1C), 0x01B0); // 0125 // 32 C0 -> B0 01
+		//utils::hook::set<WORD>(CLIENT_BASE + USE_OFFSET(0x9E51C, 0x9AF1C), 0x01B0); // 32 C0 -> B0 01
 
+		// TODO: TSP - Find offsets for remaining hooks
+		/* Portal 2 offsets - disabled for TSP
 		// CViewRender::InitFadeData :: manually set fade data and not rely on cpu_level
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x1E5673, 0x1DFC33), init_fade_data_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(init_fade_data_retn, CLIENT_BASE + USE_OFFSET(0x1E5699, 0x1DFC59)); // 0125
@@ -2398,6 +2427,7 @@ namespace components
 
 		// fix invisible brushmodels when using cl_brushfastpath 0 (eg. crazy_box)
 		//utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1EEF0A, 0x1E944A), 6);
+		*/
 
 		// -----
 		m_initialized = true;

@@ -102,7 +102,7 @@ namespace components
 	sound_events::sound_events()
 	{
 		// S_StartSound
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x1BF47, 0x1BD27), on_start_sound_stub).install()->quick(); // 0125
+		utils::hook(ENGINE_BASE + 0x1BF70, on_start_sound_stub).install()->quick(); // TSP
 
 		// ----
 		game::con_add_command(&xo_debug_sound_print_cmd, "xo_debug_sound_print", xo_debug_sound_print_fn, "Toggle sound debug prints (HASH for map_settings)");

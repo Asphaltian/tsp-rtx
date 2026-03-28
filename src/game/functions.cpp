@@ -70,7 +70,7 @@ namespace game
 	void con_add_command(ConCommand* cmd, const char* name, void(__cdecl* callback)(), const char* desc)
 	{
 		// ConCommand *this, const char *pName, void (__cdecl *callback)(), const char *pHelpString, int flags, int (__cdecl *completionFunc)(const char *, char (*)[64]
-		utils::hook::call<void(__fastcall)(ConCommand* this_ptr, void* null, const char*, void(__cdecl*)(), const char*, int, int(__cdecl*)(const char*, char(*)[64]))>(CLIENT_BASE + USE_OFFSET(0x632120, 0x6298D0)) // 0125
+		utils::hook::call<void(__fastcall)(ConCommand* this_ptr, void* null, const char*, void(__cdecl*)(), const char*, int, int(__cdecl*)(const char*, char(*)[64]))>(CLIENT_BASE + 0x986c00)
 			(cmd, nullptr, name, callback, desc, 0x20000, nullptr);
 	}
 
@@ -82,7 +82,7 @@ namespace game
 	 */
 	void debug_add_text_overlay(const float* pos, float duration, const char* text)
 	{
-		utils::hook::call<void(__cdecl)(const float*, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4640, 0xC3FE0)) // 0125
+		utils::hook::call<void(__cdecl)(const float*, float, const char*)>(ENGINE_BASE + 0xC3FE0)
 			(pos, duration, text);
 	}
 
@@ -98,7 +98,7 @@ namespace game
 	 */
 	void debug_add_text_overlay(const float* pos, const char* text, const int line_offset, const float r, const float g, const float b, const float a)
 	{
-		utils::hook::call<void(__cdecl)(const float*, int, float, float, float, float, float, const char*)>(ENGINE_BASE + USE_OFFSET(0xC4B30, 0xC4460)) // 0125
+		utils::hook::call<void(__cdecl)(const float*, int, float, float, float, float, float, const char*)>(ENGINE_BASE + 0xC4220)
 			(pos, line_offset, 0.0f, r, g, b, a, text);
 	}
 
@@ -108,36 +108,39 @@ namespace game
 		if (cbaseentity_ptr)
 		{
 			// UTIL_Remove
-			utils::hook::call<void(__cdecl)(void* cbaseentity)>(SERVER_BASE + USE_OFFSET(0x283770, 0x27D690))(cbaseentity_ptr); // 0125
+			utils::hook::call<void(__cdecl)(void* cbaseentity)>(SERVER_BASE + 0x280A30)(cbaseentity_ptr);
 		}
 	}
 
 	int get_visframecount() {
-		return *reinterpret_cast<int*>(ENGINE_BASE + USE_OFFSET(0x6AAE6C, 0x6A56B4)); // 0125
+		return *reinterpret_cast<int*>(ENGINE_BASE + 0x6A5A6C);
 	}
 
 	const char* get_map_name() {
-		return utils::hook::call<const char*(__cdecl)()>(CLIENT_BASE + USE_OFFSET(0x1F4500, 0x1EEEE0))(); // 0125
+		if (const auto interfaces = components::interfaces::get(); interfaces && interfaces->m_engine) {
+			return interfaces->m_engine->get_level_name();
+		}
+		return "";
 	}
 
 	void r_flow_through_area(const int area, const Vector* vec_vis_origin, const CPortalRect* clip_rect, const VisOverrideData_t* vis_data, float* reflection_water_height)
 	{
-		utils::hook::call<void(__cdecl)(int, const Vector*, const CPortalRect*, const VisOverrideData_t*, float*)>(ENGINE_BASE + USE_OFFSET(0x10FB70, 0x10EA00))
-			(area, vec_vis_origin, clip_rect, vis_data, reflection_water_height); // 0125
+		utils::hook::call<void(__cdecl)(int, const Vector*, const CPortalRect*, const VisOverrideData_t*, float*)>(ENGINE_BASE + 0x10F5E0)
+			(area, vec_vis_origin, clip_rect, vis_data, reflection_water_height);
 	}
 
 	// Frustum_t::SetPlanes
 	void frustum_set_planes(Frustum_t* frustum, const VPlane* planes)
 	{
-		utils::hook::call<void(__fastcall)(Frustum_t*, void* null, const VPlane*)>(ENGINE_BASE + USE_OFFSET(0x270090, 0x26CED0))
-			(frustum, nullptr, planes); // 0125
+		utils::hook::call<void(__fastcall)(Frustum_t*, void* null, const VPlane*)>(ENGINE_BASE + 0x26d3b0)
+			(frustum, nullptr, planes);
 	}
 
 	// Frustum_t::CullBox
 	bool frustum_cull_box(Frustum_t* frustum, const Vector* mins, const Vector* maxs)
 	{
-		return utils::hook::call<bool(__fastcall)(void* this_ptr, void* null, const Vector*, const Vector*)>(ENGINE_BASE + USE_OFFSET(0x270140, 0x26CF80))
-			(frustum, nullptr, mins, maxs); // 0125
+		return utils::hook::call<bool(__fastcall)(void* this_ptr, void* null, const Vector*, const Vector*)>(ENGINE_BASE + 0x26d440)
+			(frustum, nullptr, mins, maxs);
 	}
 
 	void cvar_uncheat(const char* name)

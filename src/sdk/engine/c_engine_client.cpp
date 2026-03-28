@@ -12,6 +12,12 @@ namespace sdk
 		using original_fn = VMatrix&(__thiscall*)(engine_client*);
 		return (*(original_fn * *)this)[37](this);
 	}
+
+	const char* engine_client::get_level_name()
+	{
+		using original_fn = const char*(__thiscall*)(engine_client*);
+		return (*(original_fn**)this)[52](this);
+	}
 	
 	void engine_client::execute_client_cmd_unrestricted(const char* m_cmd)
 	{

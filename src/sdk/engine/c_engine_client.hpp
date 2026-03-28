@@ -7,6 +7,7 @@ namespace sdk
 	public:
 		void get_screen_size(int& width, int& height);
 		components::VMatrix& world_to_screen_matrix();
+		const char* get_level_name();
 		void execute_client_cmd_unrestricted(const char* m_cmd);
 	};
 }

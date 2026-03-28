@@ -22,10 +22,10 @@ std::string open_file_dialog()
 	OPENFILENAMEA ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = nullptr;
-	ofn.lpstrFilter = "Portal2 Executable\0portal2.exe\0All Files\0*.*\0";
+	ofn.lpstrFilter = "The Stanley Parable Executable\0stanley.exe\0All Files\0*.*\0";
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrTitle = "Select your portal2.exe";
+	ofn.lpstrTitle = "Select your stanley.exe";
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
 	ofn.lpstrInitialDir = nullptr;
 
@@ -172,7 +172,7 @@ bool download_file_to_path(const std::wstring& url, const std::filesystem::path&
 		path = L"/";
 	}
 
-	HINTERNET hSession = WinHttpOpen(L"Portal2-Remix-CompMod-Installer/1.0",
+	HINTERNET hSession = WinHttpOpen(L"TheStanleyParable-Remix-CompMod-Installer/1.0",
 		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 		WINHTTP_NO_PROXY_NAME,
 		WINHTTP_NO_PROXY_BYPASS,
@@ -475,18 +475,18 @@ int main()
 {
 	Sleep(200);
 	
-	std::cout << "Select the Portal2 directory by selecting your portal2.exe ...\n";
+	std::cout << "Select The Stanley Parable directory by selecting your stanley.exe ...\n";
 	Sleep(500);
 
-	// select portal2.exe
-    std::string portal2_exe_path = open_file_dialog();
-	if (portal2_exe_path.empty()) 
+	// select stanley.exe
+    std::string stanley_exe_path = open_file_dialog();
+	if (stanley_exe_path.empty()) 
 	{
 		std::cout << "Path invalid. Exiting ...\n";
 		return 0;
 	}
 
-    const std::string game_dir = std::filesystem::path(portal2_exe_path).parent_path().string();
+    const std::string game_dir = std::filesystem::path(stanley_exe_path).parent_path().string();
 	
 	// Validate game directory exists
 	if (!std::filesystem::exists(game_dir) || !std::filesystem::is_directory(game_dir)) {
@@ -497,7 +497,7 @@ int main()
 	std::cout << "Using Path: '" << game_dir << "'\n\n";
 	
 	// Find zip file first (needed for version comparison)
-	static const wchar_t* zip_prefix = L"Portal2-Remix-CompatibilityMod";
+	static const wchar_t* zip_prefix = L"TheStanleyParable-Remix-CompatibilityMod";
 	std::filesystem::path found_zip;
 
 	for (const auto& entry : std::filesystem::directory_iterator(get_installer_dir()))
@@ -517,8 +517,8 @@ int main()
 
 	if (found_zip.empty()) 
 	{
-		std::cout << "[ERR] Could not find any zip starting with 'Portal2-Remix-CompatibilityMod'.\n";
-		MessageBoxA(nullptr, "Could not find 'Portal2-Remix-CompatibilityMod.zip' in the installer directory.", "Error", MB_ICONERROR);
+		std::cout << "[ERR] Could not find any zip starting with 'TheStanleyParable-Remix-CompatibilityMod'.\n";
+		MessageBoxA(nullptr, "Could not find 'TheStanleyParable-Remix-CompatibilityMod.zip' in the installer directory.", "Error", MB_ICONERROR);
 		return 1;
 	}
 	
@@ -547,7 +547,7 @@ int main()
 
 	// check if comp mod and remix are installed -> update
 	const bool has_remix_comp_mod = file_exists(game_dir + "\\bin\\d3d9.dll") &&
-									file_exists(game_dir + "\\p2-rtx.dll");
+									file_exists(game_dir + "\\tsp-rtx.dll");
 
 	if (has_remix_comp_mod) {
 		std::cout << "Detected another version of the RTX Remix Compatibility Mod. Updating ... \n";
@@ -558,9 +558,9 @@ int main()
 	std::cout << "Extracting zip ...\n";
 	Sleep(100); // Small delay before extraction
 
-	if (!extract_zip(found_zip, game_dir, "Portal2-Remix-CompatibilityMod"))
+	if (!extract_zip(found_zip, game_dir, "TheStanleyParable-Remix-CompatibilityMod"))
 	{
-		std::cout << "[ERR] Failed to extract 'Portal2-Remix-CompatibilityMod' files from 'Portal2-Remix-CompatibilityMod.zip'\n";
+		std::cout << "[ERR] Failed to extract 'TheStanleyParable-Remix-CompatibilityMod' files from 'TheStanleyParable-Remix-CompatibilityMod.zip'\n";
 		std::cout << "> Aborting installation. Please extract files manually.\n";
 		return 0;
 	}
@@ -569,9 +569,9 @@ int main()
 
 	// Optional: download and install base remix-mod (mods folder into rtx-remix)
 	{
-		static const char* base_mod_zip_url = "https://github.com/xoxor4d/p2-rtx-base-mod/archive/refs/heads/master.zip";
-		static const char* base_mod_repo_url = "https://github.com/xoxor4d/p2-rtx-base-mod";
-		static const char* base_mod_zip_inner_mods_github = "p2-rtx-base-mod-master/mods";
+		static const char* base_mod_zip_url = "https://github.com/Asphaltian/tsp-rtx-base-mod/archive/refs/heads/master.zip";
+		static const char* base_mod_repo_url = "https://github.com/Asphaltian/tsp-rtx-base-mod";
+		static const char* base_mod_zip_inner_mods_github = "tsp-rtx-base-mod-master/mods";
 		static const char* base_mod_zip_inner_mods_flat = "mods";
 
 		// Print full info (including links) to console so the user can copy them.
@@ -611,7 +611,7 @@ int main()
 		if (!std::filesystem::exists(base_zip_path))
 		{
 			std::cout << "Downloading base remix-mod zip to: " << base_zip_path.string() << "\n";
-			if (!download_file_to_path(L"https://github.com/xoxor4d/p2-rtx-base-mod/archive/refs/heads/master.zip", base_zip_path))
+			if (!download_file_to_path(L"https://github.com/Asphaltian/tsp-rtx-base-mod/archive/refs/heads/master.zip", base_zip_path))
 			{
 				MessageBoxA(nullptr,
 					("Failed to download base remix-mod.\n\n"
@@ -657,7 +657,7 @@ int main()
 		}
 	}
 
-	// Only prompt about DirectX if this is a fresh install (p2-rtx.dll doesn't exist)
+	// Only prompt about DirectX if this is a fresh install (tsp-rtx.dll doesn't exist)
 	if (!has_remix_comp_mod)
 	{
 		std::cout
@@ -670,8 +670,8 @@ int main()
 		}
 	}
 
-	std::cout << "\n\nIf you run into issues, please create an issue on the GitHub repository.\n> Please include 'portal2-rtx/logs/logfile.txt'\n> The log files from 'rtx-remix/logs'\n> A short description and anything else that might help to identify the issue.\n";
+	std::cout << "\n\nIf you run into issues, please create an issue on the GitHub repository.\n> Please include 'thestanleyparable-rtx/logs/logfile.txt'\n> The log files from 'rtx-remix/logs'\n> A short description and anything else that might help to identify the issue.\n";
 
-	MessageBoxA(nullptr, "Installation complete!\nYou can now launch Portal 2\nby running run-p2-rtx.bat", "Success", MB_ICONINFORMATION);
+	MessageBoxA(nullptr, "Installation complete!\nYou can now launch The Stanley Parable\nby running run-tsp-rtx.bat", "Success", MB_ICONINFORMATION);
     return 0;
 }

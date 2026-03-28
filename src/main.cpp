@@ -84,7 +84,7 @@ BOOL CALLBACK enum_windows_proc(HWND hwnd, LPARAM lParam)
 void init_fail_msg_setup()
 {
 	Beep(300, 100); Sleep(100); Beep(200, 100);
-	common::log("Main", "Not loading P2-RTX Compatibility Mod", common::LOG_TYPE::LOG_TYPE_ERROR, false);
+	common::log("Main", "Not loading TSP-RTX Compatibility Mod", common::LOG_TYPE::LOG_TYPE_ERROR, false);
 }
 
 void init_fail_msg_post()
@@ -117,14 +117,16 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	char exe_path[MAX_PATH]; GetModuleFileNameA(nullptr, exe_path, MAX_PATH);
 	const std::string sha1 = hash_file_sha1(exe_path);
 
+	/*
 	if (sha1 != (IS_LATEST_BUILD ? "754149fc8da2e131c2f13324c9e087f2a690f197" : "393ca001b796245e2d5425dd3505627810daecf8")) 
 	{
-		if (sha1 == "cca4a727f24b3e2eca89cbcc9e2f74908d0ce578") {
-			common::log("Main", "Using portal2.exe with p2-rtx imports", common::LOG_TYPE::LOG_TYPE_STATUS, false);
+		if (sha1 == "81c8de2925045014f68a86d2b46f6675428d5cdb") {
+			common::log("Main", "Using stanley.exe with tsp-rtx imports", common::LOG_TYPE::LOG_TYPE_STATUS, false);
 		} else {
-			common::log("Main", std::format("Unexpected portal2.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
+			common::log("Main", std::format("Unexpected stanley.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
 		}
 	}
+	*/
 
 	common::log("Main", std::format("Path to exe: '{}'", exe_path), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	common::log("Main", "Waiting for window with classname containing 'Valve001'...", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
@@ -155,10 +157,10 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	Beep(523, 100);
 
 	SetWindowTextA(glob::main_window, 
-		utils::va("Portal 2 - RTX - %d.%d.%d%s", COMP_MOD_VERSION_MAJOR, COMP_MOD_VERSION_MINOR, COMP_MOD_VERSION_PATCH, (IS_LATEST_BUILD ? "" : " - DEV")));
+		utils::va("The Stanley Parable - RTX - %d.%d.%d%s", COMP_MOD_VERSION_MAJOR, COMP_MOD_VERSION_MINOR, COMP_MOD_VERSION_PATCH, (IS_LATEST_BUILD ? "" : " - DEV")));
 
 	Sleep(500);
-	p2::main();
+	tsp::main();
 	return TRUE;
 }
 
@@ -172,9 +174,9 @@ BOOL APIENTRY DllMain(HMODULE hmodule, const DWORD ul_reason_for_call, LPVOID)
 		globals::setup_homepath();
 
 		common::set_console_color_blue(true);
-		std::cout << "Launching Portal 2 RTX Remix Compatiblity Mod Version [" << COMP_MOD_VERSION_MAJOR << "." << COMP_MOD_VERSION_MINOR << "." << COMP_MOD_VERSION_PATCH << "]\n";
+		std::cout << "Launching The Stanley Parable RTX Remix Compatiblity Mod Version [" << COMP_MOD_VERSION_MAJOR << "." << COMP_MOD_VERSION_MINOR << "." << COMP_MOD_VERSION_PATCH << "]\n";
 		std::cout << "> Compiled On : " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
-		std::cout << "> https://github.com/xoxor4d/p2-rtx\n\n";
+		std::cout << "> https://github.com/Asphaltian/tsp-rtx\n\n";
 		common::set_console_color_default();
 
 		if (const auto MH_INIT_STATUS = MH_Initialize(); MH_INIT_STATUS != MH_STATUS::MH_OK)

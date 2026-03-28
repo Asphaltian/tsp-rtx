@@ -2032,7 +2032,7 @@ namespace components
 					// do not fog HUD elements :D
 					dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
 
-					const auto s_viewFadeColor = reinterpret_cast<Vector4D*>(CLIENT_BASE + USE_OFFSET(0x9F7748, 0x9EDAF8)); // 0125
+					const auto s_viewFadeColor = reinterpret_cast<Vector4D*>(CLIENT_BASE + 0xE84BD8); // TSP
 
 					/*const auto s_viewFadeModulate = reinterpret_cast<bool*>(CLIENT_BASE + USE_OFFSET(0x0, 0x9ECEE0));
 					if (s_viewFadeModulate && *s_viewFadeModulate)
@@ -3695,14 +3695,12 @@ namespace components
 		__asm
 		{
 			// og code
-			mov		ecx, [esi + 0x50];
-			push	ecx;
-			push	eax;
-
-			//pushad;
-			call	cmeshdx8_renderpass_post_draw; // instead of 'edx' (DrawIndexedPrimitive)
+			push	eax;	// startidx
+			push	ecx;	// type
+			push	esi;	// device
+			
+			call	cmeshdx8_renderpass_post_draw;
 			add		esp, 0x1C;
-			//popad;
 
 			jmp		cmeshdx8_renderpass_post_draw_retn_addr;
 		}
@@ -4327,15 +4325,17 @@ namespace components
 		XASSERT(tbl_hk::model_renderer::table.init(tbl_hk::model_renderer::_interface) == false);
 		XASSERT(tbl_hk::model_renderer::table.hook(&tbl_hk::model_renderer::DrawModelExecute::Detour, tbl_hk::model_renderer::DrawModelExecute::Index) == false);
 
-		utils::hook(RENDERER_BASE + USE_OFFSET(0xB1B3, 0xAD23), cmeshdx8_renderpass_pre_draw_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(cmeshdx8_renderpass_pre_draw_retn_addr, RENDERER_BASE + USE_OFFSET(0xB1B8, 0xAD28)); // 0125
+		utils::hook(RENDERER_BASE + 0xA3CF, cmeshdx8_renderpass_pre_draw_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(cmeshdx8_renderpass_pre_draw_retn_addr, RENDERER_BASE + 0xA3D4);
 
-		utils::hook(RENDERER_BASE + USE_OFFSET(0xB285, 0xADF5), cmeshdx8_renderpass_post_draw_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(cmeshdx8_renderpass_post_draw_retn_addr, RENDERER_BASE + USE_OFFSET(0xB28C, 0xADFC)); // 0125
+		utils::hook(RENDERER_BASE + 0xBCC7, cmeshdx8_renderpass_post_draw_stub, HOOK_JUMP).install()->quick();
+		HOOK_RETN_PLACE(cmeshdx8_renderpass_post_draw_retn_addr, RENDERER_BASE + 0xBCCC);
 
 		// model and tluc fastpath test
+		/* TSP: Find offsets
 		utils::hook(RENDERER_BASE + USE_OFFSET(0xA9FA, 0xA56A), cmeshdx8_renderpass_pass_for_instances_stub, HOOK_JUMP).install()->quick();
 		HOOK_RETN_PLACE(cmeshdx8_renderpass_pass_for_instances_retn_addr, RENDERER_BASE + USE_OFFSET(0xAA11, 0xA581));
+		*/
 
 
 		// brushmodels - cubes - etc
@@ -4352,11 +4352,14 @@ namespace components
 		HOOK_RETN_PLACE(cmeshdx8_renderpasswithvertexindexbuffer_retn_addr, RENDERER_BASE + 0xA68D);
 #endif
 
+		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+		/* Portal 2 offsets - disabled for TSP
 		// C_FuncAreaPortalWindow::DrawModel :: disable drawing Area Portal Brushmodels
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xA164E, 0x9DE9E), 2); // 0125
 
 		// C_Prop_Portal::ClientThink :: hook to get portal 1/2 m_fOpenAmount member var
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x286142, 0x280012), prop_portal_client_think_stub, HOOK_JUMP).install()->quick(); // 0125
+		*/
 
 		// #
 		// Window portals
@@ -4371,6 +4374,8 @@ namespace components
 		HOOK_RETN_PLACE(render_portal_view_to_backbuffer_retn, CLIENT_BASE + USE_OFFSET(0x2BE7EF, 0x2B7D5F));
 #endif
 
+		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+		/* Portal 2 offsets - disabled for TSP
 		// Shader_DrawSurfaceDynamic -> BuildMSurfaceVertexArrays :: change texcoords when building the vertexbuffer
 		// so that we do not need to lock and unlock for each BSP surface when rendering
 		utils::hook(ENGINE_BASE + USE_OFFSET(0xF7D16, 0xF7193), BuildMSurfaceVertexArrays_stub, HOOK_JUMP).install()->quick(); // 0125
@@ -4386,11 +4391,14 @@ namespace components
 
 		utils::hook(ENGINE_BASE + USE_OFFSET(0x6FC2B, 0x6F73B), draw_painted_bmodel_array_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(draw_painted_bmodel_array_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0x6FC30, 0x6F740)); // 0125
+		*/
 
 		// ----
 
 		// modify trail vertices upon creation, right before the mesh gets unlocked
 #ifdef SPRITE_TRAIL_TEST
+		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+		/* Portal 2 offsets - disabled for TSP
 		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertex_t>
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), 6); // 0125
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), RenderSpriteCardFastRopeVertex_stub, HOOK_JUMP).install()->quick(); // 0125
@@ -4411,8 +4419,11 @@ namespace components
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), 6); // 0125
 		utils::hook(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), RenderSpritesTrail_Render_stub, HOOK_JUMP).install()->quick(); // 0125
 		HOOK_RETN_PLACE(RenderSpritesTrail_Render_retn_addr, CLIENT_BASE + USE_OFFSET(0x622824, 0x61A0F4)); // 0125
+		*/
 #endif
 
+		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
+		/* Portal 2 offsets - disabled for TSP
 		// Fix actual ropes
 		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), 6);
 		utils::hook(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), RopeManager_DrawRenderCache_stub, HOOK_JUMP).install()->quick();
@@ -4455,13 +4466,13 @@ namespace components
 		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), 6);
 		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), unbake_transform::R_StudioDrawPoints_stub, HOOK_JUMP).install()->quick();
 		HOOK_RETN_PLACE(unbake_transform::R_StudioDrawPoints_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0x10C42, 0x10AE2));
-
+		*/
 
 		// #
 		// commands
 
 		game::con_add_command(&xo_debug_toggle_model_info_cmd, "xo_debug_toggle_model_info", xo_debug_toggle_model_info_fn, "Toggle model name and radius visualizations");
-		game::con_add_command(&xo_mapsettings_get_unbake_info_cmd, "xo_mapsettings_get_unbake_info", xo_mapsettings_get_unbake_info_fn, "This log names of drawn models in the current frame to a logfile in portal2-rtx/logs/. Useful for MapSettings : [UNBAKE]");
+		game::con_add_command(&xo_mapsettings_get_unbake_info_cmd, "xo_mapsettings_get_unbake_info", xo_mapsettings_get_unbake_info_fn, "This log names of drawn models in the current frame to a logfile in thestanleyparable-rtx/logs/. Useful for MapSettings : [UNBAKE]");
 	
 		// -----
 		m_initialized = true;

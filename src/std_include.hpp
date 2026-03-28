@@ -8,7 +8,7 @@ constexpr auto COMP_MOD_VERSION_MAJOR = 2;
 constexpr auto COMP_MOD_VERSION_MINOR = 3;
 constexpr auto COMP_MOD_VERSION_PATCH = 0;
 
-#define COMPMOD_ASSET_DIR "\\portal2-rtx\\"
+#define COMPMOD_ASSET_DIR "\\thestanleyparable-rtx\\"
 
 // enable/disable benchmark logic
 //#define BENCHMARK
@@ -92,6 +92,6 @@ constexpr auto COMP_MOD_VERSION_PATCH = 0;
 #include "sdk/entity/c_entity_list.hpp"
 
 #include "game/functions.hpp"
-#include "p2.hpp"
+#include "tsp.hpp"
 
 using namespace std::literals;

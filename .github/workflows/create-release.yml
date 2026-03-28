@@ -32,7 +32,7 @@ jobs:
           
           $version = "$major.$minor.$patch"
           $tag = "v$version"
-          $zipName = "Portal2-Remix-CompatibilityMod-$version.zip"
+          $zipName = "TheStanleyParable-Remix-CompatibilityMod-$version.zip"
           
           Write-Host "Version: $version"
           Write-Host "Tag: $tag"
@@ -52,7 +52,7 @@ jobs:
         uses: ammaraskar/msvc-problem-matcher@master
 
       - name: Build Release binaries
-        run: msbuild /m /v:minimal /p:Configuration=Release /p:Platform=Win32 build/p2-rtx.sln
+        run: msbuild /m /v:minimal /p:Configuration=Release /p:Platform=Win32 build/tsp-rtx.sln
 
       - name: Extract d3d9 runtime
         shell: pwsh
@@ -72,20 +72,20 @@ jobs:
           $tempDir = "release_temp"
           New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
           
-          # Create Portal2-Remix-CompatibilityMod folder and copy assets
-          $modFolder = Join-Path $tempDir "Portal2-Remix-CompatibilityMod"
+          # Create TheStanleyParable-Remix-CompatibilityMod folder and copy assets
+          $modFolder = Join-Path $tempDir "TheStanleyParable-Remix-CompatibilityMod"
           New-Item -ItemType Directory -Path $modFolder -Force | Out-Null
           
           # Copy all files from assets folder
           Copy-Item -Path "assets\*" -Destination $modFolder -Recurse -Force
           
-          # Copy the built p2-rtx.dll to the mod folder
-          $dllPath = "build\bin\Release\p2-rtx.dll"
+          # Copy the built tsp-rtx.dll to the mod folder
+          $dllPath = "build\bin\Release\tsp-rtx.dll"
           if (Test-Path $dllPath) {
             Copy-Item -Path $dllPath -Destination $modFolder -Force
-            Write-Host "Copied p2-rtx.dll to: $modFolder"
+            Write-Host "Copied tsp-rtx.dll to: $modFolder"
           } else {
-            Write-Host "Error: p2-rtx.dll not found at $dllPath"
+            Write-Host "Error: tsp-rtx.dll not found at $dllPath"
             Write-Host "Listing build/bin/Release contents:"
             if (Test-Path "build\bin\Release") {
               Get-ChildItem -Path "build\bin\Release" | ForEach-Object { Write-Host "  $($_.Name)" }
@@ -178,7 +178,7 @@ jobs:
           # So we'll use the base tag here and update links later if needed
           $baseTag = "${{ steps.version.outputs.tag }}"
           $modZipLink = "https://github.com/${{ github.repository }}/releases/download/$baseTag/$zipName"
-          $installerLink = "https://github.com/${{ github.repository }}/releases/download/$baseTag/Portal2-Remix-CompMod-Installer.exe"
+          $installerLink = "https://github.com/${{ github.repository }}/releases/download/$baseTag/TheStanleyParable-Remix-CompMod-Installer.exe"
 
           $readmePath = ".github/README_INSTALL.md"
           if (-not (Test-Path $readmePath)) {
@@ -193,7 +193,7 @@ jobs:
           $readme = $readme -replace '<LINK_TO_MOD_ZIP>', $zipLinkReplacement
           
           # Replace installer link placeholder
-          $installerLinkReplacement = '[Portal2-Remix-CompMod-Installer.exe](' + $installerLink + ')'
+          $installerLinkReplacement = '[TheStanleyParable-Remix-CompMod-Installer.exe](' + $installerLink + ')'
           $readme = $readme -replace '<LINK_TO_INSTALLER>', $installerLinkReplacement
 
           $changelog = Get-Content -Raw -Path "changelog.txt"
@@ -288,9 +288,9 @@ jobs:
         shell: pwsh
         run: |
           $installerPaths = @(
-            "bin\Portal2-Remix-CompMod-Installer.exe",
-            "build\bin\Release\Portal2-Remix-CompMod-Installer.exe",
-            "bin\Release\Portal2-Remix-CompMod-Installer.exe"
+            "bin\TheStanleyParable-Remix-CompMod-Installer.exe",
+            "build\bin\Release\TheStanleyParable-Remix-CompMod-Installer.exe",
+            "bin\Release\TheStanleyParable-Remix-CompMod-Installer.exe"
           )
           
           $foundPath = $null

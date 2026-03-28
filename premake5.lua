@@ -30,9 +30,9 @@ end
 
 dependencies.load()
 
-workspace "p2-rtx"
+workspace "tsp-rtx"
 
-	startproject "p2-rtx"
+	startproject "tsp-rtx"
 	location "./build"
 	objdir "%{wks.location}/obj"
 	targetdir "%{wks.location}/bin/%{cfg.buildcfg}"
@@ -131,7 +131,7 @@ workspace "p2-rtx"
 
 	-- Project
 
-	project "p2-rtx"
+	project "tsp-rtx"
 		kind "SharedLib"
 		language "C++"
 
@@ -164,20 +164,20 @@ workspace "p2-rtx"
 		-- debugargs { "-novid -disable_d3d9_hacks -limitvsconst -disallowhwmorph -softparticlesdefaultoff -no_compressed_verts +mat_phong 1" }
 
 		filter "configurations:Debug or configurations:Release"
-			if(os.getenv("PORTAL2_ROOT")) then
-				print ("Setup paths using environment variable 'PORTAL2_ROOT' :: '" .. os.getenv("PORTAL2_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_ROOT"))
-				debugdir (os.getenv("PORTAL2_ROOT"))
-				debugcommand (os.getenv("PORTAL2_ROOT") .. "/" .. "run-p2-rtx.bat")
+			if(os.getenv("TSP_ROOT")) then
+				print ("Setup paths using environment variable 'TSP_ROOT' :: '" .. os.getenv("TSP_ROOT") .. "'")
+				targetdir(os.getenv("TSP_ROOT"))
+				debugdir (os.getenv("TSP_ROOT"))
+				debugcommand (os.getenv("TSP_ROOT") .. "/" .. "run-tsp-rtx.bat")
 			end
 		filter {}
 
 		filter "configurations:Dev"
-			if(os.getenv("PORTAL2_SEC_ROOT")) then
-				print ("Setup paths using environment variable 'PORTAL2_SEC_ROOT' :: '" .. os.getenv("PORTAL2_SEC_ROOT") .. "'")
-				targetdir(os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "bin/plugins")
-				debugdir (os.getenv("PORTAL2_SEC_ROOT"))
-				debugcommand (os.getenv("PORTAL2_SEC_ROOT") .. "/" .. "run-p2-rtx.bat")
+			if(os.getenv("TSP_SEC_ROOT")) then
+				print ("Setup paths using environment variable 'TSP_SEC_ROOT' :: '" .. os.getenv("TSP_SEC_ROOT") .. "'")
+				targetdir(os.getenv("TSP_SEC_ROOT") .. "/" .. "bin/plugins")
+				debugdir (os.getenv("TSP_SEC_ROOT"))
+				debugcommand (os.getenv("TSP_SEC_ROOT") .. "/" .. "run-tsp-rtx.bat")
 			end
 		filter {}
 		
@@ -190,7 +190,7 @@ workspace "p2-rtx"
 
 		-- Post-build
 		--[[ postbuildcommands {
-			"MOVE /Y \"$(TargetDir)p2-rtx.dll\" \"$(TargetDir)p2-rtx.asi\"",
+			"MOVE /Y \"$(TargetDir)tsp-rtx.dll\" \"$(TargetDir)tsp-rtx.asi\"",
 		} ]]
 
 		dependencies.imports()
@@ -202,7 +202,7 @@ workspace "p2-rtx"
 	
 project "installer"
     kind "ConsoleApp"
-	targetname "Portal2-Remix-CompMod-Installer"
+	targetname "TheStanleyParable-Remix-CompMod-Installer"
     language "C++"
     cppdialect "C++20"
     staticruntime "On"

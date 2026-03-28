@@ -1,0 +1,1 @@
+START stanley.exe -game thestanleyparable -insecure -steam -novid -disable_d3d9_hacks -limitvsconst -softparticlesdefaultoff -disallowhwmorph -no_compressed_verts -console +mat_phong 1 %*
