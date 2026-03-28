@@ -106,12 +106,8 @@ namespace components
 			const auto skin_num = m.index % 10u;
 			const auto model_name = utils::va("models/props_xo/mapmarker%03d.mdl", mdl_num * 10);
 
-			// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-			/* Portal 2 offsets - disabled for TSP
-			void* mdlcache = reinterpret_cast<void*>(*(DWORD*)(SERVER_BASE + USE_OFFSET(0x86B07C, 0x8618FC))); // 0125
-			*/
-			void* mdlcache = nullptr; // TSP - disabled
-			if (!mdlcache) continue; // Skip marker spawning when offsets are not available
+			void* mdlcache = reinterpret_cast<void*>(*(DWORD*)(SERVER_BASE + 0x853024)); // TSP
+			if (!mdlcache) continue;
 
 			// mdlcache->BeginLock
 			utils::hook::call_virtual<30, void>(mdlcache);
@@ -121,19 +117,14 @@ namespace components
 			if (mdl_handle != 0xFFFF)
 			{
 				// save precache state - CBaseEntity::m_bAllowPrecache
-				// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-				/* Portal 2 offsets - disabled for TSP
-				const bool old_precache_state = *reinterpret_cast<bool*>(SERVER_BASE + USE_OFFSET(0x7BC2B0, 0x7B2C58)); // 0125
+				const bool old_precache_state = *reinterpret_cast<bool*>(SERVER_BASE + 0x813870); // TSP
 
 				// allow precaching - CBaseEntity::m_bAllowPrecache
-				*reinterpret_cast<bool*>(SERVER_BASE + USE_OFFSET(0x7BC2B0, 0x7B2C58)) = true; // 0125
+				*reinterpret_cast<bool*>(SERVER_BASE + 0x813870) = true; // TSP
 
 				// CreateEntityByName - CBaseEntity *__cdecl CreateEntityByName(const char *className, int iForceEdictIndex, bool bNotify)
-				m.handle = utils::hook::call<void* (__cdecl)(const char* className, int iForceEdictIndex, bool bNotify)>(SERVER_BASE + USE_OFFSET(0x19F2C0, 0x19A090)) // 0125
+				m.handle = utils::hook::call<void* (__cdecl)(const char* className, int iForceEdictIndex, bool bNotify)>(SERVER_BASE + 0x19BE80) // TSP
 					("dynamic_prop", -1, true);
-				*/
-				[[maybe_unused]] const bool old_precache_state = false; // TSP - disabled
-				m.handle = nullptr; // TSP - disabled
 
 				if (m.handle)
 				{
@@ -155,21 +146,15 @@ namespace components
 					utils::hook::call_virtual<25, void>(m.handle);
 
 					// DispatchSpawn
-					// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-					/* Portal 2 offsets - disabled for TSP
-					utils::hook::call<void(__cdecl)(void* pEntity, bool bRunVScripts)>(SERVER_BASE + USE_OFFSET(0x27F520, 0x279480)) // 0125
+					utils::hook::call<void(__cdecl)(void* pEntity, bool bRunVScripts)>(SERVER_BASE + 0x27C810) // TSP
 						(m.handle, true);
-					*/
 
 					// ent->Activate
 					utils::hook::call_virtual<37, void>(m.handle);
 				}
 
 				// restore precaching state - CBaseEntity::m_bAllowPrecache
-				// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-				/* Portal 2 offsets - disabled for TSP
-				*reinterpret_cast<bool*>(SERVER_BASE + USE_OFFSET(0x7BC2B0, 0x7B2C58)) = old_precache_state; // 0125
-				*/
+				*reinterpret_cast<bool*>(SERVER_BASE + 0x813870) = old_precache_state; // TSP
 			}
 
 			utils::hook::call_virtual<31, void>(mdlcache); // mdlcache->EndLock

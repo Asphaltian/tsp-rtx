@@ -4352,14 +4352,8 @@ namespace components
 		HOOK_RETN_PLACE(cmeshdx8_renderpasswithvertexindexbuffer_retn_addr, RENDERER_BASE + 0xA68D);
 #endif
 
-		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-		/* Portal 2 offsets - disabled for TSP
-		// C_FuncAreaPortalWindow::DrawModel :: disable drawing Area Portal Brushmodels
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xA164E, 0x9DE9E), 2); // 0125
-
-		// C_Prop_Portal::ClientThink :: hook to get portal 1/2 m_fOpenAmount member var
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x286142, 0x280012), prop_portal_client_think_stub, HOOK_JUMP).install()->quick(); // 0125
-		*/
+		// N/A for TSP: C_FuncAreaPortalWindow (Portal 2 specific)
+		// N/A for TSP: C_Prop_Portal::ClientThink (no portals)
 
 		// #
 		// Window portals
@@ -4374,99 +4368,17 @@ namespace components
 		HOOK_RETN_PLACE(render_portal_view_to_backbuffer_retn, CLIENT_BASE + USE_OFFSET(0x2BE7EF, 0x2B7D5F));
 #endif
 
-		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-		/* Portal 2 offsets - disabled for TSP
-		// Shader_DrawSurfaceDynamic -> BuildMSurfaceVertexArrays :: change texcoords when building the vertexbuffer
-		// so that we do not need to lock and unlock for each BSP surface when rendering
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xF7D16, 0xF7193), BuildMSurfaceVertexArrays_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(BuildMSurfaceVertexArrays_retn_addr, ENGINE_BASE + USE_OFFSET(0xF7D1B, 0xF7198)); // 0125
-
-		utils::hook(ENGINE_BASE + USE_OFFSET(0xE95BD, 0xE8C7D), draw_painted_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(draw_painted_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0xE95C2, 0xE8C82)); // 0125
-		HOOK_RETN_PLACE(draw_painted_surfaces_og_func, ENGINE_BASE + USE_OFFSET(0xE2580, 0xE1C20)); // 0125
-
-		// CBrushBatchRender::DrawOpaqueBrushModel :: hook around mesh->Draw to detect paint rendering
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x7271C, 0x7231C), draw_painted_bmodel_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(draw_painted_bmodel_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0x72721, 0x72321)); // 0125
-
-		utils::hook(ENGINE_BASE + USE_OFFSET(0x6FC2B, 0x6F73B), draw_painted_bmodel_array_surfaces_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(draw_painted_bmodel_array_surfaces_retn_addr, ENGINE_BASE + USE_OFFSET(0x6FC30, 0x6F740)); // 0125
-		*/
+		// N/A for TSP: BuildMSurfaceVertexArrays, draw_painted_surfaces, draw_painted_bmodel (paint/gel system)
 
 		// ----
 
-		// modify trail vertices upon creation, right before the mesh gets unlocked
+		// TODO: TSP - Find sprite trail/rope offsets if needed (P2 offsets invalid)
 #ifdef SPRITE_TRAIL_TEST
-		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-		/* Portal 2 offsets - disabled for TSP
-		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertex_t>
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), 6); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x61ED14, 0x6165E4), RenderSpriteCardFastRopeVertex_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertex_retn_addr, CLIENT_BASE + USE_OFFSET(0x61ED1A, 0x6165EA)); // 0125
-
-		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertexNormal_t>
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6202F6, 0x617BC6), 6); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x6202F6, 0x617BC6), RenderSpriteCardFastRopeVertexNormal_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormal_retn_addr, CLIENT_BASE + USE_OFFSET(0x6202FC, 0x617BCC)); // 0125
-
-		// C_OP_RenderRope::RenderSpriteCard_Internal<FastRopeVertexNormalCacheAligned_t>
-		// not in use?
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6218E9, 0x6191B9), 6); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x6218E9, 0x6191B9), RenderSpriteCardFastRopeVertexNormalCache_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(RenderSpriteCardFastRopeVertexNormalCache_retn_addr, CLIENT_BASE + USE_OFFSET(0x6218EF, 0x6191BF)); // 0125
-
-		// C_OP_RenderSpritesTrail::Render
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), 6); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x62281E, 0x61A0EE), RenderSpritesTrail_Render_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(RenderSpritesTrail_Render_retn_addr, CLIENT_BASE + USE_OFFSET(0x622824, 0x61A0F4)); // 0125
-		*/
+		// TODO: TSP - sprite trail hooks need TSP offsets
 #endif
 
-		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-		/* Portal 2 offsets - disabled for TSP
-		// Fix actual ropes
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), 6);
-		utils::hook(CLIENT_BASE + USE_OFFSET(0xBD043, 0xB9613), RopeManager_DrawRenderCache_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(RopeManager_DrawRenderCache_retn_addr, CLIENT_BASE + USE_OFFSET(0xBD049, 0xB9619));
-
-
-		// C_OP_RenderSprites::Render :: fix SpriteCard UV's
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), 6); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x6222D0, 0x619BA0), RenderSpriteCardNew_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(RenderSpriteCardNew_retn_addr, CLIENT_BASE + USE_OFFSET(0x6222D6, 0x619BA6)); // 0125
-
-
-		// Remove world-position baking for vertices of "dynamic" static props and use SetTransform(WORLD) to transform them into the world.
-		// This results in:
-		// - affected mesh instances having the same (remix) hash
-		// - stable hashes for some non-animated props (cube)
-
-		// CStudioRender::R_StudioRenderFinal -> 
-		// CStudioRender::R_StudioDrawPoints -> 
-		// CStudioRender::R_StudioDrawMesh -> 
-		// CStudioRender::R_StudioDrawStaticMesh ->
-		// CStudioRender::R_StudioSoftwareProcessMesh -> 
-		// CProcessMeshWrapper<0,0,0>::R_StudioSoftwareProcessMesh (hooked)
-		// :: transpose pPoseToWorld and use it as world-transform in 'cmeshdx8_renderpass_pre_draw'
-		// :: set pPoseToWorld to identity to remove position/normal baking
-		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0xA6E7, 0xA587), 6);
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0xA6E7, 0xA587), unbake_transform::R_StudioSoftwareProcessMesh_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(unbake_transform::R_StudioSoftwareProcessMesh_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0xA6ED, 0xA58D));
-
-		// restore pPoseToWorld after building the mesh ^
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0xA949, 0xA7E9), unbake_transform::R_StudioSoftwareProcessMesh_Restore_stub, HOOK_JUMP).install()->quick();
-
-		// CStudioRender::R_StudioRenderFinal
-		// :: some meshes are made up of multiple submodels or body parts, so 'cmeshdx8_renderpass_pre_draw' gets called multiple times
-		// :: we need to set the modified world-transform back to identity after we are done rendering the mesh to not affect subsequent meshes
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x10DB7, 0x10C57), unbake_transform::R_StudioRenderFinal_stub, HOOK_JUMP).install()->quick();
-
-		// CStudioRender::R_StudioDrawPoints
-		// :: get info about the current mesh and decide if we will be fixing the baked transform or not
-		utils::hook::nop(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), 6);
-		utils::hook(STUDIORENDER_BASE + USE_OFFSET(0x10C3C, 0x10ADC), unbake_transform::R_StudioDrawPoints_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(unbake_transform::R_StudioDrawPoints_retn_addr, STUDIORENDER_BASE + USE_OFFSET(0x10C42, 0x10AE2));
-		*/
+		// TODO: TSP - Find rope/sprite trail offsets (P2 DEV offsets invalid)
+		// C_OP_RenderRope, C_OP_RenderSpritesTrail, SpriteCard, RopeManager
 
 		// #
 		// commands

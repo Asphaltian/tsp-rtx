@@ -1506,11 +1506,7 @@ namespace components
 
 							//CPortalRenderable_FlatBasic::AddToVisAsExitPortal(CPortalRenderable_FlatBasic * this, ViewCustomVisibility_t * pCustomVisibility)
 							// this affects 'g_RenderAreaBits' (custom vis argument)
-							// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-							/* Portal 2 offsets - disabled for TSP
-							utils::hook::call<void(__fastcall)(void* this_ptr, void* null, ViewCustomVisibility_t*)>(CLIENT_BASE + USE_OFFSET(0x2C2DC0, 0x2BBDA0)) // 0125
-								(p->portal->m_pLinkedPortal, nullptr, vis);
-							*/
+							// N/A for TSP: CPortalRenderable_FlatBasic::AddToVisAsExitPortal (no portals)
 
 							return true;
 						}
@@ -1552,10 +1548,7 @@ namespace components
 
 		// CViewRender::ViewDrawScene
 		// TODO: TSP - Replace Portal 2 offsets with The Stanley Parable offsets
-		/* Portal 2 offsets - disabled for TSP
-		utils::hook::call<void(__fastcall)(void* this_ptr, void* null, bool, int, const CViewSetup*, int, int, bool, int, ViewCustomVisibility_t*)>(CLIENT_BASE + USE_OFFSET(0x1EDFA0, 0x1E84E0)) // 0125
-			(view_renderer, nullptr, bDrew3dSkybox, nSkyboxVisible, view, nClearFlags, viewID, bDrawViewModel, baseDrawFlags, is_using_custom_vis ? &customVisibility : nullptr);
-		*/
+		// N/A for TSP: CViewRender::ViewDrawScene portal vis hook not needed (no portals)
 	}
 
 	HOOK_RETN_PLACE_DEF(viewdrawscene_push_args_retn);
@@ -2250,12 +2243,9 @@ namespace components
 		utils::hook(CLIENT_BASE + 0x1E2CEF, cviewrenderer_renderview_stub).install()->quick(); // TSP
 		HOOK_RETN_PLACE(cviewrenderer_renderview_retn, CLIENT_BASE + 0x1E2CF6); // TSP
 
-		// CViewRender::DrawOneMonitor
-		// TODO: TSP - Find DrawOneMonitor offset
-		/* Portal 2 offsets - disabled for TSP
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x1EEDB4, 0x1E92F4), cviewrenderer_drawonemonitor_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(cviewrenderer_drawonemonitor_retn, CLIENT_BASE + USE_OFFSET(0x1EEDB9, 0x1E92F9)); // 0125
-		*/
+		// CViewRender::DrawOneMonitor - hook before RenderView to set D3D transforms for monitor scenes
+		utils::hook(CLIENT_BASE + 0x3DC7C1, cviewrenderer_drawonemonitor_stub).install()->quick(); // TSP
+		HOOK_RETN_PLACE(cviewrenderer_drawonemonitor_retn, CLIENT_BASE + 0x3DC7C6); // TSP
 
 		// #
 		// culling
@@ -2298,57 +2288,28 @@ namespace components
 		// DrawDisplacementsInLeaf :: nop 'Frustum_t::CullBox' check to disable displacement (terrain) culling in leafs
 		utils::hook::nop(ENGINE_BASE + 0xE4CD2, 2);
 
-		// TODO: TSP - Find offsets for remaining hooks
-		/* Portal 2 offsets - disabled for TSP
-		// C_VGuiScreen::DrawModel :: vgui screens (world) :: nop C_VGuiScreen::IsBackfacing check
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0xCDD1E, 0xCA14E), 2); // 0125
+		// C_VGuiScreen::DrawModel :: nop IsBackfacing check so vgui screens always render
+		// TSP: test al,al (2b) + je NEAR (6b) = 8 bytes at CLIENT+0x1BBB6F
+		utils::hook::nop(CLIENT_BASE + 0x1BBB6F, 8); // TSP
 
 		// CSimpleWorldView::Setup :: nop 'DoesViewPlaneIntersectWater' check
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1EB143, 0x1E5693), 2); // 0125
-
+		// TODO: TSP - Find CSimpleWorldView::Setup offset (vtable at CLIENT+0xC80814)
+		//utils::hook::nop(CLIENT_BASE + 0x??????, 2);
 		// ^ next instruction :: OR m_DrawFlags with 0x60 instead of 0x30
-		utils::hook::set<BYTE>(CLIENT_BASE + USE_OFFSET(0x1EB145, 0x1E5695) + 6, 0x60); // 0125
+		//utils::hook::set<BYTE>(CLIENT_BASE + 0x?????? + 6, 0x60);
 
-		// C_Portal_Player::DrawModel :: disable 'C_Portal_Player::ShouldSkipRenderingViewpointPlayerForThisView' check to always render chell
-		//utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x27AEBB, 0x274FFB), 2); // 0125 ----> now done with 'draw_our_own_playerbody_mesh_stub' hook
+		// N/A for TSP: Portal ghost rendering (CPortalGhostRenderable, C_Portal_Player, C_Prop_Portal)
+		// N/A for TSP: C_CombatWeaponClone::DrawModel, 3rd-person body/weapon mesh hooks
+		// N/A for TSP: SetPixelShader warning (string exists but zero code xrefs in TSP)
 
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x28357C, 0x27D4AC), cportalghost_should_draw_stub).install()->quick(); // 0125
-		HOOK_RETN_PLACE(cportalghost_should_draw_retn, CLIENT_BASE + USE_OFFSET(0x283581, 0x27D4B1)); // 0125
+		// Shader_DrawChains :: disable nFullbright check to keep lightmaps active
+		// TSP: je NEAR (0F 84, 6 bytes) at ENGINE+0x0E964E — change to nop + jmp near (90 E9)
+		utils::hook::set<WORD>(ENGINE_BASE + 0x0E964E, 0xE990); // TSP
 
+		// N/A for TSP: CBrushBatchRender fullbright patches (no paint/gel system)
+		// N/A for TSP: ComputeLightmapPages fullbright (no paint system)
 
-		// helper var around C_BaseAnimating::DrawModel so we know when we are drawing our player mesh
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x27AEB4, 0x274FF4), draw_our_3rd_person_body_mesh_stub, HOOK_JUMP).install()->quick();
-		HOOK_RETN_PLACE(draw_our_3rd_person_body_mesh_retn, CLIENT_BASE + USE_OFFSET(0x27AEBD, 0x274FFD));
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x27AEE5, 0x275025), post_draw_our_3rd_person_body_mesh_stub, HOOK_JUMP).install()->quick();
-
-		// same ^ for C_CombatWeaponClone::DrawModel (not needed for l4d2)
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x98464, 0x950B4), draw_our_3rd_person_weapon_mesh_stub, HOOK_JUMP).install()->quick(); // E8 ? ? ? ? 5E 5D C2 ? ? ? ? 55 8B EC 56 8B F1 57
-		HOOK_RETN_PLACE(draw_our_3rd_person_weapon_mesh_retn, CLIENT_BASE + USE_OFFSET(0x98469, 0x950B9)); // ^ + offs 4
-		HOOK_RETN_PLACE(draw_our_3rd_person_weapon_mesh_og_func, CLIENT_BASE + USE_OFFSET(0x5B6E0, 0x58710)); // 55 8B EC 83 EC ? 53 57 8B F9 8B 0D ? ? ? ? 89 7D ? FF 15
-
-		// CShaderManager::SetPixelShader :: disable warning print + place stub so we can break and see what type of shader is failing to load
-		utils::hook::nop(RENDERER_BASE + USE_OFFSET(0x2B244, 0x2AAB4), 6); // 0125 // disable 'Trying to set a pixel shader that failed loading' print
-		utils::hook(RENDERER_BASE + USE_OFFSET(0x2B24A, 0x2AABA), set_pixelshader_warning_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(set_pixelshader_warning_retn, RENDERER_BASE + USE_OFFSET(0x2B24F, 0x2AABF)); // 0125
-
-		// Shader_DrawChains :: disable g_pMaterialSystemConfig->nFullbright == 1 check when rendering painted surfaces (binds the "lightmap" (paint map))
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0xE958D, 0xE8C4D), 0xEB); // 0125
-
-		// CBrushBatchRender::DrawOpaqueBrushModel :: ^ same for brushmodels
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x7193A, 0x7153A), 2); // 0125
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x71940, 0x71540), 0xEB); // 0125
-
-		// CBrushBatchRender::ComputeLightmapPages :: ^ for fastpath
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x6EC00, 0x6E710), 2); // 0125
-
-
-
-		// Fix map visibility when looking through portals when r_portal_stencil_depth == 0
-		// - Map_VisSetup called by CViewRender::ViewDrawScene --> CViewRender::SetupVis :: uses player view and 1 visOrigin if no custom vis is provided
-		// - Add player vis and call 'CPortalRenderable_FlatBasic::AddToVisAsExitPortal' for both active portals before rendering the main scene
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x1F29C4, 0x1ECF04), viewdrawscene_push_args_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(viewdrawscene_push_args_retn, CLIENT_BASE + USE_OFFSET(0x1F29C9, 0x1ECF09)); // 0125
-		*/
+		// N/A for TSP: ViewDrawScene portal stencil vis (no portals)
 
 		// not used rn
 		// ^ HACK: because 'AddToVisAsExitPortal' adds custom vis. we have to null the custom vis arg before the world list building func calculates area vis (R_SetupAreaBits)
@@ -2366,68 +2327,15 @@ namespace components
 		utils::hook(CLIENT_BASE + 0x3DFC8A, save_viewid_stub, HOOK_JUMP).install()->quick();
 		HOOK_RETN_PLACE(save_viewid_retn, CLIENT_BASE + 0x3DFC8F);
 
-		// TODO: TSP - Find offsets for remaining hooks
-		/* Portal 2 offsets - disabled for TSP
-		// C_BaseEntity::UpdateVisibility
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x76466, 0x73076), 10); // 0125
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x76466, 0x73076), base_ent_update_vis_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(base_ent_update_vis_draw_retn, CLIENT_BASE + USE_OFFSET(0x76470, 0x73080)); // 0125
-		HOOK_RETN_PLACE(base_ent_update_vis_skip_retn, CLIENT_BASE + USE_OFFSET(0x764F5, 0x73105)); // 0125
+		// N/A for TSP: C_BaseEntity::UpdateVisibility (P2 DEV offsets invalid, class hierarchy differs)
+		// N/A for TSP: Portal particle FX (C_Prop_Portal::CreateAttachedParticles)
+		// N/A for TSP: C_BeamSpotLight disabled billboards
 
-		// #
+		// TODO: TSP - Find SpawnAllEntities offset (need to find entity spawn loop that calls DispatchSpawn)
 
-		// C_Prop_Portal::CreateAttachedParticles :: disable outer portal particle fx (on high shader/effect settings) (broken anyway)
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x28818D, 0x281FAD), 2); // 0125
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x288198, 0x281FB8) + 5, 1); // 0125
-		utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x288198, 0x281FB8), 0x00015CE9); // 0125 // 0F85 5B01 0000 to E9 5C 01 00 00 + 1 nop
+		// TODO: TSP - Find WriteSaveGameScreenshotOfSize to fix quicksave crash
 
-		// C_BeamSpotLight::ClientThink :: disable spotlight billboards
-		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937A9), 2);
-		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C4), 2);
-		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x938D1), 6);
-		// utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9) + 5, 1);
-		// utils::hook::set<DWORD>(CLIENT_BASE + USE_OFFSET(0x0, 0x937C9), 0x0000FCE9);
-
-		// SpawnAllEntities:: try to not spawn sprites close to light models
-		utils::hook::nop(SERVER_BASE + USE_OFFSET(0x19FAA0, 0x19A870), 6); // 0125
-		utils::hook(SERVER_BASE + USE_OFFSET(0x19FAA0, 0x19A870), spawn_all_entities_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(spawn_all_entities_jz_retn, SERVER_BASE + USE_OFFSET(0x19FAE4, 0x19A8B4)); // 0125
-		HOOK_RETN_PLACE(spawn_all_entities_retn, SERVER_BASE + USE_OFFSET(0x19FAA6, 0x19A876)); // 0125
-
-
-		// #
-		// General fixes
-
-		// Fix quicksave crashing - game tries to take a screenshot for the save file but thats not working with remix
-		// - this disables the 'RenderView' call in 'CViewRender::WriteSaveGameScreenshotOfSize'
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AE9, 0x1D0FC9), 4); // 0125
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AF5, 0x1D0FD5), 2); // 0125
-		utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1D6AF9, 0x1D0FD9), 2); // 0125
-		*/
-
-		// force some gpu_level 3 logic
-		// C_EnvProjectedTexture::ShouldUpdate :: always return true
-		//utils::hook::set<WORD>(CLIENT_BASE + USE_OFFSET(0x9E51C, 0x9AF1C), 0x01B0); // 32 C0 -> B0 01
-
-		// TODO: TSP - Find offsets for remaining hooks
-		/* Portal 2 offsets - disabled for TSP
-		// CViewRender::InitFadeData :: manually set fade data and not rely on cpu_level
-		utils::hook(CLIENT_BASE + USE_OFFSET(0x1E5673, 0x1DFC33), init_fade_data_stub, HOOK_JUMP).install()->quick(); // 0125
-		HOOK_RETN_PLACE(init_fade_data_retn, CLIENT_BASE + USE_OFFSET(0x1E5699, 0x1DFC59)); // 0125
-
-		// C_BaseEntity::ShouldDraw :: gpu/cpu level checks for simulated entites
-		utils::hook::set<BYTE>(CLIENT_BASE + USE_OFFSET(0x6EE3D, 0x6BC2D), 0xEB); // 0125
-		utils::hook::set<BYTE>(CLIENT_BASE + USE_OFFSET(0x6EE4F, 0x6BC3F), 0xEB); // 0125
-		utils::hook::set<BYTE>(CLIENT_BASE + USE_OFFSET(0x6EE66, 0x6BC56), 0xEB); // 0125
-
-		// CStaticPropMgr::UpdatePropVisibility :: ignore cpu/gpu level key-value pairs on static props
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x1F02D0, 0x1ED3F0), 0xEB); // 0125
-		utils::hook::set<BYTE>(ENGINE_BASE + USE_OFFSET(0x1F02FB, 0x1ED41B), 0xEB); // 0125
-		utils::hook::nop(ENGINE_BASE + USE_OFFSET(0x1F035F, 0x1ED47F), 2); // 0125
-
-		// fix invisible brushmodels when using cl_brushfastpath 0 (eg. crazy_box)
-		//utils::hook::nop(CLIENT_BASE + USE_OFFSET(0x1EEF0A, 0x1E944A), 6);
-		*/
+		// TODO: TSP - Find C_EnvProjectedTexture::ShouldUpdate, InitFadeData, ShouldDraw, CStaticPropMgr offsets
 
 		// -----
 		m_initialized = true;

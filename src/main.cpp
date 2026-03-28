@@ -117,8 +117,7 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 	char exe_path[MAX_PATH]; GetModuleFileNameA(nullptr, exe_path, MAX_PATH);
 	const std::string sha1 = hash_file_sha1(exe_path);
 
-	/*
-	if (sha1 != (IS_LATEST_BUILD ? "754149fc8da2e131c2f13324c9e087f2a690f197" : "393ca001b796245e2d5425dd3505627810daecf8")) 
+	if (sha1 != "de19bf6ce02bb41c301b19f95b86e7c3ce7233e5")
 	{
 		if (sha1 == "81c8de2925045014f68a86d2b46f6675428d5cdb") {
 			common::log("Main", "Using stanley.exe with tsp-rtx imports", common::LOG_TYPE::LOG_TYPE_STATUS, false);
@@ -126,7 +125,6 @@ DWORD WINAPI find_game_window_by_sha1([[maybe_unused]] LPVOID lpParam)
 			common::log("Main", std::format("Unexpected stanley.exe hash. Hash was: {}", sha1), common::LOG_TYPE::LOG_TYPE_WARN, false);
 		}
 	}
-	*/
 
 	common::log("Main", std::format("Path to exe: '{}'", exe_path), common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
 	common::log("Main", "Waiting for window with classname containing 'Valve001'...", common::LOG_TYPE::LOG_TYPE_DEFAULT, false);
